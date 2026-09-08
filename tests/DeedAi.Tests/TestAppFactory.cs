@@ -1,0 +1,94 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Queueing;
+using DeedAi.Infrastructure.Storage;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace DeedAi.Tests;
+
+public sealed class TestAppFactory : WebApplicationFactory<Program>
+{
+    private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"deedai-tests-{Guid.NewGuid():N}.db");
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+        builder.UseSetting("Database:Provider", "Sqlite");
+        builder.UseSetting("ConnectionStrings:Sqlite", $"Data Source={_dbPath}");
+        builder.UseSetting("Storage:Mode", "InMemory");
+        builder.UseSetting("Queue:Mode", "InMemory");
+        builder.UseSetting("Ocr:RunInProcess", "false");
+        builder.UseSetting("Ocr:PoisonDequeueCount", "5");
+        builder.UseSetting("Jwt:Key", "TEST_ONLY_JWT_KEY_MUST_BE_32_CHARS_MIN");
+        builder.UseSetting("Jwt:Issuer", "deedai");
+        builder.UseSetting("Jwt:Audience", "deedai-spa");
+        builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
+        builder.UseSetting("DocumentIntelligence:Endpoint", "");
+        builder.UseSetting("DocumentIntelligence:Key", "");
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Database:Provider"] = "Sqlite",
+                ["ConnectionStrings:Sqlite"] = $"Data Source={_dbPath}",
+                ["Storage:Mode"] = "InMemory",
+                ["Queue:Mode"] = "InMemory",
+                ["Ocr:RunInProcess"] = "false",
+                ["Jwt:Key"] = "TEST_ONLY_JWT_KEY_MUST_BE_32_CHARS_MIN",
+                ["Jwt:Issuer"] = "deedai",
+                ["Jwt:Audience"] = "deedai-spa",
+                ["Cors:AllowedOrigins:0"] = "http://localhost:5173"
+            });
+        });
+
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IHostedService>();
+            services.AddSingleton<InMemoryBlobStorage>();
+            services.AddSingleton<DeedAi.Domain.Abstractions.IBlobStorage>(sp => sp.GetRequiredService<InMemoryBlobStorage>());
+            services.AddSingleton<InMemoryOcrJobQueue>();
+            services.AddSingleton<DeedAi.Domain.Abstractions.IOcrJobQueue>(sp => sp.GetRequiredService<InMemoryOcrJobQueue>());
+        });
+    }
+
+    public HttpClient CreateJsonClient()
+    {
+        var client = CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false, AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        return client;
+    }
+
+    public async Task<string> LoginAsync(HttpClient client, string email, string password = DatabaseSeeder.SeedPassword)
+    {
+        var response = await client.PostAsync("/api/auth/login", Json("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"));
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return doc.RootElement.GetProperty("token").GetString()
+               ?? throw new InvalidOperationException("Login response missing token.");
+    }
+
+    public static StringContent Json(string json) =>
+        new(json, System.Text.Encoding.UTF8, "application/json");
+
+    public T GetRequiredService<T>() where T : notnull =>
+        Services.GetRequiredService<T>();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (File.Exists(_dbPath))
+        {
+            try { File.Delete(_dbPath); } catch (IOException) { }
+        }
+    }
+
+    public static string Encode(string value) => UrlEncoder.Default.Encode(value);
+}

@@ -1,0 +1,20 @@
+namespace DeedAi.Domain.Entities;
+
+public sealed class Document
+{
+    public Guid Id { get; set; }
+    public required string Name { get; set; }
+    public Guid ClientId { get; set; }
+    public Client Client { get; set; } = null!;
+    public required string Status { get; set; }
+    public required string BlobPath { get; set; }
+    public string? DiRawBlobPath { get; set; }
+    public Guid? AssigneeUserId { get; set; }
+    public UserAccount? Assignee { get; set; }
+    public Guid? UploadedByUserId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DocumentFields? Fields { get; set; }
+}
