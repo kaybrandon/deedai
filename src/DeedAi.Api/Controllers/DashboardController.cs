@@ -19,27 +19,27 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
         [FromQuery] Guid? clientId,
         CancellationToken cancellationToken)
     {
-        var query = db.Documents.AsQueryable();
+        var rows = await db.Documents.AsNoTracking().ToListAsync(cancellationToken);
+        if (clientId is not null)
+        {
+            rows = rows.Where(x => x.ClientId == clientId).ToList();
+        }
+
         if (from is not null)
         {
-            query = query.Where(x => x.CreatedAt >= from);
+            rows = rows.Where(x => x.CreatedAt >= from).ToList();
         }
 
         if (to is not null)
         {
-            query = query.Where(x => x.CreatedAt <= to);
+            rows = rows.Where(x => x.CreatedAt <= to).ToList();
         }
 
-        if (clientId is not null)
-        {
-            query = query.Where(x => x.ClientId == clientId);
-        }
-
-        var uploaded = await query.CountAsync(cancellationToken);
-        var queued = await query.CountAsync(x => x.Status == DocumentStatuses.Queued, cancellationToken);
-        var processing = await query.CountAsync(x => x.Status == DocumentStatuses.Processing, cancellationToken);
-        var ready = await query.CountAsync(x => x.Status == DocumentStatuses.Ready, cancellationToken);
-        var failed = await query.CountAsync(x => x.Status == DocumentStatuses.Failed, cancellationToken);
-        return new DashboardCounts(uploaded, queued, processing, ready, failed);
+        return new DashboardCounts(
+            rows.Count,
+            rows.Count(x => x.Status == DocumentStatuses.Queued),
+            rows.Count(x => x.Status == DocumentStatuses.Processing),
+            rows.Count(x => x.Status == DocumentStatuses.Ready),
+            rows.Count(x => x.Status == DocumentStatuses.Failed));
     }
 }

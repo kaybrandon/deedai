@@ -52,22 +52,22 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             query = query.Where(x => x.AssigneeUserId == assigneeUserId);
         }
 
-        var items = await query
+        var rows = await query.AsNoTracking().ToListAsync(cancellationToken);
+
+        return rows
             .OrderByDescending(x => x.UpdatedAt)
             .Select(x => new DocumentListItem(
-                x.Id,
-                x.Name,
-                x.Client.Name,
-                x.ClientId,
-                x.Status,
-                x.UpdatedAt,
-                x.Assignee != null ? x.Assignee.DisplayName : null,
-                x.AssigneeUserId,
-                x.Status == DocumentStatuses.Failed,
-                x.DeletedAt != null))
-            .ToListAsync(cancellationToken);
-
-        return items;
+            x.Id,
+            x.Name,
+            x.Client.Name,
+            x.ClientId,
+            x.Status,
+            x.UpdatedAt,
+            x.Assignee?.DisplayName,
+            x.AssigneeUserId,
+            x.Status == DocumentStatuses.Failed,
+            x.DeletedAt != null))
+            .ToList();
     }
 
     [HttpGet("{id:guid}")]
@@ -84,10 +84,10 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             return NotFound();
         }
 
-        var neighbors = await db.Documents
+        var neighbors = (await db.Documents.AsNoTracking().ToListAsync(cancellationToken))
             .OrderByDescending(x => x.UpdatedAt)
             .Select(x => x.Id)
-            .ToListAsync(cancellationToken);
+            .ToList();
         var index = neighbors.IndexOf(id);
         var previous = index > 0 ? neighbors[index - 1] : (Guid?)null;
         var next = index >= 0 && index < neighbors.Count - 1 ? neighbors[index + 1] : (Guid?)null;

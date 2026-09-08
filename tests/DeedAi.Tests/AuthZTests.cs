@@ -158,7 +158,11 @@ public sealed class AuthZTests : IClassFixture<TestAppFactory>
     private static async Task<Guid> FirstDocumentId(HttpClient client)
     {
         var response = await client.GetAsync("/api/documents");
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"GET /api/documents {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+        }
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.True(json.RootElement.GetArrayLength() > 0);
         return json.RootElement[0].GetProperty("id").GetGuid();

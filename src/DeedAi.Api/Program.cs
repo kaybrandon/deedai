@@ -71,7 +71,13 @@ if (builder.Configuration.GetValue("Ocr:RunInProcess", false))
     builder.Services.AddHostedService<InProcessOcrWorker>();
 }
 
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 
 using (var scope = app.Services.CreateScope())
 {
