@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DeedAi.Api/DeedAi.Api.csproj" />
+    <Project Path="src/DeedAi.Domain/DeedAi.Domain.csproj" />
+    <Project Path="src/DeedAi.Infrastructure/DeedAi.Infrastructure.csproj" />
+    <Project Path="src/DeedAi.Worker/DeedAi.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeedAi.Tests/DeedAi.Tests.csproj" />
+  </Folder>
+</Solution>
