@@ -959,6 +959,16 @@ h1 .field-help {
 }
 .health-chip-mode { color: var(--muted); font-weight: 600; }
 .health-chip-detail { color: var(--muted); font-weight: 600; }
+.mode-switch { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.mode-switch button { min-height: 44px; min-width: 44px; }
+.email-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.email-kv-grid h3 { margin: 0 0 4px; font-size: 14px; }
+.email-kv-grid p { margin: 0 0 6px; font-size: 13px; }
 .health-status {
   font-weight: 800;
   text-transform: uppercase;

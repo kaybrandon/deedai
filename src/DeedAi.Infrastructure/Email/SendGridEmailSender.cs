@@ -1,36 +1,32 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace DeedAi.Infrastructure.Email;
 
-public sealed class SendGridOptions
-{
-    public string? ApiKey { get; set; }
-    public string FromEmail { get; set; } = "noreply@bisconsultants.com";
-    public string FromName { get; set; } = "Deed AI";
-}
-
 public sealed class SendGridEmailSender(
     IHttpClientFactory httpFactory,
-    IOptions<SendGridOptions> options,
+    IOptions<EmailOptions> options,
     ILogger<SendGridEmailSender> logger) : IEmailSender
 {
     public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
-        var key = options.Value.ApiKey;
-        if (string.IsNullOrWhiteSpace(key))
+        var key = options.Value.SendGridApiKey;
+        if (!EmailKv.HasSecret(key))
         {
-            throw new InvalidOperationException("SendGridApiKey is not configured.");
+            throw new EmailNotConfiguredException(EmailModes.SendGrid);
         }
 
+        var fromEmail = message.FromEmail ?? options.Value.FromEmail;
+        var fromName = message.FromName ?? options.Value.FromName;
         var payload = new
         {
             personalizations = new[] { new { to = new[] { new { email = message.To } } } },
-            from = new { email = options.Value.FromEmail, name = options.Value.FromName },
+            from = new { email = fromEmail, name = fromName },
             subject = message.Subject,
             content = new object[]
             {
@@ -47,8 +43,7 @@ public sealed class SendGridEmailSender(
             .SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogError("SendGrid rejected mail ({Status}): {Body}", (int)response.StatusCode, body);
+            logger.LogError("SendGrid rejected mail ({Status})", (int)response.StatusCode);
             throw new InvalidOperationException("Could not send email.");
         }
     }

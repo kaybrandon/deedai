@@ -24,3 +24,5 @@ public sealed record UpdateProfileRequest(
 public sealed record ForgotPasswordRequest(string Email);
 
 public sealed record ResetPasswordRequest(string Token, string Password);
+
+public sealed record VerifyEmailRequest(string Token);

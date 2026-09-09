@@ -7,6 +7,7 @@ public sealed record UserDetail(
     string? FullName,
     string Role,
     bool IsActive,
+    bool EmailVerified,
     DateTimeOffset CreatedAt,
     IReadOnlyList<Guid> ClientIds,
     bool HasPhoto);

@@ -14,6 +14,7 @@
   - Restart app
 - [ ] Confirm `AdminSeedPassword` in KV matches the hash you expect. Rotating the KV secret updates `admin@bisconsultants.com` on next startup (does not wipe data).
 - [ ] Optional App Setting: `Session__IdleTimeoutMinutes` (default **30**)
+- [ ] Email: `SendGridApiKey` and/or SMTP `SmtpHost` / `SmtpPort` / `SmtpTls` / `SmtpUsername` / `SmtpPassword` as Key Vault references (values never in chat)
 - [ ] Smoke: home 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin `/api/health/detail` reports SQL / storage / queue plus Blob R/W, Document Intelligence, OCR pipeline, and queue visibility (no keys).
 
 ## Naming

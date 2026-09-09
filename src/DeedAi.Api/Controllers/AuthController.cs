@@ -1,9 +1,11 @@
 using DeedAi.Api.Auth;
 using DeedAi.Api.Contracts;
+using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,8 @@ namespace DeedAi.Api.Controllers;
 public sealed class AuthController(
     DeedAiDbContext db,
     JwtTokenService tokens,
-    IEmailSender email,
+    IEmailOutbound email,
+    EmailOutbound outbound,
     IConfiguration configuration,
     IBlobStorage blobs) : ControllerBase
 {
@@ -43,6 +46,16 @@ public sealed class AuthController(
             {
                 title = "Sign in failed",
                 message = "This account is disabled. Contact an Admin."
+            });
+        }
+
+        var settings = await outbound.EnsureAsync(cancellationToken);
+        if (settings.VerifyRequired && !user.EmailVerified)
+        {
+            return Unauthorized(new
+            {
+                title = "Sign in failed",
+                message = "Verify your email before signing in. Contact an Admin if you need a new link."
             });
         }
 
@@ -203,13 +216,24 @@ public sealed class AuthController(
             var publicUrl = DependencyInjection.FirstValue(configuration, "AppPublicUrl", "App:PublicUrl")
                             ?? $"{Request.Scheme}://{Request.Host.Value}";
             var link = $"{publicUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(raw)}";
-            await email.SendAsync(
-                new EmailMessage(
-                    user.Email,
-                    "Reset your Deed AI password",
-                    $"Reset your Deed AI password using this link (expires in {ResetHours} hour):\n{link}\nReset token: {raw}",
-                    $"<p>Reset your Deed AI password using this link (expires in {ResetHours} hour):</p><p><a href=\"{link}\">{link}</a></p>"),
-                cancellationToken);
+            try
+            {
+                await email.SendAsync(
+                    new EmailMessage(
+                        user.Email,
+                        "Reset your Deed AI password",
+                        $"Reset your Deed AI password using this link (expires in {ResetHours} hour):\n{link}\nReset token: {raw}",
+                        $"<p>Reset your Deed AI password using this link (expires in {ResetHours} hour):</p><p><a href=\"{link}\">{link}</a></p>"),
+                    cancellationToken);
+            }
+            catch (EmailNotConfiguredException)
+            {
+                // Fail closed — do not leak whether the account exists.
+            }
+            catch (InvalidOperationException)
+            {
+                // Fail closed — same generic response.
+            }
         }
 
         return Ok(new
@@ -256,5 +280,43 @@ public sealed class AuthController(
         token.User.PasswordHash = PasswordHasher.Hash(request.Password);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { message = "Password updated. You can sign in now." });
+    }
+
+    [HttpPost("verify-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Token))
+        {
+            return BadRequest(new { title = "Verify failed", message = "A verification token is required." });
+        }
+
+        var hash = TokenHasher.Hash(request.Token.Trim());
+        var token = await db.EmailVerificationTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.TokenHash == hash, cancellationToken);
+
+        if (token is null || token.UsedAt is not null || token.ExpiresAt < DateTimeOffset.UtcNow)
+        {
+            return BadRequest(new
+            {
+                title = "Verify failed",
+                message = "This verification link is invalid or has expired."
+            });
+        }
+
+        token.UsedAt = DateTimeOffset.UtcNow;
+        token.User.EmailVerified = true;
+        await db.SaveChangesAsync(cancellationToken);
+
+        if (!token.User.IsActive)
+        {
+            return Ok(new
+            {
+                message = "Email verified. This account is disabled, so you still cannot sign in."
+            });
+        }
+
+        return Ok(new { message = "Email verified. You can sign in now." });
     }
 }

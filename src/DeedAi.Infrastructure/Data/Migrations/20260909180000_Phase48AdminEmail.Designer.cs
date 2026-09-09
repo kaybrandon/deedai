@@ -3,6 +3,7 @@ using System;
 using DeedAi.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DeedAi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DeedAiDbContext))]
-    partial class DeedAiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909180000_Phase48AdminEmail")]
+    partial class Phase48AdminEmail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -514,6 +517,44 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.ToTable("PasswordResetTokens", (string)null);
                 });
 
+            modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DeedType")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("DefaultValue")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("Scope", "ClientId", "DeedType", "FieldKey")
+                        .IsUnique()
+                        .HasFilter("[ClientId] IS NOT NULL AND [DeedType] IS NOT NULL");
+
+                    b.ToTable("PropertyDefaults", (string)null);
+                });
+
             modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -974,6 +1015,16 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
+                {
+                    b.HasOne("DeedAi.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>

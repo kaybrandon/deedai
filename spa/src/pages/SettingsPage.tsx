@@ -17,6 +17,7 @@ import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import { FieldHelp, LabelWithHelp } from "../components/FieldHelp";
+import AdminEmailPanel from "../components/AdminEmailPanel";
 import SwaggerAdminPanel from "../components/SwaggerAdminPanel";
 import SystemHealthPanel from "../components/SystemHealthPanel";
 import type { HelpKey } from "../helpCatalog";
@@ -147,6 +148,8 @@ export default function SettingsPage() {
       <SystemHealthPanel />
 
       <SwaggerAdminPanel />
+
+      <AdminEmailPanel />
 
       <section className="panel">
         <h2>Manage Documents</h2>
@@ -310,8 +313,9 @@ export default function SettingsPage() {
         <section className="panel">
           <h2>Notify Emails</h2>
           <p className="muted">
-            SendGrid sends <strong>OCR Failed</strong> and <strong>Ready</strong> mail. Recipients: {notifications.recipientsSummary} Events:{" "}
-            {notifications.events.join(" · ")}. API key is <code>SendGridApiKey</code> / <code>SendGrid__ApiKey</code> from App Settings or Key Vault only.
+            The active Admin email mode sends <strong>OCR Failed</strong> and <strong>Ready</strong> mail. Recipients:{" "}
+            {notifications.recipientsSummary} Events: {notifications.events.join(" · ")}. Secrets stay in Key Vault — never
+            typed here.
           </p>
           <label className="remember">
             <input

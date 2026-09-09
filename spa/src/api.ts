@@ -42,6 +42,7 @@ export interface UserDetail {
   fullName?: string | null;
   role: Role;
   isActive: boolean;
+  emailVerified: boolean;
   createdAt: string;
   clientIds: string[];
   hasPhoto: boolean;
@@ -62,6 +63,33 @@ export interface OcrQueueVisibility {
   failedCount: number;
   lastDiSuccessAt: string | null;
   lastDiFailAt: string | null;
+}
+
+export interface EmailSettings {
+  mode: "SendGrid" | "Smtp" | string;
+  configured: boolean;
+  sendGridConfigured: boolean;
+  sendGridKeyLast4: string | null;
+  smtpHostConfigured: boolean;
+  smtpHost: string | null;
+  smtpPortConfigured: boolean;
+  smtpPort: number | null;
+  smtpTls: boolean | null;
+  smtpUsernameConfigured: boolean;
+  smtpPasswordConfigured: boolean;
+  smtpTimeoutSeconds: number;
+  fromName: string;
+  fromAddress: string;
+  verifyRequired: boolean;
+  lastSuccessAt: string | null;
+  lastFailAt: string | null;
+  lastFailReason: string | null;
+}
+
+export interface TestEmailResult {
+  passed: boolean;
+  message: string;
+  at: string;
 }
 
 export interface FlagSummary {
@@ -422,6 +450,18 @@ export const endpoints = {
       method: "POST",
       body: JSON.stringify({ token, password })
     }),
+  verifyEmail: (token: string) =>
+    api<{ message: string }>("/api/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token })
+    }),
+  resendVerification: (id: string) =>
+    api<{ message: string }>(`/api/admin/users/${id}/resend-verification`, { method: "POST" }),
+  emailSettings: () => api<EmailSettings>("/api/settings/email"),
+  saveEmailSettings: (body: object) =>
+    api<EmailSettings>("/api/settings/email", { method: "PUT", body: JSON.stringify(body) }),
+  testEmail: (to: string) =>
+    api<TestEmailResult>("/api/settings/email/test", { method: "POST", body: JSON.stringify({ to }) }),
   me: () => api<Me>("/api/auth/me"),
   updateProfile: (body: object) =>
     api<Me>("/api/auth/me", { method: "PUT", body: JSON.stringify(body) }),

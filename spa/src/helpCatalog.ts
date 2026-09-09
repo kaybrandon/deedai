@@ -40,7 +40,15 @@ export const HELP = {
   "users.role": "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
   "settings.idleTimeout":
     "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
-  "settings.ocrTrim": "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list."
+  "settings.ocrTrim": "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list.",
+  "settings.emailMode":
+    "Active mail mode is SendGrid or SMTP — only one sends. API keys, SMTP username, and SMTP password stay in Key Vault.",
+  "settings.emailTest":
+    "Sends one test message to the address you type using the active mode. Result is Pass or Fail. Secrets are never shown.",
+  "settings.verifyRequired":
+    "When on, unverified users cannot sign in. Disabled accounts stay blocked even after they verify.",
+  "users.resendVerification":
+    "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in."
 } as const;
 
 export type HelpKey = keyof typeof HELP;
@@ -66,5 +74,8 @@ export const MUST_HELP_KEYS: HelpKey[] = [
   "settings.deedTypeMaps",
   "restore.confirmRestore",
   "restore.confirmHardDelete",
-  "settings.swagger"
+  "settings.swagger",
+  "settings.emailMode",
+  "settings.emailTest",
+  "settings.verifyRequired"
 ];

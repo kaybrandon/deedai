@@ -22,7 +22,7 @@
 ## Key Vault secret names (values never in docs/chat)
 `SqlConnection` · `StorageConnection` · `BISDocumentIntelligenceEndpoint` · `DocumentIntelligenceKey` · `JwtSigningKey` · `AdminSeedPassword`
 
-Ignore leftover `DocumentIntelligenceEndpoint` if present. Phase 2+ also uses `SendGridApiKey` / `SoftwareApiKey` when those features are on.
+Ignore leftover `DocumentIntelligenceEndpoint` if present. Phase 2+ also uses `SendGridApiKey` / `SoftwareApiKey` when those features are on. Phase 4.8 SMTP uses `SmtpHost` / `SmtpPort` / `SmtpTls` / `SmtpUsername` / `SmtpPassword` (KV names only).
 
 ## Naming & roles
 - **Client** (not County) · **Software** (not CAMA)
