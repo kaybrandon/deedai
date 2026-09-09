@@ -157,10 +157,12 @@ public sealed class UsersAuthZTests : IClassFixture<TestAppFactory>
     {
         var client = await Authed("admin@bisconsultants.com");
         var response = await client.PostAsync("/api/admin/users", TestAppFactory.Json(
-            "{\"email\":\"pat@bisconsultants.com\",\"displayName\":\"Pat\",\"role\":\"Editor\",\"password\":\"ChangeMe!2\",\"isActive\":true,\"clientIds\":[\"" + DatabaseSeeder.NorthsideId + "\"]}"));
+            "{\"email\":\"pat@bisconsultants.com\",\"displayName\":\"Pat\",\"fullName\":\"Pat Editor\",\"role\":\"Editor\",\"password\":\"ChangeMe!2\",\"isActive\":true,\"clientIds\":[\"" + DatabaseSeeder.NorthsideId + "\"]}"));
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Editor", json.RootElement.GetProperty("role").GetString());
+        Assert.Equal("Pat Editor", json.RootElement.GetProperty("fullName").GetString());
+        Assert.False(json.RootElement.GetProperty("hasPhoto").GetBoolean());
         Assert.Equal(1, json.RootElement.GetProperty("clientIds").GetArrayLength());
         Assert.Equal(DatabaseSeeder.NorthsideId, json.RootElement.GetProperty("clientIds")[0].GetGuid());
     }

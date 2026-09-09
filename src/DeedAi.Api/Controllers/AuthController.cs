@@ -17,7 +17,8 @@ public sealed class AuthController(
     DeedAiDbContext db,
     JwtTokenService tokens,
     IEmailSender email,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    IBlobStorage blobs) : ControllerBase
 {
     public const int ResetHours = 1;
 
@@ -66,12 +67,118 @@ public sealed class AuthController(
             return Unauthorized();
         }
 
+        return await ToMe(user, cancellationToken);
+    }
+
+    [HttpPut("me")]
+    [Authorize]
+    public async Task<ActionResult<MeResponse>> UpdateMe(
+        [FromBody] UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = ClientAccess.UserId(User);
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var user = await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            return BadRequest(new { message = "Display name is required.", field = "displayName" });
+        }
+
+        if (PasswordRules.Validate(request.Password, required: false) is { } passwordError)
+        {
+            return BadRequest(new
+            {
+                message = passwordError,
+                field = "password",
+                errors = new Dictionary<string, string[]> { ["password"] = [passwordError] }
+            });
+        }
+
+        user.DisplayName = request.DisplayName.Trim();
+        user.FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            user.PasswordHash = PasswordHasher.Hash(request.Password);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return await ToMe(user, cancellationToken);
+    }
+
+    [HttpPost("me/photo")]
+    [Authorize]
+    [RequestSizeLimit(ProfilePhotos.MaxBytes + (256 * 1024))]
+    [RequestFormLimits(MultipartBodyLengthLimit = ProfilePhotos.MaxBytes + (256 * 1024))]
+    public async Task<ActionResult<MeResponse>> UploadMyPhoto(IFormFile? file, CancellationToken cancellationToken)
+    {
+        var user = await LoadSelf(cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        if (ProfilePhotos.Validate(file) is { } error)
+        {
+            return BadRequest(new { message = error, field = "photo" });
+        }
+
+        await ProfilePhotos.SaveAsync(blobs, user, file!, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return await ToMe(user, cancellationToken);
+    }
+
+    [HttpDelete("me/photo")]
+    [Authorize]
+    public async Task<ActionResult<MeResponse>> ClearMyPhoto(CancellationToken cancellationToken)
+    {
+        var user = await LoadSelf(cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        await ProfilePhotos.ClearAsync(blobs, user, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return await ToMe(user, cancellationToken);
+    }
+
+    private async Task<UserAccount?> LoadSelf(CancellationToken cancellationToken)
+    {
+        var userId = ClientAccess.UserId(User);
+        if (userId is null)
+        {
+            return null;
+        }
+
+        return await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+    }
+
+    private async Task<MeResponse> ToMe(UserAccount user, CancellationToken cancellationToken)
+    {
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        var clients = await ClientAccess.VisibleClients(db.Clients.AsNoTracking().Where(x => x.IsActive), allowed)
+            .OrderBy(x => x.Name)
+            .Select(x => new ClientScopeItem(x.Id, x.Name))
+            .ToListAsync(cancellationToken);
+
         return new MeResponse(
             user.Id,
             user.Email,
             user.DisplayName,
+            user.FullName,
             user.Role,
-            user.ClientAccess.Select(x => x.ClientId).ToList());
+            user.ClientAccess.Select(x => x.ClientId).ToList(),
+            clients,
+            !string.IsNullOrWhiteSpace(user.PhotoBlobPath));
     }
 
     [HttpPost("forgot-password")]

@@ -8,6 +8,7 @@ interface AuthState {
   ready: boolean;
   login: (token: string, me: Me) => void;
   logout: () => void;
+  refreshMe: () => Promise<void>;
   canUpload: boolean;
   canEdit: boolean;
   canAdmin: boolean;
@@ -106,6 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem(IDLE_HAD_DRAFT_KEY);
         setToken(nextToken);
         setMe(nextMe);
+      },
+      refreshMe: async () => {
+        setMe(await endpoints.me());
       },
       logout: () => {
         sessionStorage.removeItem("deedai.token");

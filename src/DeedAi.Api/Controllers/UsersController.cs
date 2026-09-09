@@ -1,5 +1,7 @@
+using DeedAi.Api.Auth;
 using DeedAi.Api.Contracts;
 using DeedAi.Domain;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Infrastructure.Data;
 using DeedAi.Infrastructure.Security;
@@ -12,7 +14,7 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize(Policy = RolePolicies.CanAdmin)]
 [Route("api/admin/users")]
-public sealed class UsersController(DeedAiDbContext db) : ControllerBase
+public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UserDetail>>> List(CancellationToken cancellationToken)
@@ -52,6 +54,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
             Id = Guid.NewGuid(),
             Email = email,
             DisplayName = request.DisplayName.Trim(),
+            FullName = request.FullName!.Trim(),
             Role = request.Role,
             PasswordHash = PasswordHasher.Hash(request.Password!),
             IsActive = request.IsActive,
@@ -97,6 +100,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
 
         user.Email = email;
         user.DisplayName = request.DisplayName.Trim();
+        user.FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
         user.Role = request.Role;
         user.IsActive = request.IsActive;
         if (!string.IsNullOrWhiteSpace(request.Password))
@@ -133,6 +137,41 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         return Ok(new { message = "User disabled." });
     }
 
+    [HttpPost("{id:guid}/photo")]
+    [RequestSizeLimit(ProfilePhotos.MaxBytes + (256 * 1024))]
+    [RequestFormLimits(MultipartBodyLengthLimit = ProfilePhotos.MaxBytes + (256 * 1024))]
+    public async Task<ActionResult<UserDetail>> UploadPhoto(Guid id, IFormFile? file, CancellationToken cancellationToken)
+    {
+        var user = await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (ProfilePhotos.Validate(file) is { } error)
+        {
+            return BadRequest(new { message = error, field = "photo" });
+        }
+
+        await ProfilePhotos.SaveAsync(blobs, user, file!, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return ToDetail(await Reload(user.Id, cancellationToken));
+    }
+
+    [HttpDelete("{id:guid}/photo")]
+    public async Task<ActionResult<UserDetail>> ClearPhoto(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        await ProfilePhotos.ClearAsync(blobs, user, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return ToDetail(await Reload(user.Id, cancellationToken));
+    }
+
     private async Task ReplaceAccessAsync(Guid userId, IReadOnlyList<Guid> clientIds, CancellationToken cancellationToken)
     {
         var existing = await db.UserClientAccess.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
@@ -152,8 +191,9 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         await db.Users.AsNoTracking().Include(x => x.ClientAccess).FirstAsync(x => x.Id == id, cancellationToken);
 
     private static UserDetail ToDetail(UserAccount user) =>
-        new(user.Id, user.Email, user.DisplayName, user.Role, user.IsActive, user.CreatedAt,
-            user.ClientAccess.Select(x => x.ClientId).ToList());
+        new(user.Id, user.Email, user.DisplayName, user.FullName, user.Role, user.IsActive, user.CreatedAt,
+            user.ClientAccess.Select(x => x.ClientId).ToList(),
+            !string.IsNullOrWhiteSpace(user.PhotoBlobPath));
 
     private static ValidationIssue? Validate(UpsertUserRequest request, bool requirePassword)
     {
@@ -165,6 +205,11 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         if (string.IsNullOrWhiteSpace(request.DisplayName))
         {
             return new("Display name is required.", "displayName");
+        }
+
+        if (requirePassword && string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return new("Full name is required.", "fullName");
         }
 
         if (!AppRoles.All.Contains(request.Role))

@@ -7,6 +7,14 @@
 - Live Azure after `#18` still measured ~34px (top bar) / ~30px (modal). Root cause: Swashbuckle 9 puts `HeadContent` / `InjectJavascript` in `<head>` before `swagger-ui-bundle.js`, and Swagger React re-applies `display:inline` after the 4s pin (height is ignored on inline). Custom `index.html` now loads `/swagger/deedai-swagger-authorize.js` **last**; a 250ms poll + attribute observer re-pins `height/min-height:44px; max-height:none; display:inline-flex !important`.
 - Dev must self-verify after zipdeploy before pinging QA2: on `/swagger`, `window.__deedAiMeasureAuthorize()` — every `getBoundingClientRect()` width/height ≥ 44; `html[data-deedai-authorize-hit=pass]`; `window.__deedAiAuthorizeRuntimeVersion === "4.2.2"`.
 
+## 2026-09-09 — Phase 4.5 Users / shell identity
+- Users list groups by Client (multi-Client users appear in each assigned group; groups collapse/expand).
+- Profile photo in blob storage (upload / replace / clear with ConfirmSheet). Shown in the header and Users. Initials fallback. JPEG/PNG/WebP/GIF, 2 MB.
+- Header title is `{Client} Deed AI` only for a single-Client effective scope; otherwise **Deed AI**.
+- Left shell: Logged in as {name/email} + My profile (≥44px) for name, full name, photo, and password change.
+- Full name under Display name (required on create). Confirm new password with Identity rules and inline mismatch.
+- EF migration `20260909160000_Phase45UsersIdentity` (Designer-first). Client / Software naming only.
+
 ## 2026-09-09 — Phase 5.0 Mask A theme
 - Mist Slate + Teal tokens on the soft-dense shell (Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software).
 - Sticky OCR ribbon on Documents / Upload / Review. Failed review shows incomplete fields + Retry extract. Soft Failed/Queued chips. No new EF migration.

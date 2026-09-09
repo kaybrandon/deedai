@@ -32,8 +32,11 @@ export default function LoginPage() {
         id: "",
         email: result.email,
         displayName: result.displayName,
+        fullName: null,
         role: result.role,
-        clientIds: []
+        clientIds: [],
+        clients: [],
+        hasPhoto: false
       });
       navigate("/dashboard");
     } catch (err) {
