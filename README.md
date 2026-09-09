@@ -49,6 +49,13 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
   - **OCR queue visibility** (Azure queue is the bulk buffer — peek only, not a second buffer): depth, oldest waiting age, poison / Failed count, last DI success/fail timestamps.
 - Refresh control is ≥44px. Client / Software wording only. Payloads and UI never include secrets.
 
+## Phase 4.7 acceptance
+
+- **Print:** Dashboard **Print** (≥44px) prints the current **filtered** count cards plus visible charts (status mix, by-user, volume). Print CSS hides shell clutter (sidebar, top bar, footer, filters, export actions).
+- **Export PDF:** **Export PDF** (≥44px) downloads the same filtered counts and chart series from existing `GET /api/dashboard/counts` and `GET /api/dashboard/charts/*` data. Honors the applied date range and Client filter — never a silent unfiltered dump. Filename includes the date range (`deedai-dashboard-{from}-to-{to}.pdf`). Same role / ClientAccess as the dashboard APIs. Empty or failed export returns a clear message — never a blank PDF. No secrets; Client / Software wording only (no County / CAMA).
+- **Should:** `{Client} Deed AI` title when a single Client is in scope; page numbers; generated timestamp.
+- **Won’t:** Full BI pack or scheduled email PDFs.
+
 ## Phase 4.5 acceptance
 
 - **Users group-by Client:** the Users list is grouped by Client. A user assigned to more than one Client appears under each of those groups. Groups collapse/expand. Users with no Client access sit in a **No Client access** group.
@@ -165,7 +172,7 @@ With `Queue__Mode=InMemory` and `Ocr__RunInProcess=true` the API hosts the worke
 dotnet test DeedAi.sln
 ```
 
-Covers role denial, user CRUD / Client access, password reset happy/fail, upload/edit/delete/restore, CORS policy, OCR happy/fail, poison → Failed+Retry, report PDF empty/error states, notify emails, Software retry / last-sync, and Settings teams / Clients.
+Covers role denial, user CRUD / Client access, password reset happy/fail, upload/edit/delete/restore, CORS policy, OCR happy/fail, poison → Failed+Retry, report PDF empty/error states, dashboard print/export PDF filters, notify emails, Software retry / last-sync, and Settings teams / Clients.
 
 ## Publish (Layout A, Windows win-x64 zip)
 
