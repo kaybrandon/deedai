@@ -48,7 +48,20 @@ export const HELP = {
   "settings.verifyRequired":
     "When on, unverified users cannot sign in. Disabled accounts stay blocked even after they verify.",
   "users.resendVerification":
-    "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in."
+    "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in.",
+  "review.grantors":
+    "Add each grantor on its own row. Empty rows cannot be saved. Order is kept when you save the deed.",
+  "review.grantees":
+    "Add each grantee on its own row. Empty rows cannot be saved. Order is kept when you save the deed.",
+  "review.documentNumber": "Recorder document number saved with this deed and shown on Documents.",
+  "review.volume": "Book or volume reference from the instrument, saved with this deed.",
+  "review.page": "Page reference from the instrument, saved with this deed.",
+  "review.deedType": "Deed type used on review and Software push for this Client.",
+  "review.pid": "Property identifier used for Software lookup and push. Reused as the Documents PID column.",
+  "review.mailing":
+    "Mailing street, city, state, and ZIP saved with this deed for Software and Documents search.",
+  "review.softwareSearch":
+    "Search Software for this Client by parcel ID or owner, then apply a result to fill PID, owner, and mailing."
 } as const;
 
 export type HelpKey = keyof typeof HELP;
@@ -77,5 +90,8 @@ export const MUST_HELP_KEYS: HelpKey[] = [
   "settings.swagger",
   "settings.emailMode",
   "settings.emailTest",
-  "settings.verifyRequired"
+  "settings.verifyRequired",
+  "review.grantors",
+  "review.mailing",
+  "review.softwareSearch"
 ];

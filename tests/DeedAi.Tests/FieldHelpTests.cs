@@ -81,6 +81,7 @@ public sealed class FieldHelpTests : IClassFixture<TestAppFactory>
         AssertHelp(root, "components/SystemHealthPanel.tsx", "settings.systemHealth");
         AssertHelp(root, "components/AdminEmailPanel.tsx", "settings.emailMode", "settings.emailTest", "settings.verifyRequired");
         AssertHelp(root, "pages/UsersPage.tsx", "users.resendVerification");
+        AssertHelp(root, "pages/ReviewPage.tsx", "review.grantors", "review.mailing", "review.softwareSearch");
     }
 
     [Fact]

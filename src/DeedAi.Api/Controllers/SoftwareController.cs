@@ -469,9 +469,9 @@ public sealed class SoftwareController(
 
     private static SoftwareLookupQuery QueryFor(Document document) =>
         new(
-            document.Fields?.ParcelId,
-            document.Fields?.Grantor,
-            document.Fields?.Grantee,
+            document.EffectivePid,
+            PartyNames.Primary(document.Grantors, document.Fields?.Grantor),
+            PartyNames.Primary(document.Grantees, document.Fields?.Grantee),
             document.Fields?.Client ?? document.Client.Name,
             document.Fields?.InstrumentDate,
             document.DeedType);

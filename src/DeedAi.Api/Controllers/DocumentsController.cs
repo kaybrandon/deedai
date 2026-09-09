@@ -117,7 +117,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             document.DocumentNumber,
             document.Volume,
             document.Page,
-            document.Pid ?? fields?.ParcelId,
+            document.EffectivePid,
             document.MailingStreet,
             document.MailingCity,
             document.MailingState,
@@ -167,34 +167,101 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             DocumentId = document.Id
         };
 
-        fields.Grantor = request.Grantor;
-        fields.Grantee = request.Grantee;
+        if (PartyNames.EmptyRowsMessage(request.Grantors, "grantor") is { } grantorError)
+        {
+            return BadRequest(new { message = grantorError, field = "grantors" });
+        }
+
+        if (PartyNames.EmptyRowsMessage(request.Grantees, "grantee") is { } granteeError)
+        {
+            return BadRequest(new { message = granteeError, field = "grantees" });
+        }
+
         fields.InstrumentDate = request.InstrumentDate;
         fields.Consideration = request.Consideration;
-        fields.ParcelId = request.ParcelId;
         fields.Client = request.Client;
         fields.Notes = request.Notes;
         fields.IsDraft = request.IsDraft;
         fields.UpdatedAt = DateTimeOffset.UtcNow;
         document.UpdatedAt = DateTimeOffset.UtcNow;
-        if ((document.Grantors?.Count ?? 0) <= 1)
+
+        if (request.Grantors is not null)
         {
-            document.Grantors = PartyNames.Normalize(null, request.Grantor).ToList();
+            document.Grantors = PartyNames.Normalize(request.Grantors).ToList();
+            fields.Grantor = PartyNames.Primary(document.Grantors);
+        }
+        else
+        {
+            fields.Grantor = request.Grantor;
+            if ((document.Grantors?.Count ?? 0) <= 1)
+            {
+                document.Grantors = PartyNames.Normalize(null, request.Grantor).ToList();
+            }
         }
 
-        if ((document.Grantees?.Count ?? 0) <= 1)
+        if (request.Grantees is not null)
         {
-            document.Grantees = PartyNames.Normalize(null, request.Grantee).ToList();
+            document.Grantees = PartyNames.Normalize(request.Grantees).ToList();
+            fields.Grantee = PartyNames.Primary(document.Grantees);
+        }
+        else
+        {
+            fields.Grantee = request.Grantee;
+            if ((document.Grantees?.Count ?? 0) <= 1)
+            {
+                document.Grantees = PartyNames.Normalize(null, request.Grantee).ToList();
+            }
         }
 
-        if (string.IsNullOrWhiteSpace(document.Pid) && !string.IsNullOrWhiteSpace(request.ParcelId))
+        if (request.Pid is not null)
         {
-            document.Pid = request.ParcelId;
+            document.Pid = TrimToNull(request.Pid);
+            fields.ParcelId = document.Pid;
+        }
+        else if (request.ParcelId is not null)
+        {
+            fields.ParcelId = request.ParcelId;
+            document.Pid = TrimToNull(request.ParcelId) ?? document.Pid;
+        }
+
+        if (request.DocumentNumber is not null)
+        {
+            document.DocumentNumber = TrimToNull(request.DocumentNumber);
+        }
+
+        if (request.Volume is not null)
+        {
+            document.Volume = TrimToNull(request.Volume);
+        }
+
+        if (request.Page is not null)
+        {
+            document.Page = TrimToNull(request.Page);
+        }
+
+        if (request.MailingStreet is not null)
+        {
+            document.MailingStreet = TrimToNull(request.MailingStreet);
+        }
+
+        if (request.MailingCity is not null)
+        {
+            document.MailingCity = TrimToNull(request.MailingCity);
+        }
+
+        if (request.MailingState is not null)
+        {
+            document.MailingState = TrimToNull(request.MailingState);
+        }
+
+        if (request.MailingZip is not null)
+        {
+            document.MailingZip = TrimToNull(request.MailingZip);
         }
 
         if (request.DeedType is not null)
         {
-            document.DeedType = request.DeedType;
+            document.DeedType = TrimToNull(request.DeedType);
         }
 
         if (request.ReviewStatus is not null)
@@ -508,6 +575,9 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
     }
 
     private static DocumentListItem ToListItem(Document x) => DocumentListMapping.ToListItem(x);
+
+    private static string? TrimToNull(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private async Task<ActionResult?> ApplyReviewStatusAsync(
         Document document,

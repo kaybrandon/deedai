@@ -30,6 +30,11 @@ public sealed class MockSoftwareClient : ISoftwareClient
                 ["client"] = query.Client ?? "Acme",
                 ["grantor"] = query.Grantor ?? "Jane Example",
                 ["grantee"] = query.Grantee ?? "",
+                ["pid"] = parcel,
+                ["mailingStreet"] = "100 Main St",
+                ["mailingCity"] = "Springfield",
+                ["mailingState"] = "IL",
+                ["mailingZip"] = "62701",
                 ["source"] = "mock"
             }));
     }

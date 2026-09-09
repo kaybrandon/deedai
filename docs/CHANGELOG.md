@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 5.2.1 Review field depth
+- Review is Mask F 3-col queue | PDF | extracted fields. Multi grantor/grantee rows add/remove, persist order, reject empty rows, ≥44px, ConfirmSheet when a named row is removed.
+- Document Number, Volume, Page, Deed Type, PID, and Mailing street/city/state/ZIP save on the document using locked 5.2.2 names. No `docNo` / `vol` / County / CAMA.
+- Client-scoped Software search reuses `/api/software/lookup` and applies PID, owner, and mailing. Push is role-gated with ConfirmSheet; success/fail inline; no secrets.
+- Carry Failed + Incomplete (never Ready + OCR-failed), Retry Extract, Title Case labels, sentence-case helpers, PDF preview or clear empty. Reuses `20260909220000_DocumentListFields` plus the #36 NULL default hotfix. No new EF migration.
+
 ## 2026-09-09 — Hotfix: Document list NULL materialization (HTTP 500.30)
 - After PR #35, Azure SQL existing `Documents` rows had NULL in columns added by `20260909220000_DocumentListFields`. Seed `EnsureReviewConsistencyAsync` loaded full rows and SQL Server `GetString` threw `SqlNullValueException` (ANCM 500.30).
 - Follow-up Designer-first migration `20260909230000_DocumentListFieldNullDefaults` UPDATEs NULLs to empty string and adds SQL defaults for locked fields: DocumentNumber, Volume, Page, DeedType, Pid, MailingStreet/City/State/Zip, Grantors, Grantees.

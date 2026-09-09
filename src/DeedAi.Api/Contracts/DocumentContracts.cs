@@ -93,7 +93,17 @@ public sealed record FieldUpdateRequest(
     string? Notes,
     bool IsDraft,
     string? DeedType,
-    string? ReviewStatus);
+    string? ReviewStatus,
+    string? DocumentNumber = null,
+    string? Volume = null,
+    string? Page = null,
+    string? Pid = null,
+    string? MailingStreet = null,
+    string? MailingCity = null,
+    string? MailingState = null,
+    string? MailingZip = null,
+    IReadOnlyList<string>? Grantors = null,
+    IReadOnlyList<string>? Grantees = null);
 
 public sealed record DashboardCounts(
     int Uploaded,

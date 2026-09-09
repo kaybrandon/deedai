@@ -34,6 +34,15 @@ public static class FieldHelpCatalog
     public const string SettingsEmailTest = "settings.emailTest";
     public const string SettingsVerifyRequired = "settings.verifyRequired";
     public const string UsersResendVerification = "users.resendVerification";
+    public const string ReviewGrantors = "review.grantors";
+    public const string ReviewGrantees = "review.grantees";
+    public const string ReviewDocumentNumber = "review.documentNumber";
+    public const string ReviewVolume = "review.volume";
+    public const string ReviewPage = "review.page";
+    public const string ReviewDeedType = "review.deedType";
+    public const string ReviewPid = "review.pid";
+    public const string ReviewMailing = "review.mailing";
+    public const string ReviewSoftwareSearch = "review.softwareSearch";
 
     public static readonly IReadOnlyList<string> MustKeys =
     [
@@ -60,7 +69,10 @@ public static class FieldHelpCatalog
         SettingsSwagger,
         SettingsEmailMode,
         SettingsEmailTest,
-        SettingsVerifyRequired
+        SettingsVerifyRequired,
+        ReviewGrantors,
+        ReviewMailing,
+        ReviewSoftwareSearch
     ];
 
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -93,6 +105,15 @@ public static class FieldHelpCatalog
         [SettingsEmailMode] = "Active mail mode is SendGrid or SMTP — only one sends. API keys, SMTP username, and SMTP password stay in Key Vault.",
         [SettingsEmailTest] = "Sends one test message to the address you type using the active mode. Result is Pass or Fail. Secrets are never shown.",
         [SettingsVerifyRequired] = "When on, unverified users cannot sign in. Disabled accounts stay blocked even after they verify.",
-        [UsersResendVerification] = "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in."
+        [UsersResendVerification] = "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in.",
+        [ReviewGrantors] = "Add each grantor on its own row. Empty rows cannot be saved. Order is kept when you save the deed.",
+        [ReviewGrantees] = "Add each grantee on its own row. Empty rows cannot be saved. Order is kept when you save the deed.",
+        [ReviewDocumentNumber] = "Recorder document number saved with this deed and shown on Documents.",
+        [ReviewVolume] = "Book or volume reference from the instrument, saved with this deed.",
+        [ReviewPage] = "Page reference from the instrument, saved with this deed.",
+        [ReviewDeedType] = "Deed type used on review and Software push for this Client.",
+        [ReviewPid] = "Property identifier used for Software lookup and push. Reused as the Documents PID column.",
+        [ReviewMailing] = "Mailing street, city, state, and ZIP saved with this deed for Software and Documents search.",
+        [ReviewSoftwareSearch] = "Search Software for this Client by parcel ID or owner, then apply a result to fill PID, owner, and mailing."
     };
 }

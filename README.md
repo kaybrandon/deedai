@@ -31,6 +31,16 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.2.1 acceptance
+
+- **Review field depth:** Mask F 3-col queue | PDF | fields. Multi grantor/grantee rows (add/remove, persist order, empty-row validation, ≥44px, ConfirmSheet when the row has data).
+- **Instrument block:** Document Number, Volume, Page, and Deed Type live in the fields pane and save on the document.
+- **Mailing:** street, city, state, ZIP. Label **Mailing** — never CAMA.
+- **Software:** Client-scoped search reuses existing lookup and fills PID / owner / mailing. Role-gated Push (same gates as Software) with ConfirmSheet; success/fail inline; no secrets.
+- **Locked fields (shared with 5.2.2):** `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. Never `docNo` / `vol` / County / CAMA.
+- **Carry:** Failed + Incomplete never Ready + OCR-failed. Retry Extract. Title Case labels, sentence-case helpers. PDF preview or clear empty. Reuse `20260909220000_DocumentListFields` and the #36 NULL-default hotfix — no new EF migration.
+- **Won’t:** AI extract, County/CAMA, Statuses/Documents/Software-settings slices, Super Admin, Property defaults, Azure deploy.
+
 ## Phase 5.2.2 acceptance
 
 - **Documents table:** Mask F SoT density — hug rows, sticky header, zebra stripes, min 44px. One filter-row search ≤360px (no top-bar duplicate) across geo/legal (mailing + legal description), grantors/grantees, Volume, Page, Document Number, PID, name, status, and assignee.

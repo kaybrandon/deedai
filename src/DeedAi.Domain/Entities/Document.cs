@@ -43,6 +43,8 @@ public sealed class Document
         Grantors ??= [];
         Grantees ??= [];
     }
+
+    public string? EffectivePid => string.IsNullOrWhiteSpace(Pid) ? Fields?.ParcelId : Pid;
     public string? ReviewStatus { get; set; }
     public DateTimeOffset? LastSoftwareSyncAt { get; set; }
     public string? LastSoftwareSyncStatus { get; set; }
