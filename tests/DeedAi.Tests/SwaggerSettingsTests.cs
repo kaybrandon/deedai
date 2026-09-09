@@ -10,7 +10,7 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public async Task Swagger_is_off_by_default_and_returns_404()
     {
-        await using var factory = new TestAppFactory();
+        await using var factory = TestAppFactory.Create();
         var client = factory.CreateJsonClient();
 
         foreach (var path in new[] { "/swagger", "/swagger/", "/swagger/index.html", "/swagger/v1/swagger.json" })
@@ -26,7 +26,7 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public async Task Admin_toggle_on_serves_swagger_off_is_404()
     {
-        await using var factory = new TestAppFactory();
+        await using var factory = TestAppFactory.Create();
         var client = factory.CreateJsonClient();
         await Authed(factory, client, DatabaseSeeder.AdminEmail);
 
@@ -53,7 +53,7 @@ public sealed class SwaggerSettingsTests
         Assert.True(ReadEnabled(await stored.Content.ReadAsStringAsync()));
 
         client.DefaultRequestHeaders.Authorization = null;
-        var ui = await client.GetAsync("/swagger");
+        var ui = await client.GetAsync("/swagger/index.html");
         Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
         Assert.Contains("swagger", await ui.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
 
@@ -66,7 +66,7 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public async Task Non_admin_cannot_read_or_toggle_swagger()
     {
-        await using var factory = new TestAppFactory();
+        await using var factory = TestAppFactory.Create();
         var client = factory.CreateJsonClient();
 
         var anonGet = await client.GetAsync("/api/settings/swagger");
@@ -87,14 +87,14 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public async Task Enabling_swagger_does_not_open_anonymous_api()
     {
-        await using var factory = new TestAppFactory();
+        await using var factory = TestAppFactory.Create();
         var client = factory.CreateJsonClient();
         await Authed(factory, client, DatabaseSeeder.AdminEmail);
         var enable = await client.PutAsync("/api/settings/swagger", TestAppFactory.Json("""{"enabled":true}"""));
         Assert.Equal(HttpStatusCode.OK, enable.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = null;
-        var swagger = await client.GetAsync("/swagger");
+        var swagger = await client.GetAsync("/swagger/index.html");
         Assert.Equal(HttpStatusCode.OK, swagger.StatusCode);
 
         var unauth = await client.GetAsync("/api/documents");
@@ -112,7 +112,7 @@ public sealed class SwaggerSettingsTests
         var dbPath = Path.Combine(Path.GetTempPath(), $"deedai-swagger-{Guid.NewGuid():N}.db");
         try
         {
-            await using (var factory = new TestAppFactory(dbPath))
+            await using (var factory = TestAppFactory.Create(dbPath))
             {
                 var client = factory.CreateJsonClient();
                 await Authed(factory, client, DatabaseSeeder.AdminEmail);
@@ -120,10 +120,10 @@ public sealed class SwaggerSettingsTests
                 Assert.Equal(HttpStatusCode.OK, put.StatusCode);
             }
 
-            await using (var restarted = new TestAppFactory(dbPath))
+            await using (var restarted = TestAppFactory.Create(dbPath))
             {
                 var client = restarted.CreateJsonClient();
-                var ui = await client.GetAsync("/swagger");
+                var ui = await client.GetAsync("/swagger/index.html");
                 Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
 
                 await Authed(restarted, client, DatabaseSeeder.AdminEmail);
@@ -134,7 +134,7 @@ public sealed class SwaggerSettingsTests
                 Assert.Equal(HttpStatusCode.OK, off.StatusCode);
             }
 
-            await using var third = new TestAppFactory(dbPath);
+            await using var third = TestAppFactory.Create(dbPath);
             var missing = await third.CreateJsonClient().GetAsync("/swagger");
             Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         }
@@ -147,15 +147,15 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public async Task App_setting_can_seed_swagger_on_in_non_prod_only()
     {
-        await using var seeded = new TestAppFactory(null, new Dictionary<string, string?>
+        await using var seeded = TestAppFactory.Create(null, new Dictionary<string, string?>
         {
             ["Swagger:Enabled"] = "true"
         });
         var onClient = seeded.CreateJsonClient();
-        var seededUi = await onClient.GetAsync("/swagger");
+        var seededUi = await onClient.GetAsync("/swagger/index.html");
         Assert.Equal(HttpStatusCode.OK, seededUi.StatusCode);
 
-        await using var prod = new TestAppFactory(null, new Dictionary<string, string?>
+        await using var prod = TestAppFactory.Create(null, new Dictionary<string, string?>
         {
             ["Swagger:Enabled"] = "true",
             ["ASPNETCORE_ENVIRONMENT"] = "Production"

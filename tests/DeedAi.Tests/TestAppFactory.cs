@@ -18,21 +18,29 @@ namespace DeedAi.Tests;
 
 public sealed class TestAppFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbPath;
-    private readonly bool _ownsDb;
-    private readonly Dictionary<string, string?> _extra;
+    private string _dbPath = Path.Combine(Path.GetTempPath(), $"deedai-tests-{Guid.NewGuid():N}.db");
+    private bool _ownsDb = true;
+    private Dictionary<string, string?> _extra = new();
 
-    public TestAppFactory() : this(null, null)
+    public TestAppFactory()
     {
     }
 
-    public TestAppFactory(string? dbPath, IReadOnlyDictionary<string, string?>? extraSettings = null)
+    public static TestAppFactory Create(string? dbPath = null, IReadOnlyDictionary<string, string?>? extraSettings = null)
     {
-        _ownsDb = dbPath is null;
-        _dbPath = dbPath ?? Path.Combine(Path.GetTempPath(), $"deedai-tests-{Guid.NewGuid():N}.db");
-        _extra = extraSettings is null
-            ? new Dictionary<string, string?>()
-            : new Dictionary<string, string?>(extraSettings);
+        var factory = new TestAppFactory();
+        if (dbPath is not null)
+        {
+            factory._ownsDb = false;
+            factory._dbPath = dbPath;
+        }
+
+        if (extraSettings is not null)
+        {
+            factory._extra = new Dictionary<string, string?>(extraSettings);
+        }
+
+        return factory;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
