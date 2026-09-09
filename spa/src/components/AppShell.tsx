@@ -109,16 +109,6 @@ export default function AppShell() {
               <div className="nav-sub" id="settings-nav">
                 <div className="nav-group" data-nav="system-mid">
                   <div className="nav-mid-row">
-                    <button
-                      className="nav-group-caret-only"
-                      type="button"
-                      aria-expanded={systemOpen}
-                      aria-controls="system-nav"
-                      aria-label={systemOpen ? "Collapse System" : "Expand System"}
-                      onClick={() => setSystemOpen((open) => !open)}
-                    >
-                      <span className="nav-group-caret" aria-hidden="true">{systemOpen ? "▾" : "▸"}</span>
-                    </button>
                     {canAdmin ? (
                       <NavLink to="/settings" end className={() => childClass(onSystem)} onClick={closeNav}>
                         System
@@ -132,6 +122,16 @@ export default function AppShell() {
                         System
                       </button>
                     )}
+                    <button
+                      className="nav-group-caret-only"
+                      type="button"
+                      aria-expanded={systemOpen}
+                      aria-controls="system-nav"
+                      aria-label={systemOpen ? "Collapse System" : "Expand System"}
+                      onClick={() => setSystemOpen((open) => !open)}
+                    >
+                      <span className="nav-group-caret" aria-hidden="true">{systemOpen ? "▾" : "▸"}</span>
+                    </button>
                   </div>
                   {systemOpen && (
                     <div className="nav-sub" id="system-nav">

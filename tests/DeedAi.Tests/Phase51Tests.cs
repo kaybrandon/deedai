@@ -82,7 +82,7 @@ public sealed class Phase51Tests
         Assert.Contains("childClass(onApiDocs)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onSystem)", shell, StringComparison.Ordinal);
         Assert.Contains(".nav-sub .nav-sub", Read("spa/src/styles.css"), StringComparison.Ordinal);
-        Assert.Contains("margin-left: 44px", Read("spa/src/styles.css"), StringComparison.Ordinal);
+        Assert.Contains("margin-left: 16px", Read("spa/src/styles.css"), StringComparison.Ordinal);
         var settings = Read("spa/src/pages/SettingsPage.tsx");
         Assert.Contains("<h1>System</h1>", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("Systems", settings, StringComparison.Ordinal);
