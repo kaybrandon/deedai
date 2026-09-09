@@ -6,8 +6,9 @@ This repository replaces the README-only GitHub seed with a working Layout A app
 
 ## Docs
 
-Phase 1 operator and staff docs (no secrets):
+Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root index).
 
+- [SOP.md](SOP.md) — SOP index
 - [AZURE-PROD-NOTE.md](docs/AZURE-PROD-NOTE.md) — live Azure ops note
 - [AZURE-PREP.md](docs/AZURE-PREP.md) — historical Azure prep note
 - [SOP-01-overview.md](docs/SOP-01-overview.md) — local / ops overview
