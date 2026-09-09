@@ -7,11 +7,13 @@ import {
   type DeedTypeItem,
   type FieldDraft,
   type FlagItem,
+  type NotifyPreview,
   type SoftwareLookup,
   type StatusItem,
   type UserSummary
 } from "../api";
 import { useAuth } from "../auth";
+import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
 
 const emptyFields: FieldDraft = {
@@ -45,6 +47,7 @@ export default function ReviewPage() {
   const [linkTarget, setLinkTarget] = useState("");
   const [teamUser, setTeamUser] = useState("");
   const [lookup, setLookup] = useState<SoftwareLookup | null>(null);
+  const [notify, setNotify] = useState<NotifyPreview | null>(null);
 
   async function load(documentId: string) {
     const detail = await endpoints.document(documentId);
@@ -53,6 +56,7 @@ export default function ReviewPage() {
     setDeedType(detail.deedType ?? "");
     setReviewStatus(detail.reviewStatus ?? "");
     setSaved(!detail.fields.isDraft && Boolean(detail.fields.grantor));
+    endpoints.notifyPreview(documentId).then(setNotify).catch(() => setNotify(null));
   }
 
   useEffect(() => {
@@ -146,6 +150,17 @@ export default function ReviewPage() {
             }}
           >
             Retry
+          </button>
+          <button
+            className="ghost"
+            type="button"
+            onClick={() =>
+              endpoints.exportReviewedPdf(doc.id, `${doc.name}-reviewed.pdf`).catch((err) =>
+                setError(err instanceof Error ? err.message : "PDF export failed.")
+              )
+            }
+          >
+            Export PDF
           </button>
           <button className="primary" type="submit" form="field-form" disabled={!canEdit}>
             Save
@@ -353,7 +368,17 @@ export default function ReviewPage() {
 
         <section className="panel">
           <h2>Software</h2>
-          <p className="muted">Lookup or push this deed to the external Software system. Never called CAMA.</p>
+          <p className="muted">Lookup by key fields (parcel, grantor, grantee, Client) or push this deed to Software. Never called CAMA.</p>
+          {doc.lastSoftwareSyncAt ? (
+            <p>
+              Last {doc.lastSoftwareSyncDirection ?? "sync"}: <strong>{doc.lastSoftwareSyncStatus ?? "—"}</strong>
+              {doc.lastSoftwareSyncFailReason ? ` — ${doc.lastSoftwareSyncFailReason}` : ""}{" "}
+              <span className="muted">{new Date(doc.lastSoftwareSyncAt).toLocaleString()}</span>
+              {doc.softwareRecordId ? ` · ${doc.softwareRecordId}` : ""}
+            </p>
+          ) : (
+            <EmptyState title="No Software sync yet" body="Lookup or push to record last-sync status and fail reason on this deed." />
+          )}
           <div className="row-actions">
             <button
               className="ghost"
@@ -362,9 +387,11 @@ export default function ReviewPage() {
                 try {
                   setLookup(await endpoints.softwareLookup(doc.id));
                   setError(null);
+                  await load(doc.id);
                 } catch (err) {
                   setLookup(null);
                   setError(err instanceof Error ? err.message : "Software lookup failed.");
+                  await load(doc.id);
                 }
               }}
             >
@@ -380,13 +407,34 @@ export default function ReviewPage() {
                   return;
                 }
                 const result = await endpoints.softwarePush(doc.id);
-                setNotice(result.message);
+                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
+                if (!result.succeeded) setError(result.failReason ?? result.message);
+                else setError(null);
+                await load(doc.id);
               }}
             >
               Push
             </button>
+            <button
+              className="ghost"
+              type="button"
+              disabled={!canEdit}
+              onClick={async () => {
+                if (!canEdit) {
+                  navigate("/denied", { state: { action: "retry Software push" } });
+                  return;
+                }
+                const result = await endpoints.softwareRetry(doc.id);
+                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
+                if (!result.succeeded) setError(result.failReason ?? result.message);
+                else setError(null);
+                await load(doc.id);
+              }}
+            >
+              Retry push
+            </button>
           </div>
-          {lookup && (
+          {lookup ? (
             <dl className="lookup-dl">
               <dt>Parcel</dt>
               <dd>{lookup.parcelId}</dd>
@@ -397,9 +445,24 @@ export default function ReviewPage() {
               <dt>Record</dt>
               <dd>{lookup.softwareRecordId ?? "—"}</dd>
             </dl>
-          )}
+          ) : null}
         </section>
       </div>
+      {notify && (
+        <section className="panel">
+          <h2>Notify emails</h2>
+          {!notify.enabled ? (
+            <p className="muted">Admin turned notify emails off. OCR Failed and Ready mail will not send.</p>
+          ) : notify.recipients.length === 0 ? (
+            <EmptyState title="No recipients yet" body="Assign this deed (and optionally turn on uploader notify) so Ready / OCR Failed mail has someone to send to." />
+          ) : (
+            <p>
+              {notify.events.join(" and ")} mail goes to{" "}
+              {notify.recipients.map((r) => `${r.displayName} (${r.reason})`).join(", ")}.
+            </p>
+          )}
+        </section>
+      )}
       {saved && <span className="chip chip-ready saved-pill">Saved</span>}
     </section>
   );

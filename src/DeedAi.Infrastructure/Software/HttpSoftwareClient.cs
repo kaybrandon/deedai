@@ -18,14 +18,11 @@ public sealed class HttpSoftwareClient(
     IOptions<SoftwareOptions> options,
     ILogger<HttpSoftwareClient> logger) : ISoftwareClient
 {
-    public async Task<SoftwareLookupResult?> LookupAsync(string parcelId, string? clientName, CancellationToken cancellationToken)
+    public async Task<SoftwareLookupResult?> LookupAsync(SoftwareLookupQuery query, CancellationToken cancellationToken)
     {
         var client = CreateClient();
-        var url = $"lookup?parcelId={Uri.EscapeDataString(parcelId)}";
-        if (!string.IsNullOrWhiteSpace(clientName))
-        {
-            url += $"&client={Uri.EscapeDataString(clientName)}";
-        }
+        var url = "lookup?" + string.Join("&", KeyValues(query)
+            .Select(pair => $"{pair.Key}={Uri.EscapeDataString(pair.Value)}"));
 
         var response = await client.GetAsync(url, cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -46,7 +43,7 @@ public sealed class HttpSoftwareClient(
         }
 
         return new SoftwareLookupResult(
-            Read(root, "parcelId") ?? parcelId,
+            Read(root, "parcelId") ?? query.ParcelId ?? "",
             Read(root, "owner"),
             Read(root, "legalDescription"),
             Read(root, "address"),
@@ -89,6 +86,16 @@ public sealed class HttpSoftwareClient(
         }
 
         return client;
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> KeyValues(SoftwareLookupQuery query)
+    {
+        if (!string.IsNullOrWhiteSpace(query.ParcelId)) yield return new("parcelId", query.ParcelId.Trim());
+        if (!string.IsNullOrWhiteSpace(query.Grantor)) yield return new("grantor", query.Grantor.Trim());
+        if (!string.IsNullOrWhiteSpace(query.Grantee)) yield return new("grantee", query.Grantee.Trim());
+        if (!string.IsNullOrWhiteSpace(query.Client)) yield return new("client", query.Client.Trim());
+        if (!string.IsNullOrWhiteSpace(query.InstrumentDate)) yield return new("instrumentDate", query.InstrumentDate.Trim());
+        if (!string.IsNullOrWhiteSpace(query.DeedType)) yield return new("deedType", query.DeedType.Trim());
     }
 
     private static string? Read(JsonElement root, string name) =>

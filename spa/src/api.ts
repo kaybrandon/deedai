@@ -18,6 +18,7 @@ export interface LoginResponse {
 export interface ClientItem {
   id: string;
   name: string;
+  isActive?: boolean;
 }
 
 export interface UserSummary {
@@ -123,6 +124,39 @@ export interface DocumentDetail {
   flags: FlagSummary[];
   team: TeamMember[];
   linkedDocuments: LinkedDocument[];
+  lastSoftwareSyncAt: string | null;
+  lastSoftwareSyncStatus: string | null;
+  lastSoftwareSyncDirection: string | null;
+  lastSoftwareSyncFailReason: string | null;
+  softwareRecordId: string | null;
+}
+
+export interface TeamMemberItem {
+  id: string;
+  displayName: string;
+  role: Role;
+  email: string;
+}
+
+export interface TeamItem {
+  id: string;
+  name: string;
+  isActive: boolean;
+  members: TeamMemberItem[];
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  notifyUploader: boolean;
+  events: string[];
+  recipientsSummary: string;
+}
+
+export interface NotifyPreview {
+  enabled: boolean;
+  notifyUploader: boolean;
+  recipients: { email: string; displayName: string; reason: string }[];
+  events: string[];
 }
 
 export interface DashboardCounts {
@@ -342,15 +376,43 @@ export const endpoints = {
   updateDeedType: (id: string, body: object) =>
     api<DeedTypeItem>(`/api/settings/deed-types/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteDeedType: (id: string) => api<{ message: string }>(`/api/settings/deed-types/${id}`, { method: "DELETE" }),
+  settingsClients: () => api<ClientItem[]>("/api/settings/clients"),
+  createClient: (body: object) => api<ClientItem>("/api/settings/clients", { method: "POST", body: JSON.stringify(body) }),
+  updateClient: (id: string, body: object) =>
+    api<ClientItem>(`/api/settings/clients/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteClient: (id: string) => api<{ message: string }>(`/api/settings/clients/${id}`, { method: "DELETE" }),
+  teams: () => api<TeamItem[]>("/api/settings/teams"),
+  createTeam: (body: object) => api<TeamItem>("/api/settings/teams", { method: "POST", body: JSON.stringify(body) }),
+  updateTeam: (id: string, body: object) =>
+    api<TeamItem>(`/api/settings/teams/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteTeam: (id: string) => api<{ message: string }>(`/api/settings/teams/${id}`, { method: "DELETE" }),
+  notifications: () => api<NotificationSettings>("/api/settings/notifications"),
+  updateNotifications: (body: object) =>
+    api<NotificationSettings>("/api/settings/notifications", { method: "PUT", body: JSON.stringify(body) }),
   exportSettings: (format: string) => download(`/api/settings/export?format=${format}`, `deedai-settings.${format}`),
   reports: (query: string) => api<Record<string, unknown>[]>(`/api/reports/documents${query}`),
   exportReport: (query: string, format: string, name: string) =>
     download(`/api/reports/documents${query}${query.includes("?") ? "&" : "?"}format=${format}`, name),
+  exportReviewedPdf: (id: string, name: string) => download(`/api/reports/documents/${id}/pdf`, name),
+  notifyPreview: (id: string) => api<NotifyPreview>(`/api/documents/${id}/notify-preview`),
   softwareLookup: (id: string) =>
     api<SoftwareLookup>(`/api/documents/${id}/software/lookup`, { method: "POST" }),
   softwarePush: (id: string) =>
-    api<{ succeeded: boolean; softwareRecordId: string | null; message: string }>(
-      `/api/documents/${id}/software/push`,
-      { method: "POST" }
-    )
+    api<{
+      succeeded: boolean;
+      softwareRecordId: string | null;
+      message: string;
+      lastSyncAt: string | null;
+      lastSyncStatus: string | null;
+      failReason: string | null;
+    }>(`/api/documents/${id}/software/push`, { method: "POST" }),
+  softwareRetry: (id: string) =>
+    api<{
+      succeeded: boolean;
+      softwareRecordId: string | null;
+      message: string;
+      lastSyncAt: string | null;
+      lastSyncStatus: string | null;
+      failReason: string | null;
+    }>(`/api/documents/${id}/software/retry`, { method: "POST" })
 };

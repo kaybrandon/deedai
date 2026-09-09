@@ -32,7 +32,7 @@ export default function UsersPage() {
 
   async function load() {
     setUsers(await endpoints.adminUsers());
-    setClients(await endpoints.clients());
+    setClients(await endpoints.settingsClients());
   }
 
   useEffect(() => {

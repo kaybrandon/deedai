@@ -13,7 +13,7 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/documents")]
-public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, IOcrJobQueue queue) : ControllerBase
+public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, IOcrJobQueue queue, IOcrNotifier notifier) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<DocumentListItem>>> List(
@@ -116,7 +116,12 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             next,
             document.Flags.Select(x => new FlagSummary(x.FlagDefinitionId, x.Flag.Name, x.Flag.Color)).ToList(),
             document.Team.Select(x => new TeamMember(x.UserId, x.User.DisplayName, x.User.Role)).ToList(),
-            linked);
+            linked,
+            document.LastSoftwareSyncAt,
+            document.LastSoftwareSyncStatus,
+            document.LastSoftwareSyncDirection,
+            document.LastSoftwareSyncFailReason,
+            document.SoftwareRecordId);
     }
 
     [HttpGet("{id:guid}/file")]
@@ -386,6 +391,23 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         }
 
         return Ok(new { message = "Team member removed." });
+    }
+
+    [HttpGet("{id:guid}/notify-preview")]
+    public async Task<ActionResult<NotifyPreviewResponse>> NotifyPreview(Guid id, CancellationToken cancellationToken)
+    {
+        var document = await LoadVisible(id, includeDeleted: false, cancellationToken);
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        var preview = await notifier.PreviewAsync(id, cancellationToken);
+        return new NotifyPreviewResponse(
+            preview.Enabled,
+            preview.NotifyUploader,
+            preview.Recipients.Select(x => new NotifyRecipientItem(x.Email, x.DisplayName, x.Reason)).ToList(),
+            preview.Events);
     }
 
     [HttpDelete("{id:guid}")]

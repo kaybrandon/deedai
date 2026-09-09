@@ -1,6 +1,6 @@
 # Deed AI
 
-BIS Consultants **Deed AI** — Phase 2. Naming in this product is **Client** (never County) and **Software** (never CAMA). Roles: **Admin**, **Editor**, **Uploader**, **Viewer**.
+BIS Consultants **Deed AI** — Phase 3. Naming in this product is **Client** (never County) and **Software** (never CAMA). Roles: **Admin**, **Editor**, **Uploader**, **Viewer**.
 
 This repository replaces the README-only GitHub seed with a working Layout A application: a single .NET 10 API host serves the React/Vite SPA from `wwwroot` for Windows App Service `appdeedai`.
 
@@ -30,6 +30,15 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
+
+## Phase 3 acceptance
+
+- **Reports PDF:** reviewed-deed PDF export (QuestPDF-equivalent writer) with the same Client / role gates as CSV and Excel. Empty or failed exports return a clear message — never a silent blank PDF.
+- **Notify emails (SendGrid):** OCR Failed and Ready mail to the assignee, optional uploader. UI shows who gets it. Admin off-switch. `SendGridApiKey` / `SendGrid__ApiKey` from App Settings / Key Vault only.
+- **Software sync polish:** push retry, last-sync status and fail reason on the deed, lookup by key fields (parcel, grantor, grantee, Client). Named **Software**, never CAMA. Secrets KV only.
+- **Settings (Admin):** teams list CRUD, Client CRUD (name / active), export of Settings configs. Flags, statuses, and deed-type maps stay. No full legacy security-policy matrix.
+- **UX:** ConfirmSheet on destructive Settings deletes, empty states on Reports and Software, actions ≥ 44px.
+- **Hard gates:** Client / Software naming, four roles, KV-only secrets, CORS never `AllowAnyOrigin` + credentials, AuthZ tests for new endpoints.
 
 ## Phase 2 acceptance
 
@@ -109,7 +118,7 @@ With `Queue__Mode=InMemory` and `Ocr__RunInProcess=true` the API hosts the worke
 dotnet test DeedAi.sln
 ```
 
-Covers role denial, user CRUD / Client access, password reset happy/fail, upload/edit/delete/restore, CORS policy, OCR happy/fail, and poison → Failed+Retry.
+Covers role denial, user CRUD / Client access, password reset happy/fail, upload/edit/delete/restore, CORS policy, OCR happy/fail, poison → Failed+Retry, report PDF empty/error states, notify emails, Software retry / last-sync, and Settings teams / Clients.
 
 ## Publish (Layout A, Windows win-x64 zip)
 
@@ -132,7 +141,9 @@ BISDocumentIntelligenceEndpoint
 StorageConnection
 SqlConnection
 SendGridApiKey
+SendGrid__ApiKey
 SoftwareApiKey
+Software__ApiKey
 Database__Provider=SqlServer
 Storage__Mode=Azure
 Queue__Mode=Azure
@@ -152,7 +163,8 @@ Document Intelligence uses **BISDocumentIntelligenceEndpoint** + **DocumentIntel
 | Users + Settings | | | | ✓ |
 | Reports export | ✓ | ✓ | ✓ | ✓ |
 | Software lookup | ✓ | ✓ | ✓ | ✓ |
-| Software push | | | ✓ | ✓ |
+| Software push / retry | | | ✓ | ✓ |
+| Settings teams / Clients / notify switch | | | | ✓ |
 
 Denied API calls return HTTP 403 JSON: `Access denied. Your {role} role cannot perform this action.` The SPA shows the same on `/denied`.
 

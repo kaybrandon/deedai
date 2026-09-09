@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddDbContext<DeedAiDbContext>(options => ConfigureDatabase(options, configuration));
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<OcrProcessor>();
+        services.AddScoped<IOcrNotifier, OcrNotifier>();
         services.AddHttpClient(nameof(SendGridEmailSender));
         services.AddHttpClient(nameof(HttpSoftwareClient));
         AddEmail(services, configuration);
@@ -70,12 +71,12 @@ public static class DependencyInjection
     {
         services.Configure<SendGridOptions>(options =>
         {
-            options.ApiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey");
+            options.ApiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey", "SendGrid__ApiKey");
             options.FromEmail = FirstValue(configuration, "SendGridFromEmail", "SendGrid:FromEmail") ?? options.FromEmail;
             options.FromName = FirstValue(configuration, "SendGridFromName", "SendGrid:FromName") ?? options.FromName;
         });
 
-        var apiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey");
+        var apiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey", "SendGrid__ApiKey");
         if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IEmailSender, LoggingEmailSender>();
@@ -90,7 +91,7 @@ public static class DependencyInjection
         services.Configure<SoftwareOptions>(options =>
         {
             options.BaseUrl = FirstValue(configuration, "SoftwareBaseUrl", "Software:BaseUrl");
-            options.ApiKey = FirstValue(configuration, "SoftwareApiKey", "Software:ApiKey");
+            options.ApiKey = FirstValue(configuration, "SoftwareApiKey", "Software:ApiKey", "Software__ApiKey");
         });
 
         var mode = configuration["Software:Mode"];

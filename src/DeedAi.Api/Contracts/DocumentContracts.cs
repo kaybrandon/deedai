@@ -1,6 +1,6 @@
 namespace DeedAi.Api.Contracts;
 
-public sealed record ClientResponse(Guid Id, string Name);
+public sealed record ClientResponse(Guid Id, string Name, bool IsActive = true);
 
 public sealed record UserSummary(Guid Id, string DisplayName, string Role);
 
@@ -43,7 +43,12 @@ public sealed record DocumentDetail(
     Guid? NextId,
     IReadOnlyList<FlagSummary> Flags,
     IReadOnlyList<TeamMember> Team,
-    IReadOnlyList<LinkedDocument> LinkedDocuments);
+    IReadOnlyList<LinkedDocument> LinkedDocuments,
+    DateTimeOffset? LastSoftwareSyncAt,
+    string? LastSoftwareSyncStatus,
+    string? LastSoftwareSyncDirection,
+    string? LastSoftwareSyncFailReason,
+    string? SoftwareRecordId);
 
 public sealed record FieldDraft(
     string? Grantor,
