@@ -19,38 +19,18 @@ public sealed class ReportsController(DeedAiDbContext db) : ControllerBase
         [FromQuery] string? status,
         [FromQuery] Guid? clientId,
         [FromQuery] Guid? assigneeUserId,
+        [FromQuery] Guid? flagId,
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
         [FromQuery] string? format,
         CancellationToken cancellationToken)
     {
         var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
-        var query = ClientAccess.VisibleDocuments(db.Documents.AsNoTracking(), allowed)
-            .Include(x => x.Client)
-            .Include(x => x.Assignee)
-            .Include(x => x.Fields)
-            .Include(x => x.Flags).ThenInclude(x => x.Flag)
-            .AsQueryable();
+        var query = DocumentFilters.Apply(
+            DocumentFilters.WithReportIncludes(ClientAccess.VisibleDocuments(db.Documents.AsNoTracking(), allowed)),
+            search, status, clientId, assigneeUserId, flagId, from, to);
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(x => x.Name.Contains(search) || (x.Fields != null && (x.Fields.Grantor!.Contains(search) || x.Fields.ParcelId!.Contains(search))));
-        }
-
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            query = query.Where(x => x.Status == status || x.ReviewStatus == status);
-        }
-
-        if (clientId is not null)
-        {
-            query = query.Where(x => x.ClientId == clientId);
-        }
-
-        if (assigneeUserId is not null)
-        {
-            query = query.Where(x => x.AssigneeUserId == assigneeUserId);
-        }
-
-        var rows = await query.ToListAsync(cancellationToken);
+        var rows = DocumentFilters.ApplyDates(await query.ToListAsync(cancellationToken), from, to);
         var ordered = rows.OrderByDescending(x => x.UpdatedAt).ToList();
         var headers = new[]
         {

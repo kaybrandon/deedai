@@ -8,11 +8,13 @@ import {
   type FieldDraft,
   type FlagItem,
   type NotifyPreview,
+  type SoftwareClientConfig,
   type SoftwareLookup,
   type StatusItem,
   type UserSummary
 } from "../api";
 import { useAuth } from "../auth";
+import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
 
@@ -48,6 +50,8 @@ export default function ReviewPage() {
   const [teamUser, setTeamUser] = useState("");
   const [lookup, setLookup] = useState<SoftwareLookup | null>(null);
   const [notify, setNotify] = useState<NotifyPreview | null>(null);
+  const [clientConfig, setClientConfig] = useState<SoftwareClientConfig | null>(null);
+  const [pendingPush, setPendingPush] = useState<"push" | "retry" | null>(null);
 
   async function load(documentId: string) {
     const detail = await endpoints.document(documentId);
@@ -57,6 +61,12 @@ export default function ReviewPage() {
     setReviewStatus(detail.reviewStatus ?? "");
     setSaved(!detail.fields.isDraft && Boolean(detail.fields.grantor));
     endpoints.notifyPreview(documentId).then(setNotify).catch(() => setNotify(null));
+    if (canEdit) {
+      endpoints
+        .softwareClientConfigs()
+        .then((rows) => setClientConfig(rows.find((row) => row.clientId === detail.clientId) ?? null))
+        .catch(() => setClientConfig(null));
+    }
   }
 
   useEffect(() => {
@@ -95,6 +105,15 @@ export default function ReviewPage() {
   function update<K extends keyof FieldDraft>(key: K, value: FieldDraft[K]) {
     setFields((current) => ({ ...current, [key]: value, isDraft: true }));
     setSaved(false);
+  }
+
+  async function runSoftware(kind: "push" | "retry") {
+    if (!doc) return;
+    const result = kind === "push" ? await endpoints.softwarePush(doc.id) : await endpoints.softwareRetry(doc.id);
+    setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
+    if (!result.succeeded) setError(result.failReason ?? result.message);
+    else setError(null);
+    await load(doc.id);
   }
 
   async function save(event: FormEvent, asDraft: boolean) {
@@ -368,7 +387,7 @@ export default function ReviewPage() {
 
         <section className="panel">
           <h2>Software</h2>
-          <p className="muted">Lookup by key fields (parcel, grantor, grantee, Client) or push this deed to Software. Never called CAMA.</p>
+          <p className="muted">Lookup by key fields (parcel, grantor, grantee, Client) or push this deed to Software.</p>
           {doc.lastSoftwareSyncAt ? (
             <p>
               Last {doc.lastSoftwareSyncDirection ?? "sync"}: <strong>{doc.lastSoftwareSyncStatus ?? "—"}</strong>
@@ -397,42 +416,44 @@ export default function ReviewPage() {
             >
               Lookup
             </button>
-            <button
-              className="primary"
-              type="button"
-              disabled={!canEdit}
-              onClick={async () => {
-                if (!canEdit) {
-                  navigate("/denied", { state: { action: "push to Software" } });
-                  return;
-                }
-                const result = await endpoints.softwarePush(doc.id);
-                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
-                if (!result.succeeded) setError(result.failReason ?? result.message);
-                else setError(null);
-                await load(doc.id);
-              }}
-            >
-              Push
-            </button>
-            <button
-              className="ghost"
-              type="button"
-              disabled={!canEdit}
-              onClick={async () => {
-                if (!canEdit) {
-                  navigate("/denied", { state: { action: "retry Software push" } });
-                  return;
-                }
-                const result = await endpoints.softwareRetry(doc.id);
-                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
-                if (!result.succeeded) setError(result.failReason ?? result.message);
-                else setError(null);
-                await load(doc.id);
-              }}
-            >
-              Retry push
-            </button>
+            {canEdit ? (
+              <>
+                <button
+                  className="primary"
+                  type="button"
+                  onClick={() => {
+                    if (clientConfig?.hasAnyReset) {
+                      setPendingPush("push");
+                      return;
+                    }
+                    void runSoftware("push");
+                  }}
+                >
+                  Push
+                </button>
+                <button
+                  className="ghost"
+                  type="button"
+                  onClick={() => {
+                    if (clientConfig?.hasAnyReset) {
+                      setPendingPush("retry");
+                      return;
+                    }
+                    void runSoftware("retry");
+                  }}
+                >
+                  Retry push
+                </button>
+              </>
+            ) : (
+              <button
+                className="nav-disabled"
+                type="button"
+                onClick={() => navigate("/denied", { state: { action: "push to Software" } })}
+              >
+                Push
+              </button>
+            )}
           </div>
           {lookup ? (
             <dl className="lookup-dl">
@@ -464,6 +485,19 @@ export default function ReviewPage() {
         </section>
       )}
       {saved && <span className="chip chip-ready saved-pill">Saved</span>}
+      {pendingPush && doc && (
+        <ConfirmSheet
+          title="Push will reset Software properties"
+          body="This Client is set to reset one or more Software property groups (exemptions, supplement year, sales letter, Sales Tab, agents, or mortgage codes). Continue?"
+          confirmLabel="Push and reset"
+          onCancel={() => setPendingPush(null)}
+          onConfirm={async () => {
+            const kind = pendingPush;
+            setPendingPush(null);
+            await runSoftware(kind);
+          }}
+        />
+      )}
     </section>
   );
 }

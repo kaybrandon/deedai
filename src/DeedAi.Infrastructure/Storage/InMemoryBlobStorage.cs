@@ -31,4 +31,11 @@ public sealed class InMemoryBlobStorage : IBlobStorage
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_blobs.ContainsKey(path));
     }
+
+    public Task DeleteAsync(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _blobs.TryRemove(path, out _);
+        return Task.CompletedTask;
+    }
 }

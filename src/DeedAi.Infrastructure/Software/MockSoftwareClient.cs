@@ -4,6 +4,8 @@ namespace DeedAi.Infrastructure.Software;
 
 public sealed class MockSoftwareClient : ISoftwareClient
 {
+    public SoftwarePushRequest? LastPush { get; private set; }
+
     public Task<SoftwareLookupResult?> LookupAsync(SoftwareLookupQuery query, CancellationToken cancellationToken)
     {
         if (!HasKeyField(query))
@@ -34,6 +36,7 @@ public sealed class MockSoftwareClient : ISoftwareClient
 
     public Task<SoftwarePushResult> PushAsync(SoftwarePushRequest request, CancellationToken cancellationToken)
     {
+        LastPush = request;
         if (string.IsNullOrWhiteSpace(request.ParcelId)
             && string.IsNullOrWhiteSpace(request.Grantor)
             && string.IsNullOrWhiteSpace(request.Grantee))

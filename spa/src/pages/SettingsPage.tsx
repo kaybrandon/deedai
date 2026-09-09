@@ -1,11 +1,14 @@
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  DEED_FIELDS,
   endpoints,
   type ClientItem,
   type DeedTypeItem,
   type FlagItem,
   type NotificationSettings,
+  type PropertyDefaultItem,
+  type SoftwareSettings,
   type StatusItem,
   type TeamItem,
   type UserSummary
@@ -19,7 +22,10 @@ type PendingDelete =
   | { kind: "status"; id: string; name: string }
   | { kind: "deedType"; id: string; name: string }
   | { kind: "team"; id: string; name: string }
-  | { kind: "client"; id: string; name: string };
+  | { kind: "client"; id: string; name: string }
+  | { kind: "property"; id: string; name: string }
+  | { kind: "reset"; scope: "Client" | "DeedType"; clientId?: string; deedType?: string; name: string }
+  | { kind: "purge" };
 
 export default function SettingsPage() {
   const { canAdmin } = useAuth();
@@ -39,17 +45,32 @@ export default function SettingsPage() {
   const [mapForm, setMapForm] = useState({ deedType: "", softwareCode: "", fieldMapJson: "", isActive: true });
   const [teamForm, setTeamForm] = useState({ name: "", isActive: true, userIds: [] as string[] });
   const [clientForm, setClientForm] = useState({ name: "", isActive: true });
+  const [software, setSoftware] = useState<SoftwareSettings | null>(null);
+  const [defaults, setDefaults] = useState<PropertyDefaultItem[]>([]);
+  const [defaultForm, setDefaultForm] = useState({
+    scope: "Client",
+    clientId: "",
+    deedType: "",
+    fieldKey: "client",
+    defaultValue: ""
+  });
+  const [resetScope, setResetScope] = useState<"Client" | "DeedType">("Client");
+  const [resetClientId, setResetClientId] = useState("");
+  const [resetDeedType, setResetDeedType] = useState("");
 
   async function load() {
-    const [nextFlags, nextStatuses, nextMaps, nextTeams, nextClients, nextUsers, nextNotify] = await Promise.all([
-      endpoints.flags(),
-      endpoints.statuses(),
-      endpoints.deedTypes(),
-      endpoints.teams(),
-      endpoints.settingsClients(),
-      endpoints.users(),
-      endpoints.notifications()
-    ]);
+    const [nextFlags, nextStatuses, nextMaps, nextTeams, nextClients, nextUsers, nextNotify, nextSoftware, nextDefaults] =
+      await Promise.all([
+        endpoints.flags(),
+        endpoints.statuses(),
+        endpoints.deedTypes(),
+        endpoints.teams(),
+        endpoints.settingsClients(),
+        endpoints.users(),
+        endpoints.notifications(),
+        endpoints.softwareSettings(),
+        endpoints.propertyDefaults()
+      ]);
     setFlags(nextFlags);
     setStatuses(nextStatuses);
     setDeedTypes(nextMaps);
@@ -57,6 +78,8 @@ export default function SettingsPage() {
     setClients(nextClients);
     setUsers(nextUsers);
     setNotifications(nextNotify);
+    setSoftware(nextSoftware);
+    setDefaults(nextDefaults);
   }
 
   useEffect(() => {
@@ -75,7 +98,16 @@ export default function SettingsPage() {
       if (pending.kind === "deedType") await endpoints.deleteDeedType(pending.id);
       if (pending.kind === "team") await endpoints.deleteTeam(pending.id);
       if (pending.kind === "client") await endpoints.deleteClient(pending.id);
-      setNotice(`${pending.name} removed.`);
+      if (pending.kind === "property") await endpoints.deletePropertyDefault(pending.id);
+      if (pending.kind === "reset") {
+        await endpoints.resetPropertyDefaults({
+          scope: pending.scope,
+          clientId: pending.clientId || null,
+          deedType: pending.deedType || null
+        });
+      }
+      if (pending.kind === "purge") await endpoints.purgeDeleted("");
+      setNotice(pending.kind === "purge" ? "Deleted deeds purged." : pending.kind === "reset" ? `${pending.name} reset.` : `${pending.name} removed.`);
       setError(null);
       setPending(null);
       await load();
@@ -103,6 +135,211 @@ export default function SettingsPage() {
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
+
+      <section className="panel">
+        <h2>Manage Documents</h2>
+        <p className="muted">Restore and hard-delete live on the Restore page. Purge permanently removes every soft-deleted deed. Failed OCR requeue is Workstream B.</p>
+        <div className="row-actions">
+          <button className="primary" type="button" onClick={() => navigate("/restore")}>
+            Open Restore
+          </button>
+          <button className="danger" type="button" onClick={() => setPending({ kind: "purge" })}>
+            Purge deleted deeds
+          </button>
+        </div>
+      </section>
+
+      {software && (
+        <section className="panel">
+          <h2>Software defaults</h2>
+          <p className="muted">
+            Enable push and the fallback Software group here. Vendor, API URL, group code, Sales Tab, date/label depth,
+            and property resets are typed per Client on the{" "}
+            <button className="link" type="button" onClick={() => navigate("/software")}>
+              Software
+            </button>{" "}
+            page. The API key stays in Key Vault and shows as Configured there — never as a secret. Deed-type maps below
+            stay as advanced Settings.
+          </p>
+          <label className="remember">
+            <input
+              type="checkbox"
+              checked={software.pushEnabled}
+              onChange={async (e) => {
+                const next = await endpoints.updateSoftwareSettings({
+                  pushEnabled: e.target.checked,
+                  defaultGroup: software.defaultGroup,
+                  fieldDefaultsJson: software.fieldDefaultsJson
+                });
+                setSoftware(next);
+                setNotice(next.pushEnabled ? "Software push enabled." : "Software push disabled.");
+              }}
+            />
+            Enable Software push
+          </label>
+          <form
+            className="inline-form"
+            onSubmit={async (event: FormEvent) => {
+              event.preventDefault();
+              const next = await endpoints.updateSoftwareSettings({
+                pushEnabled: software.pushEnabled,
+                defaultGroup: software.defaultGroup,
+                fieldDefaultsJson: software.fieldDefaultsJson
+              });
+              setSoftware(next);
+              setNotice("Software defaults saved.");
+            }}
+          >
+            <input
+              placeholder="Default Software group"
+              value={software.defaultGroup ?? ""}
+              onChange={(e) => setSoftware({ ...software, defaultGroup: e.target.value })}
+            />
+            <input
+              placeholder='Advanced field defaults JSON e.g. {"consideration":"0"}'
+              value={software.fieldDefaultsJson ?? ""}
+              onChange={(e) => setSoftware({ ...software, fieldDefaultsJson: e.target.value })}
+            />
+            <button className="primary" type="submit">
+              Save defaults
+            </button>
+          </form>
+        </section>
+      )}
+
+      <SettingsBlock
+        title="Property defaults"
+        empty={defaults.length === 0}
+        emptyBody="Set mapped field defaults per Client or deed type. Reset clears that scope."
+      >
+        <ul className="setting-list">
+          {defaults.map((item) => (
+            <li key={item.id}>
+              <span>
+                {item.scope === "Client" ? item.clientName : item.deedType} · {item.fieldKey} = {item.defaultValue ?? "—"}
+              </span>
+              <button
+                className="link"
+                type="button"
+                onClick={() => setPending({ kind: "property", id: item.id, name: `${item.fieldKey} default` })}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form
+          className="inline-form"
+          onSubmit={async (event: FormEvent) => {
+            event.preventDefault();
+            await endpoints.createPropertyDefault({
+              scope: defaultForm.scope,
+              clientId: defaultForm.clientId || null,
+              deedType: defaultForm.deedType || null,
+              fieldKey: defaultForm.fieldKey,
+              defaultValue: defaultForm.defaultValue
+            });
+            setDefaultForm({ scope: "Client", clientId: "", deedType: "", fieldKey: "client", defaultValue: "" });
+            setNotice("Property default saved.");
+            await load();
+          }}
+        >
+          <select
+            value={defaultForm.scope}
+            onChange={(e) => setDefaultForm({ ...defaultForm, scope: e.target.value })}
+            aria-label="Default scope"
+          >
+            <option>Client</option>
+            <option>DeedType</option>
+          </select>
+          {defaultForm.scope === "Client" ? (
+            <select
+              value={defaultForm.clientId}
+              onChange={(e) => setDefaultForm({ ...defaultForm, clientId: e.target.value })}
+              aria-label="Default Client"
+              required
+            >
+              <option value="">Client</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={defaultForm.deedType}
+              onChange={(e) => setDefaultForm({ ...defaultForm, deedType: e.target.value })}
+              aria-label="Default deed type"
+              required
+            >
+              <option value="">Deed type</option>
+              {deedTypes.map((item) => (
+                <option key={item.id} value={item.deedType}>
+                  {item.deedType}
+                </option>
+              ))}
+            </select>
+          )}
+          <select
+            value={defaultForm.fieldKey}
+            onChange={(e) => setDefaultForm({ ...defaultForm, fieldKey: e.target.value })}
+            aria-label="Default field"
+          >
+            {DEED_FIELDS.map((field) => (
+              <option key={field}>{field}</option>
+            ))}
+          </select>
+          <input
+            placeholder="Default value"
+            value={defaultForm.defaultValue}
+            onChange={(e) => setDefaultForm({ ...defaultForm, defaultValue: e.target.value })}
+          />
+          <button className="primary" type="submit">
+            Add default
+          </button>
+        </form>
+        <div className="inline-form">
+          <select value={resetScope} onChange={(e) => setResetScope(e.target.value as "Client" | "DeedType")} aria-label="Reset scope">
+            <option>Client</option>
+            <option>DeedType</option>
+          </select>
+          {resetScope === "Client" ? (
+            <select value={resetClientId} onChange={(e) => setResetClientId(e.target.value)} aria-label="Reset Client">
+              <option value="">Client to reset</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select value={resetDeedType} onChange={(e) => setResetDeedType(e.target.value)} aria-label="Reset deed type">
+              <option value="">Deed type to reset</option>
+              {deedTypes.map((item) => (
+                <option key={item.id} value={item.deedType}>
+                  {item.deedType}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            className="danger"
+            type="button"
+            onClick={() =>
+              setPending({
+                kind: "reset",
+                scope: resetScope,
+                clientId: resetClientId || undefined,
+                deedType: resetDeedType || undefined,
+                name: resetScope === "Client" ? "Client property defaults" : "deed-type property defaults"
+              })
+            }
+          >
+            Reset defaults
+          </button>
+        </div>
+      </SettingsBlock>
 
       {notifications && (
         <section className="panel">
@@ -144,7 +381,7 @@ export default function SettingsPage() {
         </section>
       )}
 
-      <SettingsBlock title="Clients" empty={clients.length === 0} emptyBody="Add a Client (never County). Inactive Clients stay off upload and report filters.">
+      <SettingsBlock title="Clients" empty={clients.length === 0} emptyBody="Add a Client. Inactive Clients stay off upload and report filters.">
         <ul className="setting-list">
           {clients.map((client) => (
             <li key={client.id}>
@@ -335,9 +572,21 @@ export default function SettingsPage() {
 
       {pending && (
         <ConfirmSheet
-          title={`Remove ${pending.name}?`}
-          body="This Settings item will be deleted. Cancel if you are not sure."
-          confirmLabel="Remove"
+          title={
+            pending.kind === "purge"
+              ? "Purge all deleted deeds?"
+              : pending.kind === "reset"
+                ? `Reset ${pending.name}?`
+                : `Remove ${pending.name}?`
+          }
+          body={
+            pending.kind === "purge"
+              ? "Permanently delete every soft-deleted deed. This cannot be undone."
+              : pending.kind === "reset"
+                ? "All mapped field defaults for that Client or deed type will be removed."
+                : "This Settings item will be deleted. Cancel if you are not sure."
+          }
+          confirmLabel={pending.kind === "purge" ? "Purge" : pending.kind === "reset" ? "Reset" : "Remove"}
           onCancel={() => setPending(null)}
           onConfirm={() => void confirmDelete()}
         />
