@@ -60,7 +60,7 @@ export default function SystemHealthPanel() {
         System health <FieldHelp helpKey="settings.systemHealth" />
       </h2>
       <p className="muted">
-        Admin-only view of <code>GET /api/health/detail</code>. Shows SQL, storage, and queue reachability
+        Admin-only view of <code>GET /api/health/detail</code>. Shows SQL, Blob, and OCR queue reachability
         and mode — never connection strings or keys.
       </p>
       {error && <div className="denied-box">{error}</div>}
@@ -71,10 +71,10 @@ export default function SystemHealthPanel() {
         </p>
       )}
       {checks && (
-        <div className="health-grid">
-          <HealthCheck name="SQL" check={checks.sql} />
-          <HealthCheck name="Storage" check={checks.storage} />
-          <HealthCheck name="Queue" check={checks.queue} />
+        <div className="health-row">
+          <HealthChip name="SQL" check={checks.sql} />
+          <HealthChip name="Blob" check={checks.storage} />
+          <HealthChip name="OCR queue" check={checks.queue} />
         </div>
       )}
       <div className="row-actions">
@@ -86,13 +86,14 @@ export default function SystemHealthPanel() {
   );
 }
 
-function HealthCheck({ name, check }: { name: string; check: Check }) {
+function HealthChip({ name, check }: { name: string; check: Check }) {
+  const tone = check.reachable ? check.status : "fail";
   return (
-    <div className="health-check">
-      <strong>{name}</strong>
+    <div className={`health-chip is-${tone}`}>
+      <strong className="health-chip-name">{name}</strong>
       <span className={`health-status is-${check.status}`}>{sanitize(check.status)}</span>
       <span className="muted">{check.reachable ? "Reachable" : "Unreachable"}</span>
-      <span>{sanitize(check.mode)}</span>
+      <span className="health-chip-mode">{sanitize(check.mode)}</span>
     </div>
   );
 }

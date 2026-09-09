@@ -1,15 +1,29 @@
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
+
+function isSettingsSection(pathname: string) {
+  return pathname === "/settings" || pathname === "/software" || pathname === "/users"
+    || pathname.startsWith("/settings/") || pathname.startsWith("/software/") || pathname.startsWith("/users/");
+}
 
 export default function AppShell() {
   const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
+  const onSettingsSection = isSettingsSection(location.pathname);
+  const [settingsOpen, setSettingsOpen] = useState(true);
 
   function closeNav() {
     setNavOpen(false);
   }
+
+  useEffect(() => {
+    if (onSettingsSection) {
+      setSettingsOpen(true);
+    }
+  }, [onSettingsSection]);
 
   return (
     <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
@@ -35,7 +49,6 @@ export default function AppShell() {
             </button>
           )}
           <NavLink to="/reports">Reports</NavLink>
-          <NavLink to="/software">Software</NavLink>
           {canEdit ? (
             <NavLink to="/sales">Sales</NavLink>
           ) : (
@@ -58,29 +71,56 @@ export default function AppShell() {
               Restore
             </button>
           )}
-          {canAdmin ? (
-            <NavLink to="/users">Users</NavLink>
-          ) : (
+          <div className="nav-group" onClick={(e) => e.stopPropagation()}>
             <button
-              className="nav-disabled"
+              className={`nav-group-toggle${onSettingsSection ? " is-active" : ""}`}
               type="button"
-              onClick={() => navigate("/denied", { state: { action: "manage users" } })}
-            >
-              Users
-            </button>
-          )}
-          {canAdmin ? (
-            <NavLink to="/settings">Settings</NavLink>
-          ) : (
-            <button
-              className="nav-disabled"
-              type="button"
-              onClick={() => navigate("/denied", { state: { action: "change settings" } })}
+              aria-expanded={settingsOpen}
+              aria-controls="settings-nav"
+              onClick={() => setSettingsOpen((open) => !open)}
             >
               Settings
+              <span className="nav-group-caret" aria-hidden="true">{settingsOpen ? "▾" : "▸"}</span>
             </button>
-          )}
-          {canAdmin && <NavLink to="/settings#swagger">API</NavLink>}
+            {settingsOpen && (
+              <div className="nav-sub" id="settings-nav">
+                {canAdmin ? (
+                  <NavLink to="/settings" end onClick={closeNav}>
+                    Settings
+                  </NavLink>
+                ) : (
+                  <button
+                    className="nav-disabled"
+                    type="button"
+                    onClick={() => navigate("/denied", { state: { action: "change settings" } })}
+                  >
+                    Settings
+                  </button>
+                )}
+                <NavLink to="/software" onClick={closeNav}>
+                  Software
+                </NavLink>
+                {canAdmin ? (
+                  <NavLink to="/users" onClick={closeNav}>
+                    Users
+                  </NavLink>
+                ) : (
+                  <button
+                    className="nav-disabled"
+                    type="button"
+                    onClick={() => navigate("/denied", { state: { action: "manage users" } })}
+                  >
+                    Users
+                  </button>
+                )}
+                {canAdmin && (
+                  <NavLink to="/settings#swagger" onClick={closeNav}>
+                    API
+                  </NavLink>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
         <button
           className="ghost sidebar-logout"
@@ -110,7 +150,9 @@ export default function AppShell() {
             <span className="role-pill">{me?.role}</span>
           </div>
         </header>
-        <Outlet />
+        <div className="main-body">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

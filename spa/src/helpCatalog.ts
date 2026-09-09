@@ -36,7 +36,7 @@ export const HELP = {
   "settings.swagger":
     "When on, /swagger serves the API UI so Admins can authorize with a JWT. When off, /swagger returns 404. Enabling Swagger does not open anonymous API access.",
   "settings.systemHealth":
-    "Admin-only SQL, storage, and queue checks. Modes only — never connection strings, keys, or other secrets.",
+    "Admin-only SQL, Blob, and OCR queue checks. Modes and reachability only — never connection strings, keys, or other secrets.",
   "users.role": "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
   "settings.idleTimeout":
     "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",

@@ -23,8 +23,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={onSubmit}>
+    <form className="login-card" onSubmit={onSubmit}>
         <h1>Reset password</h1>
         <p className="subtitle">We will email a reset link if that account exists.</p>
         <label>
@@ -49,7 +48,6 @@ export default function ForgotPasswordPage() {
             {error}
           </div>
         )}
-      </form>
-    </div>
+    </form>
   );
 }

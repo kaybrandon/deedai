@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   endpoints,
   type ClientItem,
@@ -8,6 +9,14 @@ import {
   type DashboardVolume
 } from "../api";
 import { ByUserChart, StatusMixChart, VolumeChart } from "../components/DashboardCharts";
+
+function documentsPath(status: string | undefined, clientId: string) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (clientId) params.set("clientId", clientId);
+  const query = params.toString();
+  return query ? `/documents?${query}` : "/documents";
+}
 
 function defaultBounds() {
   return { from: "2024-08-01", to: toInput(new Date()) };
@@ -101,11 +110,11 @@ export default function DashboardPage() {
       </form>
       {error && <div className="denied-box">{error}</div>}
       <div className="cards">
-        <CountCard label="Uploaded" value={counts?.uploaded ?? 0} />
-        <CountCard label="Queued" value={counts?.queued ?? 0} />
-        <CountCard label="Processing" value={counts?.processing ?? 0} />
-        <CountCard label="Ready" value={counts?.ready ?? 0} />
-        <CountCard label="Failed" value={counts?.failed ?? 0} danger />
+        <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath(undefined, clientId)} />
+        <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath("Queued", clientId)} />
+        <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath("Processing", clientId)} />
+        <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath("Ready", clientId)} />
+        <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath("Failed", clientId)} />
       </div>
       <div className="chart-grid">
         <article className="chart-card">
@@ -125,11 +134,25 @@ export default function DashboardPage() {
   );
 }
 
-function CountCard({ label, value, danger }: { label: string; value: number; danger?: boolean }) {
+function CountCard({
+  label,
+  value,
+  danger,
+  to
+}: {
+  label: string;
+  value: number;
+  danger?: boolean;
+  to: string;
+}) {
   return (
-    <article className={`count-card ${danger ? "count-danger" : ""}`}>
+    <Link
+      to={to}
+      className={`count-card count-card-link ${danger ? "count-danger" : ""}`}
+      aria-label={`View ${label} documents`}
+    >
       <span>{label}</span>
       <strong className={danger ? "danger-text" : ""}>{value}</strong>
-    </article>
+    </Link>
   );
 }
