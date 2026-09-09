@@ -180,24 +180,24 @@ export default function DashboardPage() {
       {error && <div className="denied-box no-print">{error}</div>}
       <div className="dashboard-print-surface">
         <div className="cards">
-          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath({ clientId: applied.clientId })} />
-          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath({ status: "Queued", clientId: applied.clientId })} />
-          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath({ status: "Processing", clientId: applied.clientId })} />
-          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath({ status: "Ready", clientId: applied.clientId })} />
-          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath({ status: "Failed", clientId: applied.clientId })} />
+          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath({ ...applied })} />
+          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath({ status: "Queued", ...applied })} />
+          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath({ status: "Processing", ...applied })} />
+          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath({ status: "Ready", ...applied })} />
+          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath({ status: "Failed", ...applied })} />
         </div>
         <div className="chart-grid">
           <article className="chart-card">
             <h2>Status Mix</h2>
-            <StatusMixChart data={mix} clientId={applied.clientId} />
+            <StatusMixChart data={mix} {...applied} />
           </article>
           <article className="chart-card">
             <h2>By Users</h2>
-            <ByUserChart data={byUser} clientId={applied.clientId} />
+            <ByUserChart data={byUser} {...applied} />
           </article>
           <article className="chart-card chart-card-wide">
             <h2>Volume Over Time</h2>
-            <VolumeChart data={volume} />
+            <VolumeChart data={volume} {...applied} />
           </article>
         </div>
       </div>

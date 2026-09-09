@@ -76,19 +76,21 @@ public sealed class DashboardChartNavTests
 
         Assert.Contains("params.set(\"status\", filters.status)", helper, StringComparison.Ordinal);
         Assert.Contains("params.set(\"clientId\", filters.clientId)", helper, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"from\", filters.from)", helper, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"to\", filters.to)", helper, StringComparison.Ordinal);
         Assert.Contains("`/documents?${query}`", helper, StringComparison.Ordinal);
 
         Assert.Contains("import { documentsPath } from \"../documentsPath\"", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ clientId: applied.clientId })", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status: \"Queued\", clientId: applied.clientId })", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status: \"Processing\", clientId: applied.clientId })", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status: \"Ready\", clientId: applied.clientId })", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status: \"Failed\", clientId: applied.clientId })", page, StringComparison.Ordinal);
-        Assert.Contains("<StatusMixChart data={mix} clientId={applied.clientId} />", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ ...applied })", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status: \"Queued\", ...applied })", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status: \"Processing\", ...applied })", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status: \"Ready\", ...applied })", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status: \"Failed\", ...applied })", page, StringComparison.Ordinal);
+        Assert.Contains("<StatusMixChart data={mix} {...applied} />", page, StringComparison.Ordinal);
 
         Assert.Contains("onClick:", charts, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status, clientId })", charts, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ status: slice.status, clientId })", charts, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status, clientId, from, to })", charts, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ status: slice.status, clientId, from, to })", charts, StringComparison.Ordinal);
         Assert.Contains("goStatus(slice.status)", charts, StringComparison.Ordinal);
 
         Assert.Contains("params.get(\"status\")", documents, StringComparison.Ordinal);
@@ -104,8 +106,8 @@ public sealed class DashboardChartNavTests
         var documents = Read("spa/src/pages/DocumentsPage.tsx");
 
         Assert.Contains("params.set(\"assigneeUserId\", filters.assigneeUserId)", helper, StringComparison.Ordinal);
-        Assert.Contains("<ByUserChart data={byUser} clientId={applied.clientId} />", page, StringComparison.Ordinal);
-        Assert.Contains("documentsPath({ assigneeUserId: user.userId, clientId })", charts, StringComparison.Ordinal);
+        Assert.Contains("<ByUserChart data={byUser} {...applied} />", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ assigneeUserId: user.userId, clientId, from, to })", charts, StringComparison.Ordinal);
         Assert.Contains("goUser(data.users[elements[0]?.index ?? -1])", charts, StringComparison.Ordinal);
         Assert.Contains("if (!user?.userId)", charts, StringComparison.Ordinal);
         Assert.Contains("chart-legend-static", charts, StringComparison.Ordinal);
@@ -115,22 +117,26 @@ public sealed class DashboardChartNavTests
     }
 
     [Fact]
-    public void Volume_stays_non_clickable_because_documents_has_no_date_filter()
+    public void Volume_filters_documents_by_date_bucket()
     {
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var documents = Read("spa/src/pages/DocumentsPage.tsx");
         var page = Read("spa/src/pages/DashboardPage.tsx");
+        var api = Read("src/DeedAi.Api/Controllers/DocumentsController.cs");
 
         var volumeFn = SliceFunction(charts, "export function VolumeChart");
-        Assert.DoesNotContain("documentsPath", volumeFn, StringComparison.Ordinal);
-        Assert.DoesNotContain("onClick", volumeFn, StringComparison.Ordinal);
-        Assert.DoesNotContain("useNavigate", volumeFn, StringComparison.Ordinal);
-        Assert.Contains("<VolumeChart data={volume} />", page, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ from: day, to: day, clientId })", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("onClick:", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("chart-legend-link", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("<VolumeChart data={volume} {...applied} />", page, StringComparison.Ordinal);
 
-        Assert.DoesNotContain("params.get(\"from\")", documents, StringComparison.Ordinal);
-        Assert.DoesNotContain("params.set(\"from\"", documents, StringComparison.Ordinal);
-        Assert.DoesNotContain("params.get(\"to\")", documents, StringComparison.Ordinal);
-        Assert.DoesNotContain("params.set(\"to\"", documents, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"from\")", documents, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"from\", from)", documents, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"to\")", documents, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"to\", to)", documents, StringComparison.Ordinal);
+        Assert.Contains("No Documents Match", documents, StringComparison.Ordinal);
+        Assert.Contains("DateTimeOffset? from", api, StringComparison.Ordinal);
+        Assert.Contains("DocumentFilters.ApplyDates", api, StringComparison.Ordinal);
     }
 
     [Fact]

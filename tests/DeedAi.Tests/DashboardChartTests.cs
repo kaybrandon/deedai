@@ -259,6 +259,26 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
         Assert.StartsWith("{", body.TrimStart());
     }
 
+    [Fact]
+    public async Task Documents_list_honors_from_to_the_same_way_as_dashboard()
+    {
+        var client = await Authed("viewer@bisconsultants.com");
+        var day = await client.GetAsync("/api/documents?status=Ready&from=2024-08-12T00:00:00Z&to=2024-08-12T23:59:59Z");
+        Assert.Equal(HttpStatusCode.OK, day.StatusCode);
+        using (var json = JsonDocument.Parse(await day.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal(1, json.RootElement.GetArrayLength());
+            Assert.Equal("Ready", json.RootElement[0].GetProperty("status").GetString());
+        }
+
+        var miss = await client.GetAsync("/api/documents?status=Ready&from=2024-08-13T00:00:00Z&to=2024-08-13T23:59:59Z");
+        Assert.Equal(HttpStatusCode.OK, miss.StatusCode);
+        using (var json = JsonDocument.Parse(await miss.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal(0, json.RootElement.GetArrayLength());
+        }
+    }
+
     private async Task<HttpClient> Authed(string email)
     {
         var client = _factory.CreateJsonClient();
