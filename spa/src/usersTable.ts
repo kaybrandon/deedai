@@ -1,4 +1,4 @@
-import type { ClientItem, Role, UserDetail } from "./api";
+import type { ClientItem, UserDetail } from "./api";
 
 export const USERS_TABLE_STORAGE_KEY = "deedai.users.table";
 export const USERS_PAGE_SIZE = 50;
@@ -190,5 +190,3 @@ function sortValue(user: UserDetail, clients: ClientItem[], sort: UsersSortKey):
 function isSortKey(value: string | null | undefined): value is UsersSortKey {
   return USERS_SORT_KEYS.includes(value as UsersSortKey);
 }
-
-export const usersRoles: Role[] = ["Admin", "Editor", "Uploader", "Viewer"];

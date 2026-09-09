@@ -18,11 +18,12 @@ import {
   patchUsersTableQuery,
   readStoredUsersTableQuery,
   serializeUsersTableQuery,
-  usersRoles,
   writeStoredUsersTableQuery,
   type UsersSortKey,
   type UsersTableQuery
 } from "../usersTable";
+
+const roles: Role[] = ["Admin", "Editor", "Uploader", "Viewer"];
 
 const blank = {
   email: "",
@@ -214,7 +215,7 @@ export default function UsersPage() {
                         onChange={(e) => patchQuery({ role: e.target.value })}
                       >
                         <option value="">All Roles</option>
-                        {usersRoles.map((role) => (
+                        {roles.map((role) => (
                           <option key={role} value={role}>
                             {role}
                           </option>
@@ -383,7 +384,7 @@ export default function UsersPage() {
             <label>
               <LabelWithHelp helpKey="users.role">Role</LabelWithHelp>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-                {usersRoles.map((role) => (
+                {roles.map((role) => (
                   <option key={role}>{role}</option>
                 ))}
               </select>
