@@ -174,11 +174,11 @@ public sealed class RuntimeHealth(
         try
         {
             var reachable = await documentIntelligence.CanReachAsync(cancellationToken);
-            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, configured ? "Configured" : "Not configured", configured);
+            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, null, configured);
         }
         catch
         {
-            return new HealthCheckStatus("fail", false, mode, configured ? "Configured" : "Not configured", configured);
+            return new HealthCheckStatus("fail", false, mode, null, configured);
         }
     }
 
