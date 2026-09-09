@@ -199,7 +199,7 @@ export function VolumeChart({
     navigate(documentsPath({ from: day, to: day, clientId }));
   }
 
-  const daysWithVolume = data.labels.filter((label, index) => (total?.data[index] ?? 0) > 0);
+  const daysWithVolume = data.labels.filter((_, index) => (total?.data[index] ?? 0) > 0);
 
   return (
     <>
