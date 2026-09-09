@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
 export default function AppShell() {
-  const { me, logout, canUpload } = useAuth();
+  const { me, logout, canUpload, canAdmin } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -21,6 +21,29 @@ export default function AppShell() {
               onClick={() => navigate("/denied", { state: { action: "upload documents" } })}
             >
               Upload
+            </button>
+          )}
+          <NavLink to="/reports">Reports</NavLink>
+          {canAdmin ? (
+            <NavLink to="/users">Users</NavLink>
+          ) : (
+            <button
+              className="nav-disabled"
+              type="button"
+              onClick={() => navigate("/denied", { state: { action: "manage users" } })}
+            >
+              Users
+            </button>
+          )}
+          {canAdmin ? (
+            <NavLink to="/settings">Settings</NavLink>
+          ) : (
+            <button
+              className="nav-disabled"
+              type="button"
+              onClick={() => navigate("/denied", { state: { action: "change settings" } })}
+            >
+              Settings
             </button>
           )}
         </nav>

@@ -16,5 +16,11 @@ public sealed class Document
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public string? ErrorMessage { get; set; }
+    public string? DeedType { get; set; }
+    public string? ReviewStatus { get; set; }
     public DocumentFields? Fields { get; set; }
+    public ICollection<DocumentFlag> Flags { get; set; } = new List<DocumentFlag>();
+    public ICollection<DocumentTeamMember> Team { get; set; } = new List<DocumentTeamMember>();
+    public ICollection<DocumentLink> OutgoingLinks { get; set; } = new List<DocumentLink>();
+    public ICollection<DocumentLink> IncomingLinks { get; set; } = new List<DocumentLink>();
 }

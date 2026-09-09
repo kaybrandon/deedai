@@ -14,7 +14,8 @@ public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
     [HttpGet("clients")]
     public async Task<ActionResult<IReadOnlyList<ClientResponse>>> Clients(CancellationToken cancellationToken)
     {
-        var items = await db.Clients
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        var items = await ClientAccess.VisibleClients(db.Clients.AsNoTracking(), allowed)
             .OrderBy(x => x.Name)
             .Select(x => new ClientResponse(x.Id, x.Name))
             .ToListAsync(cancellationToken);
@@ -25,6 +26,8 @@ public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UserSummary>>> Users(CancellationToken cancellationToken)
     {
         var items = await db.Users
+            .AsNoTracking()
+            .Where(x => x.IsActive)
             .OrderBy(x => x.DisplayName)
             .Select(x => new UserSummary(x.Id, x.DisplayName, x.Role))
             .ToListAsync(cancellationToken);

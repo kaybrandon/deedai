@@ -1,6 +1,6 @@
 # Deed AI
 
-BIS Consultants **Deed AI** — Phase 1. Naming in this product is **Client** (never County) and **Software** (never CAMA). Roles: **Admin**, **Editor**, **Uploader**, **Viewer**.
+BIS Consultants **Deed AI** — Phase 2. Naming in this product is **Client** (never County) and **Software** (never CAMA). Roles: **Admin**, **Editor**, **Uploader**, **Viewer**.
 
 This repository replaces the README-only GitHub seed with a working Layout A application: a single .NET 10 API host serves the React/Vite SPA from `wwwroot` for Windows App Service `appdeedai`.
 
@@ -17,6 +17,16 @@ This repository replaces the README-only GitHub seed with a working Layout A app
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
+
+## Phase 2 acceptance
+
+- **Users (full):** Admin CRUD, role assign, Client access mapping; clear role-denied UI (not a blank page)
+- **Forgot / reset password** via SendGrid (replaces contact-Admin stub); hashed single-use tokens; `SendGridApiKey` from App Settings / Key Vault only
+- **Doc collab:** team members, flags, linked documents, assignee UI, bulk assign, next/prev on review
+- **Settings (Admin):** flags, statuses, deed-type maps + JSON/CSV/Excel export
+- **Reports:** CSV and Excel export of visible documents
+- **Software lookup / push** to the external system (mock when `SoftwareBaseUrl` is empty)
+- **UX P1:** dashboard cards stack on tablet, non-blocking upload progress dock, empty states
 
 ## Phase 1 acceptance
 
@@ -86,7 +96,7 @@ With `Queue__Mode=InMemory` and `Ocr__RunInProcess=true` the API hosts the worke
 dotnet test DeedAi.sln
 ```
 
-Covers role denial, upload/edit/delete/restore, CORS policy, OCR happy/fail, and poison → Failed+Retry.
+Covers role denial, user CRUD / Client access, password reset happy/fail, upload/edit/delete/restore, CORS policy, OCR happy/fail, and poison → Failed+Retry.
 
 ## Publish (Layout A, Windows win-x64 zip)
 
@@ -108,6 +118,8 @@ DocumentIntelligenceKey
 BISDocumentIntelligenceEndpoint
 StorageConnection
 SqlConnection
+SendGridApiKey
+SoftwareApiKey
 Database__Provider=SqlServer
 Storage__Mode=Azure
 Queue__Mode=Azure
@@ -124,6 +136,10 @@ Document Intelligence uses **BISDocumentIntelligenceEndpoint** + **DocumentIntel
 | Upload | | ✓ | ✓ | ✓ |
 | Edit fields, Retry, soft-delete | | | ✓ | ✓ |
 | Restore soft-deleted deeds | | | | ✓ |
+| Users + Settings | | | | ✓ |
+| Reports export | ✓ | ✓ | ✓ | ✓ |
+| Software lookup | ✓ | ✓ | ✓ | ✓ |
+| Software push | | | ✓ | ✓ |
 
 Denied API calls return HTTP 403 JSON: `Access denied. Your {role} role cannot perform this action.` The SPA shows the same on `/denied`.
 

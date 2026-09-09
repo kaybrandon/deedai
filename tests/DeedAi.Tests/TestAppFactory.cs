@@ -1,6 +1,8 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Queueing;
 using DeedAi.Infrastructure.Storage;
 using Microsoft.AspNetCore.Hosting;
@@ -52,10 +54,13 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IHostedService>();
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<RecordingEmailSender>();
+            services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<RecordingEmailSender>());
             services.AddSingleton<InMemoryBlobStorage>();
-            services.AddSingleton<DeedAi.Domain.Abstractions.IBlobStorage>(sp => sp.GetRequiredService<InMemoryBlobStorage>());
+            services.AddSingleton<IBlobStorage>(sp => sp.GetRequiredService<InMemoryBlobStorage>());
             services.AddSingleton<InMemoryOcrJobQueue>();
-            services.AddSingleton<DeedAi.Domain.Abstractions.IOcrJobQueue>(sp => sp.GetRequiredService<InMemoryOcrJobQueue>());
+            services.AddSingleton<IOcrJobQueue>(sp => sp.GetRequiredService<InMemoryOcrJobQueue>());
         });
     }
 

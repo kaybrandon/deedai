@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { endpoints, type ApiError } from "../api";
 import { useAuth } from "../auth";
 
@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(() => Boolean(localStorage.getItem(EMAIL_KEY)));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [forgot, setForgot] = useState(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -30,7 +29,8 @@ export default function LoginPage() {
         id: "",
         email: result.email,
         displayName: result.displayName,
-        role: result.role
+        role: result.role,
+        clientIds: []
       });
       navigate("/dashboard");
     } catch (err) {
@@ -71,9 +71,9 @@ export default function LoginPage() {
           {busy ? "Signing in…" : "Sign in"}
         </button>
         <div className="login-meta">
-          <button className="link" type="button" onClick={() => setForgot(true)}>
+          <Link className="link-plain" to="/forgot-password">
             Forgot password?
-          </button>
+          </Link>
           <label className="remember">
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
             Remember email
@@ -82,11 +82,6 @@ export default function LoginPage() {
         {error && (
           <div className="denied-box" role="alert">
             {error}
-          </div>
-        )}
-        {forgot && (
-          <div className="note-box">
-            Contact your Admin to reset your password. Access denied shows a clear message (not a blank page).
           </div>
         )}
       </form>

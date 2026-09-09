@@ -31,6 +31,16 @@ public sealed class UploadsController(DeedAiDbContext db, IBlobStorage blobs, IO
             return BadRequest(new { message = "Select a valid Client." });
         }
 
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        if (!ClientAccess.CanSee(allowed, clientId))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                title = "Access denied",
+                message = "Access denied. You do not have access to this Client."
+            });
+        }
+
         var uploadedBy = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
             ? userId
             : (Guid?)null;
@@ -78,7 +88,10 @@ public sealed class UploadsController(DeedAiDbContext db, IBlobStorage blobs, IO
                 null,
                 null,
                 false,
-                false));
+                false,
+                null,
+                null,
+                []));
         }
 
         return new UploadResult(created.Count, created, errors);

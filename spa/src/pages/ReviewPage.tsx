@@ -1,6 +1,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { endpoints, type DocumentDetail, type FieldDraft } from "../api";
+import {
+  endpoints,
+  type DocumentDetail,
+  type DocumentListItem,
+  type DeedTypeItem,
+  type FieldDraft,
+  type FlagItem,
+  type SoftwareLookup,
+  type StatusItem,
+  type UserSummary
+} from "../api";
 import { useAuth } from "../auth";
 import StatusChip from "../components/StatusChip";
 
@@ -21,16 +31,37 @@ export default function ReviewPage() {
   const navigate = useNavigate();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [fields, setFields] = useState<FieldDraft>(emptyFields);
+  const [deedType, setDeedType] = useState("");
+  const [reviewStatus, setReviewStatus] = useState("");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [flagDefs, setFlagDefs] = useState<FlagItem[]>([]);
+  const [deedTypes, setDeedTypes] = useState<DeedTypeItem[]>([]);
+  const [statuses, setStatuses] = useState<StatusItem[]>([]);
+  const [docs, setDocs] = useState<DocumentListItem[]>([]);
+  const [linkTarget, setLinkTarget] = useState("");
+  const [teamUser, setTeamUser] = useState("");
+  const [lookup, setLookup] = useState<SoftwareLookup | null>(null);
 
   async function load(documentId: string) {
     const detail = await endpoints.document(documentId);
     setDoc(detail);
     setFields({ ...emptyFields, ...detail.fields, isDraft: detail.fields.isDraft });
+    setDeedType(detail.deedType ?? "");
+    setReviewStatus(detail.reviewStatus ?? "");
     setSaved(!detail.fields.isDraft && Boolean(detail.fields.grantor));
   }
+
+  useEffect(() => {
+    endpoints.users().then(setUsers).catch(() => undefined);
+    endpoints.flags().then(setFlagDefs).catch(() => undefined);
+    endpoints.deedTypes().then(setDeedTypes).catch(() => undefined);
+    endpoints.statuses().then(setStatuses).catch(() => undefined);
+    endpoints.documents("").then(setDocs).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -69,9 +100,15 @@ export default function ReviewPage() {
       navigate("/denied", { state: { action: "edit deed fields" } });
       return;
     }
-    const next = await endpoints.saveFields(id, { ...fields, isDraft: asDraft });
+    const next = await endpoints.saveFields(id, {
+      ...fields,
+      isDraft: asDraft,
+      deedType,
+      reviewStatus
+    });
     setFields(next);
     setSaved(!next.isDraft);
+    await load(id);
   }
 
   if (!doc) {
@@ -81,6 +118,9 @@ export default function ReviewPage() {
       </section>
     );
   }
+
+  const selectedFlags = new Set(doc.flags.map((flag) => flag.id));
+  const reviewStatuses = statuses.filter((status) => !status.isSystem);
 
   return (
     <section className="page">
@@ -129,14 +169,55 @@ export default function ReviewPage() {
           </button>
         </div>
       )}
+      {notice && <div className="success-banner">{notice}</div>}
+      {error && <div className="denied-box">{error}</div>}
+
+      <div className="collab-row">
+        <label>
+          Assignee
+          <select
+            value={doc.assigneeUserId ?? ""}
+            disabled={!canEdit}
+            onChange={async (e) => {
+              await endpoints.assign(doc.id, e.target.value || null);
+              await load(doc.id);
+            }}
+          >
+            <option value="">Unassigned</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Deed type
+          <select value={deedType} disabled={!canEdit} onChange={(e) => setDeedType(e.target.value)}>
+            <option value="">None</option>
+            {deedTypes.map((item) => (
+              <option key={item.id} value={item.deedType}>
+                {item.deedType}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Review status
+          <select value={reviewStatus} disabled={!canEdit} onChange={(e) => setReviewStatus(e.target.value)}>
+            <option value="">None</option>
+            {reviewStatuses.map((item) => (
+              <option key={item.id} value={item.code}>
+                {item.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="review-grid">
         <div className="pdf-pane">
-            {pdfUrl ? (
-              <iframe title="PDF preview" src={pdfUrl} />
-            ) : (
-              <div className="pdf-placeholder">PDF preview</div>
-            )}
+          {pdfUrl ? <iframe title="PDF preview" src={pdfUrl} /> : <div className="pdf-placeholder">PDF preview</div>}
         </div>
         <form id="field-form" className="field-form" onSubmit={(e) => save(e, false)}>
           <Field label="Grantor" value={fields.grantor ?? ""} onChange={(v) => update("grantor", v)} readOnly={!canEdit} />
@@ -156,6 +237,168 @@ export default function ReviewPage() {
           </label>
           {fields.isDraft && canEdit && <p className="muted">Draft — press Save to confirm field edits.</p>}
         </form>
+      </div>
+
+      <div className="collab-grid">
+        <section className="panel">
+          <h2>Flags</h2>
+          <div className="flag-list">
+            {flagDefs.filter((flag) => flag.isActive).map((flag) => (
+              <label key={flag.id} className="remember">
+                <input
+                  type="checkbox"
+                  checked={selectedFlags.has(flag.id)}
+                  disabled={!canEdit}
+                  onChange={async (e) => {
+                    const next = new Set(selectedFlags);
+                    if (e.target.checked) next.add(flag.id);
+                    else next.delete(flag.id);
+                    await endpoints.setFlags(doc.id, [...next]);
+                    await load(doc.id);
+                  }}
+                />
+                <span className="flag-pill" style={{ background: flag.color }}>
+                  {flag.name}
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <h2>Team</h2>
+          <ul className="setting-list">
+            {doc.team.map((member) => (
+              <li key={member.id}>
+                <span>
+                  {member.displayName} <span className="muted">({member.role})</span>
+                </span>
+                {canEdit && (
+                  <button className="link" type="button" onClick={() => void endpoints.removeTeam(doc.id, member.id).then(() => load(doc.id))}>
+                    Remove
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {canEdit && (
+            <div className="inline-form">
+              <select value={teamUser} onChange={(e) => setTeamUser(e.target.value)} aria-label="Add team member">
+                <option value="">Add teammate</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.displayName}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="primary"
+                type="button"
+                disabled={!teamUser}
+                onClick={async () => {
+                  await endpoints.addTeam(doc.id, teamUser);
+                  setTeamUser("");
+                  await load(doc.id);
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="panel">
+          <h2>Linked documents</h2>
+          <ul className="setting-list">
+            {doc.linkedDocuments.map((linked) => (
+              <li key={linked.id}>
+                <button className="link" type="button" onClick={() => navigate(`/documents/${linked.id}`)}>
+                  {linked.name}
+                </button>
+                {canEdit && (
+                  <button className="link" type="button" onClick={() => void endpoints.unlinkDocument(doc.id, linked.id).then(() => load(doc.id))}>
+                    Unlink
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {canEdit && (
+            <div className="inline-form">
+              <select value={linkTarget} onChange={(e) => setLinkTarget(e.target.value)} aria-label="Link document">
+                <option value="">Link a deed</option>
+                {docs
+                  .filter((item) => item.id !== doc.id)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                className="primary"
+                type="button"
+                disabled={!linkTarget}
+                onClick={async () => {
+                  await endpoints.linkDocument(doc.id, linkTarget);
+                  setLinkTarget("");
+                  await load(doc.id);
+                }}
+              >
+                Link
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="panel">
+          <h2>Software</h2>
+          <p className="muted">Lookup or push this deed to the external Software system. Never called CAMA.</p>
+          <div className="row-actions">
+            <button
+              className="ghost"
+              type="button"
+              onClick={async () => {
+                try {
+                  setLookup(await endpoints.softwareLookup(doc.id));
+                  setError(null);
+                } catch (err) {
+                  setLookup(null);
+                  setError(err instanceof Error ? err.message : "Software lookup failed.");
+                }
+              }}
+            >
+              Lookup
+            </button>
+            <button
+              className="primary"
+              type="button"
+              disabled={!canEdit}
+              onClick={async () => {
+                if (!canEdit) {
+                  navigate("/denied", { state: { action: "push to Software" } });
+                  return;
+                }
+                const result = await endpoints.softwarePush(doc.id);
+                setNotice(result.message);
+              }}
+            >
+              Push
+            </button>
+          </div>
+          {lookup && (
+            <dl className="lookup-dl">
+              <dt>Parcel</dt>
+              <dd>{lookup.parcelId}</dd>
+              <dt>Owner</dt>
+              <dd>{lookup.owner ?? "—"}</dd>
+              <dt>Address</dt>
+              <dd>{lookup.address ?? "—"}</dd>
+              <dt>Record</dt>
+              <dd>{lookup.softwareRecordId ?? "—"}</dd>
+            </dl>
+          )}
+        </section>
       </div>
       {saved && <span className="chip chip-ready saved-pill">Saved</span>}
     </section>

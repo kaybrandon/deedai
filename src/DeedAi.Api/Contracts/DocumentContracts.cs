@@ -4,6 +4,12 @@ public sealed record ClientResponse(Guid Id, string Name);
 
 public sealed record UserSummary(Guid Id, string DisplayName, string Role);
 
+public sealed record FlagSummary(Guid Id, string Name, string Color);
+
+public sealed record LinkedDocument(Guid Id, string Name, string? Note);
+
+public sealed record TeamMember(Guid Id, string DisplayName, string Role);
+
 public sealed record DocumentListItem(
     Guid Id,
     string Name,
@@ -14,7 +20,10 @@ public sealed record DocumentListItem(
     string? Assignee,
     Guid? AssigneeUserId,
     bool CanRetry,
-    bool IsDeleted);
+    bool IsDeleted,
+    string? DeedType,
+    string? ReviewStatus,
+    IReadOnlyList<FlagSummary> Flags);
 
 public sealed record DocumentDetail(
     Guid Id,
@@ -27,9 +36,14 @@ public sealed record DocumentDetail(
     Guid? AssigneeUserId,
     string? ErrorMessage,
     string? DiRawBlobPath,
+    string? DeedType,
+    string? ReviewStatus,
     FieldDraft Fields,
     Guid? PreviousId,
-    Guid? NextId);
+    Guid? NextId,
+    IReadOnlyList<FlagSummary> Flags,
+    IReadOnlyList<TeamMember> Team,
+    IReadOnlyList<LinkedDocument> LinkedDocuments);
 
 public sealed record FieldDraft(
     string? Grantor,
@@ -49,7 +63,9 @@ public sealed record FieldUpdateRequest(
     string? ParcelId,
     string? Client,
     string? Notes,
-    bool IsDraft);
+    bool IsDraft,
+    string? DeedType,
+    string? ReviewStatus);
 
 public sealed record DashboardCounts(
     int Uploaded,
@@ -59,3 +75,13 @@ public sealed record DashboardCounts(
     int Failed);
 
 public sealed record UploadResult(int Queued, IReadOnlyList<DocumentListItem> Documents, IReadOnlyList<string> Errors);
+
+public sealed record AssignRequest(Guid? AssigneeUserId);
+
+public sealed record BulkAssignRequest(IReadOnlyList<Guid> DocumentIds, Guid? AssigneeUserId);
+
+public sealed record SetFlagsRequest(IReadOnlyList<Guid> FlagIds);
+
+public sealed record LinkDocumentRequest(Guid TargetDocumentId, string? Note);
+
+public sealed record TeamMemberRequest(Guid UserId);
