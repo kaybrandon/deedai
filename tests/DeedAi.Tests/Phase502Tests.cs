@@ -36,7 +36,7 @@ public sealed class Phase502Tests
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var volumeFn = SliceFunction(charts, "export function VolumeChart");
         Assert.Contains("item.key === \"total\"", volumeFn, StringComparison.Ordinal);
-        Assert.Contains("#0D8A7F", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("const VOLUME_TEAL = \"#0D8A7F\"", charts, StringComparison.Ordinal);
         Assert.Contains("backgroundColor: VOLUME_TEAL", volumeFn, StringComparison.Ordinal);
         Assert.DoesNotContain("stacked: true", volumeFn, StringComparison.Ordinal);
         Assert.DoesNotContain("key !== \"total\"", volumeFn, StringComparison.Ordinal);
