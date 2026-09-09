@@ -82,19 +82,30 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         {
             Assert.True(
                 type.GetCustomAttribute<MigrationAttribute>() is not null,
-                $"{type.Name} is missing [Migration] and would be skipped on Azure SQL.");
+                $"{type.Name} is missing [Migration] (Designer) and would be skipped on Azure SQL.");
             Assert.True(
                 type.GetCustomAttribute<DbContextAttribute>() is not null,
-                $"{type.Name} is missing [DbContext] and would be skipped on Azure SQL.");
+                $"{type.Name} is missing [DbContext] (Designer) and would be skipped on Azure SQL.");
+            Assert.True(
+                type.GetMethod("BuildTargetModel", BindingFlags.Instance | BindingFlags.NonPublic) is not null,
+                $"{type.Name} is missing BuildTargetModel — add a *.Designer.cs like the other migrations.");
         }
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DeedAiDbContext>();
+        var assembly = db.GetService<IMigrationsAssembly>();
+        var discovered = assembly.Migrations.Keys.ToList();
+        Assert.Contains(Phase4SqlServerSchema.Phase4HardeningId, discovered);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AId, discovered);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, discovered);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AzureRepairId, discovered);
+        Assert.Equal(typeof(Phase4A), assembly.Migrations[Phase4SqlServerSchema.Phase4AId].AsType());
+        Assert.Equal(typeof(Phase4AQa), assembly.Migrations[Phase4SqlServerSchema.Phase4AQaId].AsType());
+        Assert.Equal(typeof(Phase4AzureRepair), assembly.Migrations[Phase4SqlServerSchema.Phase4AzureRepairId].AsType());
+
         var ids = db.Database.GetMigrations().ToList();
-        Assert.Contains(Phase4SqlServerSchema.Phase4HardeningId, ids);
         Assert.Contains(Phase4SqlServerSchema.Phase4AId, ids);
         Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, ids);
-        Assert.Contains(Phase4SqlServerSchema.Phase4AzureRepairId, ids);
         Assert.True(
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AId, Phase4SqlServerSchema.Phase4AQaId) < 0);
         Assert.True(

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -7,11 +6,9 @@ namespace DeedAi.Infrastructure.Data.Migrations
 {
     /// <summary>
     /// Catch-up for Azure SQL when Phase 4A / Phase 4AQa were invisible to EF
-    /// (missing [Migration] attributes) or only partly applied. No-ops when the
-    /// objects already exist. Does not wipe data.
+    /// (missing Designer / [Migration] attributes) or only partly applied.
+    /// No-ops when the objects already exist. Does not wipe data.
     /// </summary>
-    [DbContext(typeof(DeedAiDbContext))]
-    [Migration(Phase4SqlServerSchema.Phase4AzureRepairId)]
     public partial class Phase4AzureRepair : Migration
     {
         /// <inheritdoc />

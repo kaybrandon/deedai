@@ -1,7 +1,7 @@
 # Changelog — Deed AI SOPs
 
 ## 2026-09-09 — Phase 4 Azure schema hotfix
-- Phase 4A / Phase 4AQa are now registered EF migrations (`[Migration]` + `[DbContext]`) so Azure `MigrateAsync` actually applies AppPolicies, field maps, PropertyDefaults, SoftwareClientConfigs, SalesTabCodes, and `Documents.SalesTabCode`.
+- Phase 4A / Phase 4AQa now have `*.Designer.cs` files (`[Migration]` + `[DbContext]` + `BuildTargetModel`) so Azure `MigrateAsync` actually applies AppPolicies, field maps, PropertyDefaults, SoftwareClientConfigs, SalesTabCodes, and `Documents.SalesTabCode`.
 - SQL Server scripts are idempotent (`IF OBJECT_ID` / `IF COL_LENGTH` / `IF NOT EXISTS`). `Phase4AzureRepair` re-applies any missing Phase 4 objects without wiping data. UploadedBy stays `ON DELETE NO ACTION`.
 - Ops: after merge, redeploy Layout A zip to `appdeedai`. Do not drop Clients or baseline-wipe.
 

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -7,8 +6,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DeedAi.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    [DbContext(typeof(DeedAiDbContext))]
-    [Migration(Phase4SqlServerSchema.Phase4AQaId)]
     public partial class Phase4AQa : Migration
     {
         /// <inheritdoc />
