@@ -15,7 +15,7 @@ export PATH="${DOTNET_ROOT:-$HOME/.dotnet}:$PATH"
 export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
 
 echo "==> Building SPA into API wwwroot"
-if [[ ! -d "${ROOT}/spa/node_modules" ]]; then
+if [[ -f "${ROOT}/spa/package-lock.json" ]]; then
   (cd "${ROOT}/spa" && npm ci --no-audit --no-fund)
 else
   (cd "${ROOT}/spa" && npm install --no-audit --no-fund)
@@ -67,6 +67,9 @@ print("wrote", zip_path)
 PY
 fi
 
+STABLE_ZIP="${ROOT}/artifacts/appdeedai-windows.zip"
+cp -f "${ZIP}" "${STABLE_ZIP}"
 echo "Published ${ZIP}"
+echo "Also copied to ${STABLE_ZIP}"
 echo "Deploy to Windows App Service appdeedai (plan asp-bis-deed-ai B1, RG rg-bis-deed-ai, South Central US)."
-echo "Set stack to .NET 10. Apply settings from .env.example (no secrets in source)."
+echo "Set stack to .NET 10, IIS in-process. Apply settings from .env.example (no secrets in source)."

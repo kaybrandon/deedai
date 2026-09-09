@@ -95,7 +95,7 @@ chmod +x scripts/publish-layout-a.sh
 ./scripts/publish-layout-a.sh
 ```
 
-Writes `artifacts/layout-a/deedai-win-x64.zip` (framework-dependent `win-x64`) plus a continuous WebJob at `App_Data/jobs/continuous/ocr-worker`.
+Writes `artifacts/layout-a/deedai-win-x64.zip` (framework-dependent `win-x64`, IIS in-process) plus a copy at `artifacts/appdeedai-windows.zip`, and a continuous WebJob at `App_Data/jobs/continuous/ocr-worker`.
 
 Deploy the zip to **appdeedai**. Set the App Service stack to **.NET 10**. Apply settings from `.env.example` (secrets live in App Settings / Key Vault, never in source or migrations).
 
