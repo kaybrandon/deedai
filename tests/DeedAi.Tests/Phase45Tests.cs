@@ -220,6 +220,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var created = await admin.PostAsync("/api/admin/users", TestAppFactory.Json(
             """{"email":"noclient.profile@bisconsultants.com","displayName":"No Client","fullName":"No Client Profile","role":"Viewer","password":"ChangeMe!1","isActive":true,"clientIds":[]}"""));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        await MarkVerified("noclient.profile@bisconsultants.com");
 
         var client = await Authed("noclient.profile@bisconsultants.com");
         var me = await client.GetAsync("/api/auth/me");
