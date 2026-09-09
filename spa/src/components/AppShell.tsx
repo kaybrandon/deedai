@@ -28,7 +28,7 @@ export default function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const title = productTitle(me?.clients);
   const identity = me?.displayName || me?.email || "signed-in user";
-  const onWorkspace = location.pathname === "/settings" && location.hash !== "#swagger";
+  const onSystem = location.pathname === "/settings" && location.hash !== "#swagger";
   const onApiDocs = location.pathname === "/settings" && location.hash === "#swagger";
   const onSoftware = location.pathname === "/software" || location.pathname.startsWith("/software/");
   const onUsers = location.pathname === "/users" || location.pathname.startsWith("/users/");
@@ -103,8 +103,8 @@ export default function AppShell() {
             {settingsOpen && (
               <div className="nav-sub" id="settings-nav">
                 {canAdmin ? (
-                  <NavLink to="/settings" end className={() => childClass(onWorkspace)} onClick={closeNav}>
-                    Workspace
+                  <NavLink to="/settings" end className={() => childClass(onSystem)} onClick={closeNav}>
+                    System
                   </NavLink>
                 ) : (
                   <button
@@ -112,7 +112,7 @@ export default function AppShell() {
                     type="button"
                     onClick={() => navigate("/denied", { state: { action: "change settings" } })}
                   >
-                    Workspace
+                    System
                   </button>
                 )}
                 <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>

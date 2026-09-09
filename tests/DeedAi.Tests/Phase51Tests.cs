@@ -56,17 +56,18 @@ public sealed class Phase51Tests
         var shell = Read("spa/src/components/AppShell.tsx");
         Assert.Contains("Software", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
-        Assert.Contains("Workspace", shell, StringComparison.Ordinal);
+        Assert.Contains("                    System", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("nav-group-toggle${onSettingsSection", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("is-active", shell, StringComparison.Ordinal);
-        Assert.Contains("childClass(onWorkspace)", shell, StringComparison.Ordinal);
+        Assert.Contains("childClass(onSystem)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onSoftware)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onUsers)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onApiDocs)", shell, StringComparison.Ordinal);
-        Assert.Contains("<h1>Workspace</h1>", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("<h1>System</h1>", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
     }
 
     [Fact]
