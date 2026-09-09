@@ -90,7 +90,7 @@ export default function SwaggerAdminPanel() {
   return (
     <section className={`panel swagger-panel${enabled ? "" : " is-off"}`} id="swagger">
       <h2>
-        API documentation (Swagger) <FieldHelp helpKey="settings.swagger" />
+        API Documentation (Swagger) <FieldHelp helpKey="settings.swagger" />
       </h2>
       <p className="muted">
         Admins only. Stored in the database — no App Setting change needed. Off by default.

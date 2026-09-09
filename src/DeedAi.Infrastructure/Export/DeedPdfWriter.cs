@@ -124,7 +124,7 @@ public static class DeedPdfWriter
             $"Ready: {ready}",
             $"Failed: {failed}",
             "",
-            "Status mix"
+            "Status Mix"
         };
 
         if (statusMix.Count == 0 || uploaded == 0)
@@ -141,7 +141,7 @@ public static class DeedPdfWriter
         }
 
         lines.Add("");
-        lines.Add("By user");
+        lines.Add("By Users");
         if (userLabels.Count == 0)
         {
             lines.Add("No by-user activity for this range.");
@@ -160,7 +160,7 @@ public static class DeedPdfWriter
         }
 
         lines.Add("");
-        lines.Add("Volume over time");
+        lines.Add("Volume Over Time");
         if (volumeLabels.Count == 0)
         {
             lines.Add("No volume for this range.");

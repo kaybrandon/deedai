@@ -7,9 +7,9 @@ import { documentsPath } from "../documentsPath";
 import EmptyState from "./EmptyState";
 
 const emptyCopy = {
-  mix: { title: "No status mix", body: "No deeds in this range. Widen the dates or pick another Client." },
-  users: { title: "No by-user activity", body: "No assigned or unassigned deeds in this range." },
-  volume: { title: "No volume yet", body: "Upload a PDF or widen the dates to see volume over time." }
+  mix: { title: "No Status Mix", body: "No deeds in this range. Widen the dates or pick another Client." },
+  users: { title: "No By Users Activity", body: "No assigned or unassigned deeds in this range." },
+  volume: { title: "No Volume Yet", body: "Upload a PDF or widen the dates to see volume over time." }
 };
 
 function pointerOnHit(event: ChartEvent, elements: ActiveElement[]) {
@@ -38,7 +38,7 @@ export function StatusMixChart({
 
   return (
     <>
-      <div className="chart-canvas chart-canvas-clickable" role="img" aria-label={`Status mix for ${data.total} deeds`}>
+      <div className="chart-canvas chart-canvas-clickable" role="img" aria-label={`Status Mix for ${data.total} deeds`}>
         <Doughnut
           data={{
             labels: slices.map((slice) => slice.label),
@@ -115,7 +115,7 @@ export function ByUserChart({
 
   return (
     <>
-      <div className="chart-canvas chart-canvas-clickable" role="img" aria-label="Deeds by user and status">
+      <div className="chart-canvas chart-canvas-clickable" role="img" aria-label="Deeds by Users and status">
         <Bar
           data={{
             labels: data.labels,
@@ -179,7 +179,7 @@ export function VolumeChart({ data }: { data: DashboardVolume | null }) {
   }
 
   return (
-    <div className="chart-canvas chart-canvas-wide" role="img" aria-label="Deed volume over time">
+    <div className="chart-canvas chart-canvas-wide" role="img" aria-label="Deed Volume Over Time">
       <Line
         data={{
           labels: data.labels,

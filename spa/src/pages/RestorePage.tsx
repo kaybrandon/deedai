@@ -95,7 +95,7 @@ export default function RestorePage() {
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
       {rows.length === 0 && !error ? (
-        <EmptyState title="No deleted deeds" body="Nothing to restore for this Client. Soft-delete a deed from Documents first." />
+        <EmptyState title="No Deleted Deeds" body="Nothing to restore for this Client. Soft-delete a deed from Documents first." />
       ) : rows.length > 0 ? (
         <div className="table-wrap">
           <table>
@@ -122,7 +122,7 @@ export default function RestorePage() {
                       Restore
                     </button>
                     <button className="ghost" type="button" onClick={() => setPending({ kind: "hard", row })}>
-                      Hard delete
+                      Hard Delete
                     </button>
                   </td>
                 </tr>
@@ -146,7 +146,7 @@ export default function RestorePage() {
         <ConfirmSheet
           title={`Permanently delete ${pending.row.name}?`}
           body="Hard-delete cannot be undone. The PDF blob is removed."
-          confirmLabel="Hard delete"
+          confirmLabel="Hard Delete"
           helpKey="restore.confirmHardDelete"
           onCancel={() => setPending(null)}
           onConfirm={() => void confirm()}

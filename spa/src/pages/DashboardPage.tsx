@@ -129,7 +129,7 @@ export default function DashboardPage() {
   const appliedClient = clients.find((client) => client.id === applied.clientId);
   const printTitle = appliedClient ? `${appliedClient.name} Deed AI` : "Deed AI";
   const printRange = `${applied.from || "all dates"} to ${applied.to || "all dates"}`;
-  const printClient = appliedClient?.name ?? "All clients";
+  const printClient = appliedClient?.name ?? "All Clients";
   const busy = loading || exporting;
 
   return (
@@ -165,7 +165,7 @@ export default function DashboardPage() {
         <label>
           Client
           <select value={clientId} onChange={(e) => setClientId(e.target.value)}>
-            <option value="">All clients</option>
+            <option value="">All Clients</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
@@ -188,15 +188,15 @@ export default function DashboardPage() {
         </div>
         <div className="chart-grid">
           <article className="chart-card">
-            <h2>Status mix</h2>
+            <h2>Status Mix</h2>
             <StatusMixChart data={mix} clientId={applied.clientId} />
           </article>
           <article className="chart-card">
-            <h2>By user</h2>
+            <h2>By Users</h2>
             <ByUserChart data={byUser} clientId={applied.clientId} />
           </article>
           <article className="chart-card chart-card-wide">
-            <h2>Volume over time</h2>
+            <h2>Volume Over Time</h2>
             <VolumeChart data={volume} />
           </article>
         </div>

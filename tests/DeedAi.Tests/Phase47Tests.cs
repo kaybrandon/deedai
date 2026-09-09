@@ -51,9 +51,9 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
         var text = Encoding.ASCII.GetString(bytes);
         Assert.Contains("Deed AI", text);
         Assert.Contains("Counts", text);
-        Assert.Contains("Status mix", text);
-        Assert.Contains("By user", text);
-        Assert.Contains("Volume over time", text);
+        Assert.Contains("Status Mix", text);
+        Assert.Contains("By Users", text);
+        Assert.Contains("Volume Over Time", text);
         Assert.Contains("Page 1 of", text);
         Assert.Contains("Generated ", text);
         AssertNoSecretsOrLegacyNames(text);

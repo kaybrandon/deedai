@@ -74,7 +74,7 @@ public sealed class Phase50Tests
         }
 
         Assert.Contains("Retry", documents, StringComparison.Ordinal);
-        Assert.Contains("Retry extract", review, StringComparison.Ordinal);
+        Assert.Contains("Retry Extract", review, StringComparison.Ordinal);
         Assert.Contains("Incomplete", review, StringComparison.Ordinal);
         Assert.Contains("ocr-failed-banner", review, StringComparison.Ordinal);
         Assert.Contains("shownStatus !== \"Ready\"", review, StringComparison.Ordinal);

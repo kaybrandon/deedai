@@ -3,23 +3,67 @@ namespace DeedAi.Tests;
 public sealed class DashboardChartNavTests
 {
     [Fact]
-    public void Chart_titles_match_dashboard_sentence_case()
+    public void Chart_titles_match_ba_title_case()
     {
         var page = Read("spa/src/pages/DashboardPage.tsx");
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var pdf = Read("src/DeedAi.Infrastructure/Export/DeedPdfWriter.cs");
 
-        Assert.Contains("<h2>Status mix</h2>", page, StringComparison.Ordinal);
-        Assert.Contains("<h2>By user</h2>", page, StringComparison.Ordinal);
-        Assert.Contains("<h2>Volume over time</h2>", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("Status Mix", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("By Users", page, StringComparison.Ordinal);
-        Assert.DoesNotContain("By users", page, StringComparison.Ordinal);
-        Assert.Contains("Status mix", charts, StringComparison.Ordinal);
-        Assert.Contains("Status mix", pdf, StringComparison.Ordinal);
-        Assert.Contains("By user", pdf, StringComparison.Ordinal);
+        Assert.Contains("<h2>Status Mix</h2>", page, StringComparison.Ordinal);
+        Assert.Contains("<h2>By Users</h2>", page, StringComparison.Ordinal);
+        Assert.Contains("<h2>Volume Over Time</h2>", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("<h2>Status mix</h2>", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("<h2>By user</h2>", page, StringComparison.Ordinal);
+        Assert.Contains("Status Mix", charts, StringComparison.Ordinal);
+        Assert.Contains("Status Mix", pdf, StringComparison.Ordinal);
+        Assert.Contains("By Users", pdf, StringComparison.Ordinal);
+        Assert.Contains("Volume Over Time", pdf, StringComparison.Ordinal);
         AssertNoLegacyNames(page);
         AssertNoLegacyNames(charts);
+    }
+
+    [Fact]
+    public void Spa_headings_nav_and_primary_labels_use_title_case()
+    {
+        var shell = Read("spa/src/components/AppShell.tsx");
+        var dashboard = Read("spa/src/pages/DashboardPage.tsx");
+        var documents = Read("spa/src/pages/DocumentsPage.tsx");
+        var review = Read("spa/src/pages/ReviewPage.tsx");
+        var users = Read("spa/src/pages/UsersPage.tsx");
+        var settings = Read("spa/src/pages/SettingsPage.tsx");
+        var software = Read("spa/src/pages/SoftwarePage.tsx");
+        var login = Read("spa/src/pages/LoginPage.tsx");
+
+        Assert.Contains("My Profile", shell, StringComparison.Ordinal);
+        Assert.Contains("Logged In As", shell, StringComparison.Ordinal);
+        Assert.Contains("Sign Out", shell, StringComparison.Ordinal);
+        Assert.Contains("<h2>Status Mix</h2>", dashboard, StringComparison.Ordinal);
+        Assert.Contains("<h2>By Users</h2>", dashboard, StringComparison.Ordinal);
+        Assert.Contains("<h2>Volume Over Time</h2>", dashboard, StringComparison.Ordinal);
+        Assert.Contains("<h1>Upload Documents</h1>", Read("spa/src/pages/UploadPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("<h1>Deed Review</h1>", review, StringComparison.Ordinal);
+        Assert.Contains("<h1>My Profile</h1>", Read("spa/src/pages/ProfilePage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("<h1>Access Denied</h1>", Read("spa/src/pages/DeniedPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("<h1>Reset Password</h1>", Read("spa/src/pages/ForgotPasswordPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("Sign In", login, StringComparison.Ordinal);
+        Assert.Contains("Retry Extract", review, StringComparison.Ordinal);
+        Assert.Contains("Linked Documents", review, StringComparison.Ordinal);
+        Assert.Contains("Software Defaults", settings, StringComparison.Ordinal);
+        Assert.Contains("Notify Emails", settings, StringComparison.Ordinal);
+        Assert.Contains("Client Software Settings", software, StringComparison.Ordinal);
+        Assert.Contains("Needs Review", documents, StringComparison.Ordinal);
+        Assert.Contains("New User", users, StringComparison.Ordinal);
+        Assert.Contains("Edit User", users, StringComparison.Ordinal);
+
+        Assert.Contains("Counts and charts for Clients you can access.", dashboard, StringComparison.Ordinal);
+        Assert.Contains("Search, assign, and open deeds for your Clients.", documents, StringComparison.Ordinal);
+        Assert.Contains("Sign in to your Client workspace", login, StringComparison.Ordinal);
+        AssertNoLegacyNames(shell);
+        AssertNoLegacyNames(dashboard);
+        AssertNoLegacyNames(documents);
+        AssertNoLegacyNames(review);
+        AssertNoLegacyNames(settings);
+        AssertNoLegacyNames(software);
     }
 
     [Fact]

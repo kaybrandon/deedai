@@ -1,5 +1,5 @@
 const LABELS: Record<string, string> = {
-  NeedsReview: "Needs review",
+  NeedsReview: "Needs Review",
   Approved: "Approved"
 };
 

@@ -43,12 +43,12 @@ export default function ResetPasswordPage() {
 
   return (
     <form className="login-card" onSubmit={onSubmit}>
-        <h1>Choose a new password</h1>
+        <h1>Choose a New Password</h1>
         <p className="subtitle">Use the link from your email.</p>
         {!token && <div className="denied-box">This reset link is missing a token.</div>}
         <PasswordField
           id="reset-password"
-          label="New password"
+          label="New Password"
           value={password}
           required
           error={passwordError}
@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
           }}
         />
         <label>
-          Confirm password
+          Confirm Password
           <input
             id="reset-confirm"
             type="password"
@@ -83,10 +83,10 @@ export default function ResetPasswordPage() {
           )}
         </label>
         <button className="primary" type="submit" disabled={busy || !token}>
-          {busy ? "Saving…" : "Update password"}
+          {busy ? "Saving…" : "Update Password"}
         </button>
         <Link className="link-plain" to="/login">
-          Back to sign in
+          Back to Sign In
         </Link>
         {error && (
           <div className="denied-box" role="alert">

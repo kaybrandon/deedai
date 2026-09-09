@@ -101,7 +101,7 @@ export default function DocumentsPage() {
           <option>Processing</option>
           <option>Ready</option>
           <option>Failed</option>
-          <option value="NeedsReview">Needs review</option>
+          <option value="NeedsReview">Needs Review</option>
         </select>
         <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
           <option value="">Client</option>
@@ -126,7 +126,7 @@ export default function DocumentsPage() {
               checked={includeDeleted}
               onChange={(e) => setIncludeDeleted(e.target.checked)}
             />
-            Show deleted
+            Show Deleted
           </label>
         )}
         <button className="primary" type="submit">
@@ -145,14 +145,14 @@ export default function DocumentsPage() {
               await reload();
             }}
           >
-            Requeue failed
+            Requeue Failed
           </button>
         </div>
       )}
       {canEdit && selected.length > 0 && (
         <div className="bulk-bar">
           <span>{selected.length} selected</span>
-          <select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} aria-label="Bulk assignee">
+          <select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} aria-label="Bulk Assignee">
             <option value="">Assignee</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
@@ -169,13 +169,13 @@ export default function DocumentsPage() {
               await reload();
             }}
           >
-            Bulk assign
+            Bulk Assign
           </button>
         </div>
       )}
       {notice && <div className="success-banner">{notice}</div>}
       {rows.length === 0 ? (
-        <EmptyState title="No documents match" body="Try another Client, status, or upload a PDF to get started." />
+        <EmptyState title="No Documents Match" body="Try another Client, status, or upload a PDF to get started." />
       ) : (
         <div className="table-wrap">
           <table>
@@ -264,7 +264,7 @@ export default function DocumentsPage() {
                           Restore
                         </button>
                         <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
-                          Hard delete
+                          Hard Delete
                         </button>
                       </>
                     )}
@@ -308,7 +308,7 @@ export default function DocumentsPage() {
         <ConfirmSheet
           title={`Permanently delete ${pendingHard.name}?`}
           body="Hard-delete cannot be undone. Soft-delete first if this deed is still active."
-          confirmLabel="Hard delete"
+          confirmLabel="Hard Delete"
           onCancel={() => setPendingHard(null)}
           onConfirm={async () => {
             await endpoints.hardDelete(pendingHard.id);

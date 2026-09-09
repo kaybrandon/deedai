@@ -98,7 +98,7 @@ export default function UploadPage() {
   return (
     <section className="page has-ocr-ribbon">
       <OcrRibbon current="Upload" />
-      <h1>Upload documents</h1>
+      <h1>Upload Documents</h1>
       <p className="muted">Upload continues in the progress dock if you leave this page.</p>
       <form onSubmit={onSubmit}>
         <label className="narrow">
@@ -129,7 +129,7 @@ export default function UploadPage() {
           />
         </div>
         {items.length === 0 ? (
-          <EmptyState title="No files queued" body="Drop PDFs here. Progress will not block the rest of Deed AI." />
+          <EmptyState title="No Files Queued" body="Drop PDFs here. Progress will not block the rest of Deed AI." />
         ) : (
           <ul className="file-list">
             {items.map((item, index) => (

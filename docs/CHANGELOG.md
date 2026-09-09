@@ -1,10 +1,11 @@
 # Changelog — Deed AI SOPs
 
-## 2026-09-09 — Dashboard chart rename + clickable filters
-- Chart titles stay sentence case with the rest of the dashboard: **Status mix**, **By user**, **Volume over time**.
-- Status mix donut segments and ≥44px legend links open Documents with the same `status` + `clientId` query as the count cards.
-- By user bars and ≥44px user links open Documents with `assigneeUserId` + `clientId`. Unassigned has no Documents assignee filter, so that column is not a link.
-- Volume stays non-clickable: Documents list/UI has no `from`/`to` filter. Mask A tokens unchanged. No EF migration.
+## 2026-09-09 — Dashboard polish: Title Case + clickable chart filters
+- BA chart titles (exact): **Status Mix**, **By Users**, **Volume Over Time**. Same titles on dashboard print/PDF export.
+- Sitewide SPA Title Case on headings, nav, card titles, and primary button/tab/field labels. Kickers, placeholders, errors, and help stay sentence case.
+- Status Mix donut segments and ≥44px keyboard legend links open Documents with the same `status` + applied `clientId` as the count cards.
+- By Users bars and ≥44px user links open Documents with `assigneeUserId` + applied `clientId`. Unassigned has no Documents assignee filter, so that column is not a link.
+- Volume Over Time stays non-clickable: Documents list/UI and `GET /api/documents` have no `from`/`to` date-bucket filter. Mask A tokens unchanged. No EF migration.
 
 ## 2026-09-09 — Phase 4.2.4 no-store on Swagger index.html
 - Swashbuckle served `/swagger/index.html` (and `index.js`) with `Cache-Control: max-age=604800, private`. QA2 could keep a 7-day stale shell while authorize.js was already no-store, so `__deedAiMeasureAuthorize` stayed undefined.

@@ -175,13 +175,13 @@ export default function SoftwarePage() {
             <dd>{status.mode}</dd>
             <dt>Status</dt>
             <dd>{status.connected ? "Connected" : "Not connected"}</dd>
-            <dt>API key</dt>
+            <dt>API Key</dt>
             <dd>{status.keyConfigured ? "Configured" : "Not configured"}</dd>
             <dt>Connection URL</dt>
             <dd>{status.connectionUrl ?? "—"}</dd>
             <dt>Push</dt>
             <dd>{status.pushEnabled ? "Enabled" : "Disabled"}</dd>
-            <dt>Last sync</dt>
+            <dt>Last Sync</dt>
             <dd>
               {status.lastSyncAt
                 ? `${status.lastSyncStatus ?? "—"} · ${new Date(status.lastSyncAt).toLocaleString()}${
@@ -189,7 +189,7 @@ export default function SoftwarePage() {
                   }`
                 : "None yet"}
             </dd>
-            <dt>Last fail</dt>
+            <dt>Last Fail</dt>
             <dd>{status.lastFailReason ?? "—"}</dd>
           </dl>
         ) : (
@@ -203,7 +203,7 @@ export default function SoftwarePage() {
                 checked={settings.pushEnabled}
                 onChange={(e) => void saveSettings({ ...settings, pushEnabled: e.target.checked })}
               />
-              <LabelWithHelp helpKey="software.enablePush">Enable Software push</LabelWithHelp>
+              <LabelWithHelp helpKey="software.enablePush">Enable Software Push</LabelWithHelp>
             </label>
             <label>
               Default Software group
@@ -219,7 +219,7 @@ export default function SoftwarePage() {
 
       {canAdmin && draft && (
         <section className="panel">
-          <h2>Client Software settings</h2>
+          <h2>Client Software Settings</h2>
           <p className="muted">
             Vendor, API URL, group code, Sales Tab, and the six property resets are stored per Client. The API key stays
             in Key Vault / App Settings and is never shown here.
@@ -229,7 +229,7 @@ export default function SoftwarePage() {
             <select
               value={configClientId}
               onChange={(e) => setConfigClientId(e.target.value)}
-              aria-label="Client Software settings"
+              aria-label="Client Software Settings"
             >
               {configs.map((item) => (
                 <option key={item.clientId} value={item.clientId}>
@@ -255,15 +255,15 @@ export default function SoftwarePage() {
               <input value={draft.apiUrl ?? ""} onChange={(e) => setDraft({ ...draft, apiUrl: e.target.value })} />
             </label>
             <label>
-              <LabelWithHelp helpKey="software.groupCode">Group code</LabelWithHelp>
+              <LabelWithHelp helpKey="software.groupCode">Group Code</LabelWithHelp>
               <input value={draft.groupCode ?? ""} onChange={(e) => setDraft({ ...draft, groupCode: e.target.value })} />
             </label>
             <label>
-              <LabelWithHelp helpKey="software.dateLabelDepth">Mapped date/label depth</LabelWithHelp>
+              <LabelWithHelp helpKey="software.dateLabelDepth">Mapped Date/Label Depth</LabelWithHelp>
               <select
                 value={draft.dateLabelDepth}
                 onChange={(e) => setDraft({ ...draft, dateLabelDepth: Number(e.target.value) })}
-                aria-label="Mapped date/label depth"
+                aria-label="Mapped Date/Label Depth"
               >
                 <option value={1}>1 — instrument date</option>
                 <option value={2}>2 — instrument + updated</option>
@@ -271,7 +271,7 @@ export default function SoftwarePage() {
               </select>
             </label>
             <label>
-              <LabelWithHelp helpKey="sales.considerationThreshold">Consideration threshold</LabelWithHelp>
+              <LabelWithHelp helpKey="sales.considerationThreshold">Consideration Threshold</LabelWithHelp>
               <input
                 type="number"
                 min={0}
@@ -286,7 +286,7 @@ export default function SoftwarePage() {
                 checked={draft.removeLeadingZeros}
                 onChange={(e) => setDraft({ ...draft, removeLeadingZeros: e.target.checked })}
               />
-              <LabelWithHelp helpKey="software.removeLeadingZeros">Remove leading zeros</LabelWithHelp>
+              <LabelWithHelp helpKey="software.removeLeadingZeros">Remove Leading Zeros</LabelWithHelp>
             </label>
             <label className="remember">
               <input
@@ -302,10 +302,10 @@ export default function SoftwarePage() {
                 checked={draft.sendConsideration}
                 onChange={(e) => setDraft({ ...draft, sendConsideration: e.target.checked })}
               />
-              <LabelWithHelp helpKey="software.sendConsideration">Send consideration</LabelWithHelp>
+              <LabelWithHelp helpKey="software.sendConsideration">Send Consideration</LabelWithHelp>
             </label>
             <div style={{ gridColumn: "1 / -1" }}>
-              <h3>Property resets on push</h3>
+              <h3>Property Resets on Push</h3>
               <p className="muted">When set, push clears that Software property group. Confirm before a destructive push.</p>
               <div className="form-grid">
                 {RESET_FLAGS.map((flag) => (
@@ -321,7 +321,7 @@ export default function SoftwarePage() {
               </div>
             </div>
             <button className="primary" type="submit">
-              Save Client settings
+              Save Client Settings
             </button>
           </form>
         </section>
@@ -330,14 +330,14 @@ export default function SoftwarePage() {
       {canAdmin && (
         <section className="panel">
           <h2>
-            Sales Tab codes <FieldHelp helpKey="sales.codes" />
+            Sales Tab Codes <FieldHelp helpKey="sales.codes" />
           </h2>
           <p className="muted">
             Codes assigned when Display Sales Tab is on and consideration meets the Client threshold. Editors assign them
             on the Sales page.
           </p>
           {codes.length === 0 ? (
-            <EmptyState title="No Sales Tab codes" body="Add a code and consideration range used on push and the Sales page." />
+            <EmptyState title="No Sales Tab Codes" body="Add a code and consideration range used on push and the Sales page." />
           ) : (
             <ul className="setting-list">
               {codes.map((code) => (
@@ -413,7 +413,7 @@ export default function SoftwarePage() {
               ))}
             </select>
             <button className="primary" type="submit">
-              Add code
+              Add Code
             </button>
           </form>
         </section>
@@ -509,7 +509,7 @@ export default function SoftwarePage() {
         <h2>Field Map</h2>
         <p className="muted">Map deed fields to Software fields and groups. These mappings are used on push.</p>
         {maps.length === 0 ? (
-          <EmptyState title="No field maps yet" body="Add a deed field → Software field map so push uses the right group." />
+          <EmptyState title="No Field Maps Yet" body="Add a deed field → Software field map so push uses the right group." />
         ) : (
           <ul className="setting-list">
             {maps.map((map) => (
@@ -572,7 +572,7 @@ export default function SoftwarePage() {
               ))}
             </select>
             <select value={mapForm.deedType} onChange={(e) => setMapForm({ ...mapForm, deedType: e.target.value })} aria-label="Deed type scope">
-              <option value="">Any deed type</option>
+              <option value="">Any Deed Type</option>
               {deedTypes.map((item) => (
                 <option key={item.id} value={item.deedType}>
                   {item.deedType}
@@ -580,7 +580,7 @@ export default function SoftwarePage() {
               ))}
             </select>
             <button className="primary" type="submit">
-              Add map
+              Add Map
             </button>
           </form>
         )}
