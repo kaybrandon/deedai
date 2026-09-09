@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-5.2.4-DELETE-POLICY-AC.md](docs/PHASE-5.2.4-DELETE-POLICY-AC.md) — Phase 5.2.4 Delete Policy
 - Phase 1 wires: [login](docs/wires/01-login.png) · [dashboard](docs/wires/02-dashboard.png) · [documents](docs/wires/03-documents.png) · [upload](docs/wires/04-upload.png) · [review](docs/wires/05-review.png)
 
 ## Stack
@@ -30,6 +31,15 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
+
+## Phase 5.2.4 acceptance
+
+- **Delete Policy** (Settings → System): Admin persists who may soft-delete documents — **All Editors** or **Admin only**. Label **Delete Policy** / **Who Can Delete**. Never County / CAMA / Super Admin.
+- **Enforce:** Soft-delete is hidden when the role is below the policy. Unauthorized API delete returns **403** (not 404). ConfirmSheet still required when allowed (≥44px). Uploader and Viewer never delete.
+- **Restore:** Restore stays Admin-gated. Policy change does not alter restore or hard-delete.
+- **Carry:** 4 roles · Client/Software · Mask F density · no secrets · Designer-first EF migration `20260910010000_DeletePolicy` · null-safe `WhoCanDelete` (DEFAULT AllEditors + NULL backfill + null-safe materialize) · health 200.
+- **Should:** Audit last Admin who changed the policy. Editors see a read-only Delete Policy hint on Documents.
+- **Won’t:** Super Admin matrix · hard-delete · County/CAMA · Statuses catalog (5.2.5) · Property defaults · Software settings depth (5.2.3).
 
 ## Phase 5.2.1 acceptance
 
@@ -282,7 +292,8 @@ Document Intelligence uses **BISDocumentIntelligenceEndpoint** + **DocumentIntel
 | --- | --- | --- | --- | --- |
 | Dashboard / documents list / review | ✓ | ✓ | ✓ | ✓ |
 | Upload | | ✓ | ✓ | ✓ |
-| Edit fields, Retry, soft-delete | | | ✓ | ✓ |
+| Edit fields, Retry | | | ✓ | ✓ |
+| Soft-delete | | | when Delete Policy is All Editors | ✓ |
 | Restore soft-deleted deeds | | | | ✓ |
 | Users + Settings | | | | ✓ |
 | Reports export | ✓ | ✓ | ✓ | ✓ |

@@ -163,6 +163,10 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .login-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .remember { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 .remember input { width: auto; min-height: 20px; }
+.delete-policy-choices { border: 0; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
+.delete-policy-choices legend { font-weight: 700; margin-bottom: 4px; }
+.delete-policy-choice { min-height: var(--action-h); }
+.delete-policy-hint, .delete-policy-audit { margin: 8px 0 0; }
 .denied-box, .note-box {
   background: #f3f4f6;
   color: #4b5563;

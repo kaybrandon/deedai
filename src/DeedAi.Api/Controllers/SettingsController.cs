@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using DeedAi.Api.Contracts;
 using DeedAi.Api.Swagger;
@@ -522,6 +523,32 @@ public sealed class SettingsController(
         return new SessionConfigResponse(item.IdleTimeoutMinutes, SessionSettings.DefaultIdleTimeoutMinutes, "admin");
     }
 
+    [HttpGet("delete-policy")]
+    public async Task<ActionResult<DeletePolicyResponse>> GetDeletePolicy(CancellationToken cancellationToken)
+    {
+        var item = await DeletePolicyStore.EnsureAsync(db, cancellationToken);
+        return ToDeletePolicy(item, ClientAccess.Role(User));
+    }
+
+    [HttpPut("delete-policy")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<DeletePolicyResponse>> UpdateDeletePolicy(
+        [FromBody] UpdateDeletePolicyRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!DeletePolicy.IsKnown(request.WhoCanDelete))
+        {
+            return BadRequest(new { message = "Who can delete must be All Editors or Admin only." });
+        }
+
+        var item = await DeletePolicyStore.EnsureAsync(db, cancellationToken);
+        item.WhoCanDelete = DeletePolicy.Normalize(request.WhoCanDelete);
+        item.UpdatedByEmail = User.FindFirstValue(System.Security.Claims.ClaimTypes.Email);
+        item.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return ToDeletePolicy(item, ClientAccess.Role(User));
+    }
+
     [HttpGet("ocr-cleanup")]
     public async Task<ActionResult<IReadOnlyList<OcrCleanupItem>>> OcrCleanup(CancellationToken cancellationToken) =>
         await db.OcrCleanupRules.AsNoTracking()
@@ -712,6 +739,17 @@ public sealed class SettingsController(
             settings.LastSuccessAt,
             settings.LastFailAt,
             settings.LastFailReason);
+
+    private static DeletePolicyResponse ToDeletePolicy(DeletePolicySettings settings, string role)
+    {
+        var who = DeletePolicy.Normalize(settings.WhoCanDelete);
+        return new DeletePolicyResponse(
+            who,
+            DeletePolicy.Label(who),
+            DeletePolicy.Allows(role, who),
+            settings.UpdatedByEmail,
+            settings.UpdatedAt == default ? null : settings.UpdatedAt);
+    }
 
     private static string NormalizeColor(string? color) =>
         string.IsNullOrWhiteSpace(color) ? "#374151" : color.Trim();

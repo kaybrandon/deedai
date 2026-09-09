@@ -40,6 +40,8 @@ export const HELP = {
   "users.role": "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
   "settings.idleTimeout":
     "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
+  "settings.deletePolicy":
+    "Choose who may soft-delete documents: All Editors, or Admin only. Restore stays Admin-only. Uploader and Viewer never delete.",
   "settings.ocrTrim": "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list.",
   "settings.emailMode":
     "Active mail mode is SendGrid or SMTP — only one sends. API keys, SMTP username, and SMTP password stay in Key Vault.",

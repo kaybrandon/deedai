@@ -132,6 +132,7 @@ public sealed class DatabaseSeeder(
         await SeedNotificationsAsync(cancellationToken);
         await SeedSoftwareParityAsync(cancellationToken);
         await SeedSessionAsync(cancellationToken);
+        await SeedDeletePolicyAsync(cancellationToken);
         await SeedOcrCleanupAsync(cancellationToken);
         await SeedSwaggerSettingAsync(cancellationToken);
         await SeedEmailSettingsAsync(cancellationToken);
@@ -406,6 +407,22 @@ public sealed class DatabaseSeeder(
         {
             Id = SessionSettings.SingletonId,
             IdleTimeoutMinutes = minutes,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedDeletePolicyAsync(CancellationToken cancellationToken)
+    {
+        if (await db.DeletePolicySettings.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        db.DeletePolicySettings.Add(new DeletePolicySettings
+        {
+            Id = DeletePolicySettings.SingletonId,
+            WhoCanDelete = DeletePolicy.AllEditors,
             UpdatedAt = DateTimeOffset.UtcNow
         });
         await db.SaveChangesAsync(cancellationToken);

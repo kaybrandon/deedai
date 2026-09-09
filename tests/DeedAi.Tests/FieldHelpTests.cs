@@ -48,7 +48,7 @@ public sealed class FieldHelpTests : IClassFixture<TestAppFactory>
             Assert.Contains($"\"{key}\"", text);
         }
 
-        foreach (var key in new[] { "users.role", "settings.idleTimeout", "settings.ocrTrim", "settings.swagger", "settings.systemHealth", "settings.emailMode", "settings.emailTest", "settings.verifyRequired", "users.resendVerification" })
+        foreach (var key in new[] { "users.role", "settings.idleTimeout", "settings.deletePolicy", "settings.ocrTrim", "settings.swagger", "settings.systemHealth", "settings.emailMode", "settings.emailTest", "settings.verifyRequired", "users.resendVerification" })
         {
             Assert.Contains($"\"{key}\"", text);
         }
@@ -75,7 +75,7 @@ public sealed class FieldHelpTests : IClassFixture<TestAppFactory>
         AssertHelp(root, "pages/ReportsPage.tsx",
             "reports.date", "reports.assignee", "reports.status", "reports.flag", "reports.client");
         AssertHelp(root, "pages/SettingsPage.tsx",
-            "settings.flags", "settings.statuses", "settings.deedTypeMaps");
+            "settings.flags", "settings.statuses", "settings.deedTypeMaps", "settings.deletePolicy");
         AssertHelp(root, "pages/RestorePage.tsx", "restore.confirmRestore", "restore.confirmHardDelete");
         AssertHelp(root, "components/SwaggerAdminPanel.tsx", "settings.swagger");
         AssertHelp(root, "components/SystemHealthPanel.tsx", "settings.systemHealth");
