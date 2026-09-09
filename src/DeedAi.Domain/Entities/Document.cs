@@ -26,8 +26,23 @@ public sealed class Document
     public string? MailingCity { get; set; }
     public string? MailingState { get; set; }
     public string? MailingZip { get; set; }
-    public List<string> Grantors { get; set; } = [];
-    public List<string> Grantees { get; set; } = [];
+    public List<string>? Grantors { get; set; } = [];
+    public List<string>? Grantees { get; set; } = [];
+
+    public void CoalesceNullListFields()
+    {
+        DocumentNumber ??= "";
+        Volume ??= "";
+        Page ??= "";
+        DeedType ??= "";
+        Pid ??= "";
+        MailingStreet ??= "";
+        MailingCity ??= "";
+        MailingState ??= "";
+        MailingZip ??= "";
+        Grantors ??= [];
+        Grantees ??= [];
+    }
     public string? ReviewStatus { get; set; }
     public DateTimeOffset? LastSoftwareSyncAt { get; set; }
     public string? LastSoftwareSyncStatus { get; set; }

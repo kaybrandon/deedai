@@ -2,6 +2,7 @@ using DeedAi.Domain;
 using DeedAi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DeedAi.Infrastructure.Data;
 
@@ -163,21 +164,24 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.MailingCity).HasMaxLength(128);
             entity.Property(x => x.MailingState).HasMaxLength(32);
             entity.Property(x => x.MailingZip).HasMaxLength(16);
-            var partiesComparer = new ValueComparer<List<string>>(
+            var partiesComparer = new ValueComparer<List<string>?>(
                 (left, right) => (left ?? new List<string>()).SequenceEqual(right ?? new List<string>()),
-                names => names.Aggregate(0, (hash, name) => HashCode.Combine(hash, name.GetHashCode(StringComparison.Ordinal))),
-                names => names.ToList());
+                names => (names ?? new List<string>()).Aggregate(0, (hash, name) => HashCode.Combine(hash, name.GetHashCode(StringComparison.Ordinal))),
+                names => (names ?? new List<string>()).ToList());
+            // Store type is string? so SQL Server does not GetString() on NULL
+            // (existing rows after 20260909220000_DocumentListFields).
+            var partyListConverter = new ValueConverter<List<string>?, string?>(
+                names => PartyNames.ToJson(names),
+                json => PartyNames.FromJson(json));
             entity.Property(x => x.Grantors)
                 .HasMaxLength(4000)
-                .HasConversion(
-                    names => PartyNames.ToJson(names),
-                    json => PartyNames.FromJson(json))
+                .HasConversion(partyListConverter)
+                .IsRequired(false)
                 .Metadata.SetValueComparer(partiesComparer);
             entity.Property(x => x.Grantees)
                 .HasMaxLength(4000)
-                .HasConversion(
-                    names => PartyNames.ToJson(names),
-                    json => PartyNames.FromJson(json))
+                .HasConversion(partyListConverter)
+                .IsRequired(false)
                 .Metadata.SetValueComparer(partiesComparer);
             entity.Property(x => x.ReviewStatus).HasMaxLength(32);
             entity.Property(x => x.LastSoftwareSyncStatus).HasMaxLength(16);
@@ -394,5 +398,10 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
                 "CK_OcrCleanupRules_Kind",
                 $"Kind IN ('{OcrCleanupKinds.Trim}','{OcrCleanupKinds.Discard}')"));
         });
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddInterceptors(DocumentListFieldNullInterceptor.Instance);
     }
 }

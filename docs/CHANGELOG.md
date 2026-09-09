@@ -1,5 +1,10 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Hotfix: Document list NULL materialization (HTTP 500.30)
+- After PR #35, Azure SQL existing `Documents` rows had NULL in columns added by `20260909220000_DocumentListFields`. Seed `EnsureReviewConsistencyAsync` loaded full rows and SQL Server `GetString` threw `SqlNullValueException` (ANCM 500.30).
+- Follow-up Designer-first migration `20260909230000_DocumentListFieldNullDefaults` UPDATEs NULLs to empty string and adds SQL defaults for locked fields: DocumentNumber, Volume, Page, DeedType, Pid, MailingStreet/City/State/Zip, Grantors, Grantees.
+- Grantors/Grantees EF conversion is `string?` so NULL still materializes to `[]`. Seeder projects only Id + ReviewStatus. Locked field names unchanged. No 5.2.1 Review UI. No Azure deploy.
+
 ## 2026-09-09 — Phase 5.2.2 Manage Documents rich list
 - Documents is a Mask F SoT table: hug 44px rows, sticky gray header, zebra stripes, one filter-row Search ≤360px. No top-bar search.
 - Search covers name/status/assignee, grantors/grantees, Volume, Page, Document Number, PID, mailing street/city/state/zip, and existing legal description.

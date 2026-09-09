@@ -177,12 +177,12 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         fields.IsDraft = request.IsDraft;
         fields.UpdatedAt = DateTimeOffset.UtcNow;
         document.UpdatedAt = DateTimeOffset.UtcNow;
-        if (document.Grantors.Count <= 1)
+        if ((document.Grantors?.Count ?? 0) <= 1)
         {
             document.Grantors = PartyNames.Normalize(null, request.Grantor).ToList();
         }
 
-        if (document.Grantees.Count <= 1)
+        if ((document.Grantees?.Count ?? 0) <= 1)
         {
             document.Grantees = PartyNames.Normalize(null, request.Grantee).ToList();
         }
