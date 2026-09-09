@@ -38,7 +38,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         var error = Validate(request, requirePassword: true);
         if (error is not null)
         {
-            return Invalid(error);
+            return Invalid(error.Value);
         }
 
         var email = request.Email.Trim();
@@ -69,7 +69,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         var error = Validate(request, requirePassword: false);
         if (error is not null)
         {
-            return Invalid(error);
+            return Invalid(error.Value);
         }
 
         var user = await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
