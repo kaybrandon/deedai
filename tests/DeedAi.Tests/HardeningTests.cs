@@ -102,6 +102,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains(Phase4SqlServerSchema.Phase4AzureRepairId, discovered);
         Assert.Contains("20260909140000_Phase41SwaggerHelp", discovered);
         Assert.Contains("20260909160000_Phase45UsersIdentity", discovered);
+        Assert.Contains("20260909190000_Phase491RemovePropertyDefaults", discovered);
+        Assert.DoesNotContain("20260909180000_Phase491RemovePropertyDefaults", discovered);
         Assert.DoesNotContain("20260909120000_Phase41SwaggerHelp", discovered);
         Assert.Equal(typeof(Phase4A), assembly.Migrations[Phase4SqlServerSchema.Phase4AId].AsType());
         Assert.Equal(typeof(Phase4AQa), assembly.Migrations[Phase4SqlServerSchema.Phase4AQaId].AsType());
@@ -113,6 +115,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, ids);
         Assert.Contains("20260909140000_Phase41SwaggerHelp", ids);
         Assert.Contains("20260909160000_Phase45UsersIdentity", ids);
+        Assert.Contains("20260909190000_Phase491RemovePropertyDefaults", ids);
         Assert.True(
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AId, Phase4SqlServerSchema.Phase4AQaId) < 0);
         Assert.True(
@@ -121,6 +124,10 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AzureRepairId, "20260909140000_Phase41SwaggerHelp") < 0);
         Assert.True(
             string.CompareOrdinal("20260909140000_Phase41SwaggerHelp", "20260909160000_Phase45UsersIdentity") < 0);
+        Assert.True(
+            string.CompareOrdinal("20260909160000_Phase45UsersIdentity", "20260909190000_Phase491RemovePropertyDefaults") < 0);
+        Assert.True(
+            string.CompareOrdinal("20260909180000_Phase48AdminEmail", "20260909190000_Phase491RemovePropertyDefaults") < 0);
     }
 
     [Fact]

@@ -603,16 +603,6 @@ export const endpoints = {
     api<SoftwareFieldMapItem>(`/api/software/field-maps/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteSoftwareFieldMap: (id: string) =>
     api<{ message: string }>(`/api/software/field-maps/${id}`, { method: "DELETE" }),
-  propertyDefaults: () => api<PropertyDefaultItem[]>("/api/settings/property-defaults"),
-  createPropertyDefault: (body: object) =>
-    api<PropertyDefaultItem>("/api/settings/property-defaults", { method: "POST", body: JSON.stringify(body) }),
-  deletePropertyDefault: (id: string) =>
-    api<{ message: string }>(`/api/settings/property-defaults/${id}`, { method: "DELETE" }),
-  resetPropertyDefaults: (body: object) =>
-    api<{ message: string; count: number }>("/api/settings/property-defaults/reset", {
-      method: "POST",
-      body: JSON.stringify(body)
-    }),
   deletedDocuments: (query: string) => api<DocumentListItem[]>(`/api/admin/documents/deleted${query}`),
   hardDelete: (id: string) => api<{ message: string }>(`/api/admin/documents/${id}`, { method: "DELETE" }),
   purgeDeleted: (query: string) =>
@@ -692,16 +682,6 @@ export interface SoftwareFieldMapItem {
   deedType: string | null;
   isActive: boolean;
   sortOrder: number;
-}
-
-export interface PropertyDefaultItem {
-  id: string;
-  scope: string;
-  clientId: string | null;
-  clientName: string | null;
-  deedType: string | null;
-  fieldKey: string;
-  defaultValue: string | null;
 }
 
 export interface SaleRow {

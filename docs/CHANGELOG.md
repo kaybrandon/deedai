@@ -1,5 +1,10 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.9.1 remove Property defaults
+- Settings no longer has a Property defaults panel (Admin and non-Admin). Software field maps, the six push resets (Exemptions / Supplement Year / Sales Letter / Sales Tab / Agents / Mortgage Codes), and OCR Settings stay.
+- `/api/settings/property-defaults` create/read/update/delete/reset are gone (404/410). No stubs.
+- EF migration `20260909190000_Phase491RemovePropertyDefaults` drops the `PropertyDefaults` table and seed. Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Client / Software naming only.
+
 ## 2026-09-09 — Dashboard polish: Title Case + clickable chart filters
 - BA chart titles (exact): **Status Mix**, **By Users**, **Volume Over Time**. Same titles on dashboard print/PDF export.
 - Sitewide SPA Title Case on headings, nav, card titles, and primary button/tab/field labels. Kickers, placeholders, errors, and help stay sentence case.
@@ -67,7 +72,7 @@
 - Rebased onto PR #11. Migration id is `20260909140000_Phase41SwaggerHelp` (after `Phase4AzureRepair`, no timestamp collision) with a `*.Designer.cs` (`[Migration]` + `[DbContext]` + `BuildTargetModel`).
 
 ## 2026-09-09 — Phase 4 Azure schema hotfix
-- Phase 4A / Phase 4AQa now have `*.Designer.cs` files (`[Migration]` + `[DbContext]` + `BuildTargetModel`) so Azure `MigrateAsync` actually applies AppPolicies, field maps, PropertyDefaults, SoftwareClientConfigs, SalesTabCodes, and `Documents.SalesTabCode`.
+- Phase 4A / Phase 4AQa now have `*.Designer.cs` files (`[Migration]` + `[DbContext]` + `BuildTargetModel`) so Azure `MigrateAsync` actually applies AppPolicies, field maps, SoftwareClientConfigs, SalesTabCodes, and `Documents.SalesTabCode`. PropertyDefaults was later dropped in Phase 4.9.1.
 - SQL Server scripts are idempotent (`IF OBJECT_ID` / `IF COL_LENGTH` / `IF NOT EXISTS`). `Phase4AzureRepair` re-applies any missing Phase 4 objects without wiping data. UploadedBy stays `ON DELETE NO ACTION`.
 - Ops: after merge, redeploy Layout A zip to `appdeedai`. Do not drop Clients or baseline-wipe.
 

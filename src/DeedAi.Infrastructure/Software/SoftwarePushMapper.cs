@@ -39,8 +39,6 @@ public static class SoftwarePushMapper
         CancellationToken cancellationToken)
     {
         var values = ResolveFieldValues(document, policy, clientConfig);
-        var defaults = await db.PropertyDefaults.AsNoTracking().ToListAsync(cancellationToken);
-        ApplyPropertyDefaults(values, defaults, document.ClientId, document.DeedType);
         var maps = await db.SoftwareFieldMaps.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.SortOrder)
@@ -168,31 +166,6 @@ public static class SoftwarePushMapper
         document.SalesTabCode = match.Code;
         mapped["SalesTab.Code"] = match.Code;
         mapped["SalesTab.Label"] = match.Label;
-    }
-
-    public static void ApplyPropertyDefaults(
-        Dictionary<string, string?> values,
-        IEnumerable<PropertyDefault> defaults,
-        Guid clientId,
-        string? deedType)
-    {
-        foreach (var item in defaults)
-        {
-            if (!values.TryGetValue(item.FieldKey, out var current) || !string.IsNullOrWhiteSpace(current))
-            {
-                continue;
-            }
-
-            var matches = item.Scope == PropertyDefaultScopes.Client
-                ? item.ClientId == clientId
-                : item.Scope == PropertyDefaultScopes.DeedType
-                  && !string.IsNullOrWhiteSpace(deedType)
-                  && string.Equals(item.DeedType, deedType, StringComparison.OrdinalIgnoreCase);
-            if (matches)
-            {
-                values[item.FieldKey] = item.DefaultValue;
-            }
-        }
     }
 
     private static void ApplyDateLabelDepth(
