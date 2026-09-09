@@ -163,15 +163,17 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
-    public void Spa_groups_users_by_client_and_wires_identity()
+    public void Spa_users_table_shows_all_client_assignments_and_wires_identity()
     {
         var users = Read("spa/src/pages/UsersPage.tsx");
-        Assert.Contains("user.clientIds.includes(client.id)", users, StringComparison.Ordinal);
-        Assert.Contains("user-group-toggle", users, StringComparison.Ordinal);
+        Assert.Contains("clientColumnLabel", users, StringComparison.Ordinal);
+        Assert.Contains("Client(s)", users, StringComparison.Ordinal);
+        Assert.Contains("data-table=\"users\"", users, StringComparison.Ordinal);
         Assert.Contains("Full Name", users, StringComparison.Ordinal);
         Assert.Contains("PasswordPair", users, StringComparison.Ordinal);
         Assert.Contains("PhotoEditor", users, StringComparison.Ordinal);
         Assert.Contains("ConfirmSheet", users, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-group-toggle", users, StringComparison.Ordinal);
         Assert.DoesNotContain("County", users, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", users, StringComparison.Ordinal);
 
@@ -207,7 +209,8 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var css = Read("spa/src/styles.css");
         Assert.Contains(".sidebar-profile", css, StringComparison.Ordinal);
         Assert.Contains("min-height: var(--action-h)", css, StringComparison.Ordinal);
-        Assert.Contains(".user-group-toggle", css, StringComparison.Ordinal);
+        Assert.Contains(".users-table", css, StringComparison.Ordinal);
+        Assert.Contains(".th-sort", css, StringComparison.Ordinal);
         Assert.Contains(".topbar-title", css, StringComparison.Ordinal);
         Assert.Contains(".profile-client-chip", css, StringComparison.Ordinal);
         Assert.Contains(".profile-client-list { display: grid; grid-template-columns: 1fr; }", css, StringComparison.Ordinal);

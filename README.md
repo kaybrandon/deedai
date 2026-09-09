@@ -31,6 +31,17 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.1.1 acceptance
+
+- **Users table:** Admin Users is a real data table (not a card stack). Mask F SoT density (`05-settings-users`): hug rows, sticky gray header, zebra stripes, role chips, single-line sort+filter headings, min 44px (`--table-row-h: 44px`).
+- **Search:** One filter-row search ≤360px across display name, full name, and email. No second search in the top bar.
+- **Sort / filter:** Column headings sort asc/desc with a visible affordance for Display Name, Email, Role, Client(s), and Status. Per-column filters on Role, Client, and Status (enabled/disabled).
+- **Phase 4.5 carry:** Multi-Client users list every assignment in the Client(s) column. ConfirmSheet disable, add/edit panel, photo, and password stay. Admin-only. Client / Software only — never County / CAMA.
+- **Should:** Sort/filter persist on the URL and in `sessionStorage`. Empty and no-match states. Paginate at 50 rows.
+- **Won’t:** In-cell edit, CSV export, replacing add/edit, or relitigating photo/password. Volume weekly (#34).
+- **Nav:** Settings → **System** (singular mid-parent from Mask F) → indented Software · Users · API. Never Systems plural. Never System as a sibling of Software.
+- **Hard gates:** No new EF migration. No zipdeploy.
+
 ## Phase 5.1 acceptance
 
 - **Mask F theme:** Mockitt Admin tokens — rail `#1E2430` · canvas `#F0F2F5` · surface `#FFFFFF` · text `#1A1F2A` · muted `#5C6573` · teal `#0D8A7F` · accent `#3B82F6` · Ready `#D8F0EA`/`#0B5F56` · Failed `#F5D6D3`/`#8B2E28`. Dark rail sitewide. Inter. Radii 5/8. Spacing 4/8/12/16.
@@ -68,7 +79,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 
 ## Phase 4.5 acceptance
 
-- **Users group-by Client:** the Users list is grouped by Client. A user assigned to more than one Client appears under each of those groups. Groups collapse/expand. Users with no Client access sit in a **No Client access** group.
+- **Users group-by Client:** Phase 4.5 grouped the list by Client (multi-Client users in each group). Phase 5.1.1 replaces that card stack with a searchable sortable table; the Client(s) column still shows every assignment.
 - **Profile photo:** upload, replace, and clear (ConfirmSheet on remove). Stored in blob storage. Shown in the header and on Users. JPEG/PNG/WebP/GIF, 2 MB max. Default avatar is initials when there is no photo.
 - **Header title:** `{Client} Deed AI` only when the signed-in user's effective scope is exactly one Client; otherwise the product name **Deed AI**.
 - **Left shell identity:** **Logged in as {name/email}** plus a **My profile** entry (≥44px) for display name, full name, photo, password change, and assigned Client(s) from existing identity / Client access (clear empty state when none).
