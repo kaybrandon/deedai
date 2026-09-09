@@ -95,9 +95,7 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(1200px 400px at 50% -10%, rgba(13, 138, 127, 0.16), transparent 55%),
-    var(--bg);
+  background: var(--bg);
 }
 .login-page-body {
   flex: 1;
@@ -132,7 +130,6 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(30, 36, 48, 0.08);
   padding: 24px 20px;
   display: grid;
   gap: 12px;
@@ -706,7 +703,6 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   display: grid;
   gap: 10px;
   z-index: 20;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
 .progress-job-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 .progress-dock progress { width: 100%; }
@@ -859,7 +855,6 @@ progress { width: 220px; height: 10px; }
   border-radius: 4px;
   background: #fff;
   border: 1px solid var(--border);
-  box-shadow: 0 6px 16px rgba(44, 58, 69, 0.08);
   position: relative;
 }
 .pdf-placeholder-mark::after {
@@ -982,7 +977,6 @@ progress { width: 220px; height: 10px; }
   height: 26px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(19, 35, 61, 0.2);
   transition: transform 0.15s ease;
 }
 .setting-toggle.is-on .setting-toggle-thumb { transform: translateX(20px); }
