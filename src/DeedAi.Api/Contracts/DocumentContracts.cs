@@ -80,6 +80,35 @@ public sealed record DashboardCounts(
     int Ready,
     int Failed);
 
+public sealed record DashboardStatusSlice(
+    string Status,
+    string Label,
+    int Count,
+    string? Color);
+
+public sealed record DashboardStatusMix(
+    int Total,
+    IReadOnlyList<DashboardStatusSlice> Series);
+
+public sealed record DashboardUserColumn(
+    Guid? UserId,
+    string DisplayName);
+
+public sealed record DashboardStackedSeries(
+    string Key,
+    string Label,
+    IReadOnlyList<int> Data,
+    string? Color);
+
+public sealed record DashboardByUser(
+    IReadOnlyList<string> Labels,
+    IReadOnlyList<DashboardUserColumn> Users,
+    IReadOnlyList<DashboardStackedSeries> Series);
+
+public sealed record DashboardVolume(
+    IReadOnlyList<string> Labels,
+    IReadOnlyList<DashboardStackedSeries> Series);
+
 public sealed record UploadResult(int Queued, IReadOnlyList<DocumentListItem> Documents, IReadOnlyList<string> Errors);
 
 public sealed record AssignRequest(Guid? AssigneeUserId);
