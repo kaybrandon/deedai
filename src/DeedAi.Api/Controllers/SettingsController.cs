@@ -2,18 +2,20 @@ using System.Text.Json;
 using DeedAi.Api.Contracts;
 using DeedAi.Domain;
 using DeedAi.Domain.Entities;
+using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
 using DeedAi.Infrastructure.Export;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace DeedAi.Api.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/settings")]
-public sealed class SettingsController(DeedAiDbContext db) : ControllerBase
+public sealed class SettingsController(DeedAiDbContext db, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("flags")]
     public async Task<ActionResult<IReadOnlyList<FlagItem>>> Flags(CancellationToken cancellationToken) =>

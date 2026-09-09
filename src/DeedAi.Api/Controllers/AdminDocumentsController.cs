@@ -107,5 +107,6 @@ public sealed class AdminDocumentsController(DeedAiDbContext db, IBlobStorage bl
             x.DeletedAt != null,
             x.DeedType,
             x.ReviewStatus,
-            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList());
+            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
+            x.ErrorMessage);
 }
