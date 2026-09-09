@@ -10,26 +10,42 @@ public static class SwaggerExtensions
     public const string ConfigKey = "Swagger:Enabled";
 
     /// <summary>
-    /// Swagger UI's default Authorize control is ~34px. Keep the hit target at
-    /// least 44px to match Copy Bearer and the rest of the Admin Settings UI.
+    /// Swagger UI's default Authorize control is ~34px because
+    /// <c>.swagger-ui .btn.authorize { display: inline; line-height: 1 }</c>
+    /// (padding 5px + 20px lock icon + 5px + 2px borders). <c>min-height</c>
+    /// does not apply to inline boxes, so a HeadContent-only min-height
+    /// override is ignored. Force a flex box and a 44px tap target to match
+    /// Copy Bearer and the rest of the Admin Settings UI.
     /// </summary>
     public const string AuthorizeHitTargetCss =
         """
         <style id="deedai-swagger-authorize">
         .swagger-ui .btn.authorize,
-        .swagger-ui .btn.authorize span,
         .swagger-ui .auth-wrapper .authorize,
-        .swagger-ui .authorization__btn,
-        .swagger-ui .authorization__btn .locked,
-        .swagger-ui .authorization__btn .unlocked,
-        .swagger-ui .modal-btn.authorize,
+        .swagger-ui .scheme-container .btn.authorize,
+        .swagger-ui .modal-ux .btn.modal-btn,
+        .swagger-ui .modal-ux .btn.modal-btn.authorize,
+        .swagger-ui .auth-btn-wrapper .btn,
+        .swagger-ui .auth-btn-wrapper .btn.modal-btn,
+        .swagger-ui .auth-btn-wrapper .btn.modal-btn.authorize,
         .swagger-ui .btn.modal-btn.authorize,
-        .swagger-ui .auth-btn-wrapper .btn.modal-btn {
+        .swagger-ui .btn-done {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-sizing: border-box !important;
           min-height: 44px !important;
           min-width: 44px !important;
-        }
-        .swagger-ui .btn.authorize {
+          height: auto !important;
           padding: 10px 16px !important;
+          line-height: 1.2 !important;
+        }
+        .swagger-ui .btn.authorize span,
+        .swagger-ui .auth-wrapper .authorize span {
+          float: none !important;
+          display: inline !important;
+          padding: 0 8px 0 0 !important;
+          line-height: inherit !important;
         }
         </style>
         """;
