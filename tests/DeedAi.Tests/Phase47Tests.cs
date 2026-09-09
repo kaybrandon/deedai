@@ -238,7 +238,7 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
         Assert.Contains("exportDashboard", api);
         Assert.Contains("/api/dashboard/export", api);
         Assert.Contains("fileNameFromDisposition", api);
-        Assert.Contains("filename*=", api);
+        Assert.Contains(@"filename\*=", api);
         Assert.DoesNotContain(@"filename=""?([^""]+)""?", api);
 
         var printAt = css.LastIndexOf("@media print", StringComparison.Ordinal);
