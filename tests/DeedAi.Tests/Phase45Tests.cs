@@ -40,6 +40,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var created = await admin.PostAsync("/api/admin/users", TestAppFactory.Json(
             "{\"email\":\"northonly@bisconsultants.com\",\"displayName\":\"North\",\"fullName\":\"North Only\",\"role\":\"Viewer\",\"password\":\"ChangeMe!1\",\"isActive\":true,\"clientIds\":[\"" + DatabaseSeeder.NorthsideId + "\"]}"));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        await MarkVerified("northonly@bisconsultants.com");
 
         var client = await Authed("northonly@bisconsultants.com");
         var me = await client.GetAsync("/api/auth/me");
@@ -68,6 +69,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var created = await admin.PostAsync("/api/admin/users", TestAppFactory.Json(
             """{"email":"pat.profile@bisconsultants.com","displayName":"Pat","fullName":"Pat Profile","role":"Editor","password":"ChangeMe!1","isActive":true,"clientIds":[]}"""));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        await MarkVerified("pat.profile@bisconsultants.com");
 
         var client = await Authed("pat.profile@bisconsultants.com");
         var response = await client.PutAsync("/api/auth/me", TestAppFactory.Json(
@@ -289,6 +291,15 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var token = await _factory.LoginAsync(client, email);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
+    }
+
+    private async Task MarkVerified(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DeedAiDbContext>();
+        var user = await db.Users.SingleAsync(x => x.Email == email);
+        user.EmailVerified = true;
+        await db.SaveChangesAsync();
     }
 
     private static MultipartFormDataContent Jpeg(string name, byte[] bytes)
