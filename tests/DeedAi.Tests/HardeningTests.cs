@@ -105,6 +105,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains(Phase48AdminEmail.Id, discovered);
         Assert.Contains("20260909190000_Phase491RemovePropertyDefaults", discovered);
         Assert.Contains("20260909220000_DocumentListFields", discovered);
+        Assert.Contains(DocumentListFieldNullDefaults.MigrationId, discovered);
         Assert.DoesNotContain("20260909180000_Phase491RemovePropertyDefaults", discovered);
         Assert.DoesNotContain("20260909120000_Phase41SwaggerHelp", discovered);
         Assert.DoesNotContain("20260909151048_Phase48AdminEmail", discovered);
@@ -123,6 +124,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains(Phase48AdminEmail.Id, ids);
         Assert.Contains("20260909190000_Phase491RemovePropertyDefaults", ids);
         Assert.Contains("20260909220000_DocumentListFields", ids);
+        Assert.Contains(DocumentListFieldNullDefaults.MigrationId, ids);
         Assert.True(
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AId, Phase4SqlServerSchema.Phase4AQaId) < 0);
         Assert.True(
@@ -137,6 +139,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
             string.CompareOrdinal(Phase48AdminEmail.Id, "20260909190000_Phase491RemovePropertyDefaults") < 0);
         Assert.True(
             string.CompareOrdinal("20260909190000_Phase491RemovePropertyDefaults", "20260909220000_DocumentListFields") < 0);
+        Assert.True(
+            string.CompareOrdinal("20260909220000_DocumentListFields", DocumentListFieldNullDefaults.MigrationId) < 0);
     }
 
     [Fact]

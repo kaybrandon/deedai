@@ -103,7 +103,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Settings nest:** Settings → System (mid-level, singular) → Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Never Systems / County / CAMA.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
-- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909220000_DocumentListFields` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
+- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909230000_DocumentListFieldNullDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
 
 ## Phase 4.3 acceptance
 

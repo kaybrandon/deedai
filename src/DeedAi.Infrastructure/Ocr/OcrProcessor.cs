@@ -93,12 +93,12 @@ public sealed class OcrProcessor(
                 document.Pid = fields.ParcelId;
             }
 
-            if (document.Grantors.Count == 0 && !string.IsNullOrWhiteSpace(fields.Grantor))
+            if ((document.Grantors?.Count ?? 0) == 0 && !string.IsNullOrWhiteSpace(fields.Grantor))
             {
                 document.Grantors = [fields.Grantor];
             }
 
-            if (document.Grantees.Count == 0 && !string.IsNullOrWhiteSpace(fields.Grantee))
+            if ((document.Grantees?.Count ?? 0) == 0 && !string.IsNullOrWhiteSpace(fields.Grantee))
             {
                 document.Grantees = [fields.Grantee];
             }

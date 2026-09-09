@@ -503,21 +503,34 @@ public sealed class DatabaseSeeder(
             return;
         }
 
-        var documents = await db.Documents.IgnoreQueryFilters()
+        // Project only Id + ReviewStatus. Loading full Document rows after
+        // 20260909220000_DocumentListFields throws SqlNullValueException on
+        // SQL Server when new string columns are still NULL (HTTP 500.30).
+        var rows = await db.Documents.IgnoreQueryFilters()
+            .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
+            .Select(x => new { x.Id, x.ReviewStatus })
             .ToListAsync(cancellationToken);
-        foreach (var document in documents)
+        var needsReviewIds = new List<Guid>();
+        foreach (var row in rows)
         {
-            var hasFlag = flaggedIds.Contains(document.Id);
-            if (hasFlag && !ReviewWorkflow.IsNeedsReview(document.ReviewStatus))
+            var hasFlag = flaggedIds.Contains(row.Id);
+            if (hasFlag && !ReviewWorkflow.IsNeedsReview(row.ReviewStatus))
             {
-                document.ReviewStatus = ReviewWorkflow.NeedsReview;
+                needsReviewIds.Add(row.Id);
             }
-            else if (!hasFlag && ReviewWorkflow.IsNeedsReview(document.ReviewStatus))
+            else if (!hasFlag && ReviewWorkflow.IsNeedsReview(row.ReviewStatus))
             {
-                db.DocumentFlags.Add(new DocumentFlag { DocumentId = document.Id, FlagDefinitionId = flagId.Value });
-                flaggedIds.Add(document.Id);
+                db.DocumentFlags.Add(new DocumentFlag { DocumentId = row.Id, FlagDefinitionId = flagId.Value });
+                flaggedIds.Add(row.Id);
             }
+        }
+
+        foreach (var id in needsReviewIds)
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Documents SET ReviewStatus = {ReviewWorkflow.NeedsReview} WHERE Id = {id}",
+                cancellationToken);
         }
 
         await db.SaveChangesAsync(cancellationToken);
