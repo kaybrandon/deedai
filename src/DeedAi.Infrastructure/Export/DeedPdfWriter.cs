@@ -167,7 +167,7 @@ public static class DeedPdfWriter
         }
         else
         {
-            var volumeHeaders = new List<string> { "Day" };
+            var volumeHeaders = new List<string> { "Week" };
             volumeHeaders.AddRange(volumeSeries.Select(s => s.Label));
             lines.Add(string.Join(" | ", volumeHeaders));
             for (var i = 0; i < volumeLabels.Count; i++)

@@ -129,7 +129,7 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
-    public async Task Volume_returns_daily_total_and_status_breakdown()
+    public async Task Volume_returns_weekly_total_and_status_breakdown()
     {
         var client = await Authed("viewer@bisconsultants.com");
         var response = await client.GetAsync("/api/dashboard/charts/volume");
@@ -139,17 +139,22 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
         using var json = JsonDocument.Parse(body);
 
         var labels = json.RootElement.GetProperty("labels").EnumerateArray().Select(x => x.GetString()).ToList();
-        Assert.Equal(new[] { "2024-08-12", "2024-08-13", "2024-08-14", "2024-08-15" }, labels);
+        Assert.Equal(new[] { "2024-08-12" }, labels);
+
+        var buckets = json.RootElement.GetProperty("buckets").EnumerateArray().ToList();
+        Assert.Equal(1, buckets.Count);
+        Assert.Equal("2024-08-12", buckets[0].GetProperty("from").GetString());
+        Assert.Equal("2024-08-18", buckets[0].GetProperty("to").GetString());
 
         var series = json.RootElement.GetProperty("series");
         Assert.Equal(1 + DocumentStatuses.All.Length, series.GetArrayLength());
         var total = series.EnumerateArray().Single(x => x.GetProperty("key").GetString() == "total");
         Assert.Equal("Uploaded", total.GetProperty("label").GetString());
-        Assert.Equal(new[] { 1, 1, 1, 1 }, total.GetProperty("data").EnumerateArray().Select(x => x.GetInt32()).ToArray());
+        Assert.Equal(new[] { 4 }, total.GetProperty("data").EnumerateArray().Select(x => x.GetInt32()).ToArray());
         Assert.Equal(1, VolumeCount(json, DocumentStatuses.Ready, "2024-08-12"));
-        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Processing, "2024-08-13"));
-        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Failed, "2024-08-14"));
-        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Queued, "2024-08-15"));
+        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Processing, "2024-08-12"));
+        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Failed, "2024-08-12"));
+        Assert.Equal(1, VolumeCount(json, DocumentStatuses.Queued, "2024-08-12"));
         AssertNoSecretsOrLegacyNames(body);
     }
 
@@ -193,7 +198,27 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
             var labels = json.RootElement.GetProperty("labels").EnumerateArray().Select(x => x.GetString()).ToList();
             Assert.Equal(new[] { "2024-08-12" }, labels);
             Assert.Equal(1, VolumeCount(json, "total", "2024-08-12"));
+            var bucket = json.RootElement.GetProperty("buckets")[0];
+            Assert.Equal("2024-08-12", bucket.GetProperty("from").GetString());
+            Assert.Equal("2024-08-18", bucket.GetProperty("to").GetString());
         }
+    }
+
+    [Fact]
+    public async Task Volume_fills_empty_iso_weeks_inside_a_short_range()
+    {
+        var client = await Authed("viewer@bisconsultants.com");
+        const string query = "?from=2024-08-05T00:00:00Z&to=2024-08-18T23:59:59Z";
+        var volume = await client.GetAsync($"/api/dashboard/charts/volume{query}");
+        AssertJson(volume);
+        using var json = JsonDocument.Parse(await volume.Content.ReadAsStringAsync());
+        var labels = json.RootElement.GetProperty("labels").EnumerateArray().Select(x => x.GetString()).ToList();
+        Assert.Equal(new[] { "2024-08-05", "2024-08-12" }, labels);
+        Assert.Equal(0, VolumeCount(json, "total", "2024-08-05"));
+        Assert.Equal(4, VolumeCount(json, "total", "2024-08-12"));
+        var empty = json.RootElement.GetProperty("buckets")[0];
+        Assert.Equal("2024-08-05", empty.GetProperty("from").GetString());
+        Assert.Equal("2024-08-11", empty.GetProperty("to").GetString());
     }
 
     [Fact]
@@ -274,6 +299,20 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
         var miss = await client.GetAsync("/api/documents?status=Ready&from=2024-08-13T00:00:00Z&to=2024-08-13T23:59:59Z");
         Assert.Equal(HttpStatusCode.OK, miss.StatusCode);
         using (var json = JsonDocument.Parse(await miss.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal(0, json.RootElement.GetArrayLength());
+        }
+
+        var week = await client.GetAsync("/api/documents?from=2024-08-12T00:00:00Z&to=2024-08-18T23:59:59Z");
+        Assert.Equal(HttpStatusCode.OK, week.StatusCode);
+        using (var json = JsonDocument.Parse(await week.Content.ReadAsStringAsync()))
+        {
+            Assert.Equal(4, json.RootElement.GetArrayLength());
+        }
+
+        var emptyWeek = await client.GetAsync("/api/documents?from=2024-08-19T00:00:00Z&to=2024-08-25T23:59:59Z");
+        Assert.Equal(HttpStatusCode.OK, emptyWeek.StatusCode);
+        using (var json = JsonDocument.Parse(await emptyWeek.Content.ReadAsStringAsync()))
         {
             Assert.Equal(0, json.RootElement.GetArrayLength());
         }

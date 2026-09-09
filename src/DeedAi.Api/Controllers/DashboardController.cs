@@ -254,33 +254,33 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
     {
         if (rows.Count == 0)
         {
-            return new DashboardVolume([], []);
+            return new DashboardVolume([], [], []);
         }
 
-        var labels = VolumeLabels(rows, from, to);
-        var byDate = rows
-            .GroupBy(x => x.CreatedAt.UtcDateTime.Date)
+        var weekStarts = VolumeWeekStarts(rows, from, to);
+        var byWeek = rows
+            .GroupBy(x => VolumeWeeks.StartOfIsoWeek(x.CreatedAt.UtcDateTime.Date))
             .ToDictionary(g => g.Key, g => g.ToList());
+
+        var labels = weekStarts.Select(VolumeWeeks.FormatDay).ToList();
+        var buckets = weekStarts.Select(start => new DashboardVolumeBucket(
+            VolumeWeeks.FormatDay(start),
+            VolumeWeeks.FormatDay(start),
+            VolumeWeeks.FormatDay(VolumeWeeks.EndOfIsoWeek(start)))).ToList();
 
         var total = new DashboardStackedSeries(
             TotalKey,
             TotalLabel,
-            labels.Select(label =>
-            {
-                var day = DateTime.Parse(label, System.Globalization.CultureInfo.InvariantCulture);
-                return byDate.TryGetValue(day, out var dayRows) ? dayRows.Count : 0;
-            }).ToList(),
+            weekStarts.Select(start =>
+                byWeek.TryGetValue(start, out var weekRows) ? weekRows.Count : 0).ToList(),
             null);
 
-        var statusSeries = StatusSeries(labels, defs, (label, status) =>
-        {
-            var day = DateTime.Parse(label, System.Globalization.CultureInfo.InvariantCulture);
-            return byDate.TryGetValue(day, out var dayRows)
-                ? dayRows.Count(x => x.Status == status)
-                : 0;
-        });
+        var statusSeries = StatusSeries(weekStarts, defs, (start, status) =>
+            byWeek.TryGetValue(start, out var weekRows)
+                ? weekRows.Count(x => x.Status == status)
+                : 0);
 
-        return new DashboardVolume(labels, [total, .. statusSeries]);
+        return new DashboardVolume(labels, [total, .. statusSeries], buckets);
     }
 
     private static DashboardStatusSlice Slice(
@@ -308,36 +308,35 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
         }).ToList();
     }
 
-    private static IReadOnlyList<string> VolumeLabels(
+    private static IReadOnlyList<DateTime> VolumeWeekStarts(
         IReadOnlyList<Document> rows,
         DateTimeOffset? from,
         DateTimeOffset? to)
     {
         var dataMin = rows.Min(x => x.CreatedAt.UtcDateTime.Date);
         var dataMax = rows.Max(x => x.CreatedAt.UtcDateTime.Date);
-        var start = from?.UtcDateTime.Date ?? dataMin;
-        var end = to?.UtcDateTime.Date ?? dataMax;
+        var start = VolumeWeeks.StartOfIsoWeek(from?.UtcDateTime.Date ?? dataMin);
+        var end = VolumeWeeks.StartOfIsoWeek(to?.UtcDateTime.Date ?? dataMax);
         if (end < start)
         {
             return [];
         }
 
-        var days = (end - start).Days + 1;
-        if (days > 366)
+        var weeks = new List<DateTime>();
+        for (var cursor = start; cursor <= end; cursor = cursor.AddDays(7))
+        {
+            weeks.Add(cursor);
+        }
+
+        if (weeks.Count > VolumeWeeks.MaxFilledWeeks)
         {
             return rows
-                .Select(x => x.CreatedAt.UtcDateTime.Date)
+                .Select(x => VolumeWeeks.StartOfIsoWeek(x.CreatedAt.UtcDateTime.Date))
                 .Distinct()
                 .OrderBy(x => x)
-                .Select(FormatDay)
                 .ToList();
         }
 
-        return Enumerable.Range(0, days)
-            .Select(offset => FormatDay(start.AddDays(offset)))
-            .ToList();
+        return weeks;
     }
-
-    private static string FormatDay(DateTime day) =>
-        day.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 }
