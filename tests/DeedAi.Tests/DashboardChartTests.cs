@@ -142,9 +142,9 @@ public sealed class DashboardChartTests : IClassFixture<TestAppFactory>
         Assert.Equal(new[] { "2024-08-12" }, labels);
 
         var buckets = json.RootElement.GetProperty("buckets").EnumerateArray().ToList();
-        Assert.Equal(1, buckets.Count);
-        Assert.Equal("2024-08-12", buckets[0].GetProperty("from").GetString());
-        Assert.Equal("2024-08-18", buckets[0].GetProperty("to").GetString());
+        var week = Assert.Single(buckets);
+        Assert.Equal("2024-08-12", week.GetProperty("from").GetString());
+        Assert.Equal("2024-08-18", week.GetProperty("to").GetString());
 
         var series = json.RootElement.GetProperty("series");
         Assert.Equal(1 + DocumentStatuses.All.Length, series.GetArrayLength());
