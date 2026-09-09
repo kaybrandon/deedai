@@ -684,20 +684,33 @@ h1 .field-help {
   text-decoration: none;
 }
 
-.health-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+.health-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 12px 0;
 }
-.health-check {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
+.health-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-height: 44px;
+  padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 999px;
   background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
 }
+.health-chip.is-ok { background: #f0fdf4; border-color: #bbf7d0; }
+.health-chip.is-degraded, .health-chip.is-fail { background: #fef2f2; border-color: #fecaca; }
+.health-chip-name {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.health-chip-mode { color: var(--muted); font-weight: 600; }
 .health-status {
   font-weight: 800;
   text-transform: uppercase;
@@ -706,7 +719,3 @@ h1 .field-help {
 }
 .health-status.is-ok { color: #166534; }
 .health-status.is-degraded, .health-status.is-fail { color: #b91c1c; }
-
-@media (max-width: 800px) {
-  .health-grid { grid-template-columns: 1fr; }
-}

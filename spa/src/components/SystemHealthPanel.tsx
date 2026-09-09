@@ -71,7 +71,7 @@ export default function SystemHealthPanel() {
         </p>
       )}
       {checks && (
-        <div className="health-grid">
+        <div className="health-row">
           <HealthCheck name="SQL" check={checks.sql} />
           <HealthCheck name="Storage" check={checks.storage} />
           <HealthCheck name="Queue" check={checks.queue} />
@@ -87,12 +87,13 @@ export default function SystemHealthPanel() {
 }
 
 function HealthCheck({ name, check }: { name: string; check: Check }) {
+  const tone = check.reachable ? check.status : "fail";
   return (
-    <div className="health-check">
-      <strong>{name}</strong>
+    <div className={`health-chip is-${tone}`}>
+      <strong className="health-chip-name">{name}</strong>
       <span className={`health-status is-${check.status}`}>{sanitize(check.status)}</span>
       <span className="muted">{check.reachable ? "Reachable" : "Unreachable"}</span>
-      <span>{sanitize(check.mode)}</span>
+      <span className="health-chip-mode">{sanitize(check.mode)}</span>
     </div>
   );
 }
