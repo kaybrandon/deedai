@@ -13,7 +13,7 @@ namespace DeedAi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DeedAiDbContext))]
     [Migration("20260910010000_DeletePolicy")]
-    partial class DeletePolicy
+    partial class Phase524DeletePolicy
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

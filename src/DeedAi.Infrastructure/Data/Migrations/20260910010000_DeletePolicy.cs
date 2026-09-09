@@ -9,7 +9,7 @@ namespace DeedAi.Infrastructure.Data.Migrations
     /// with null-safe WhoCanDelete (DEFAULT AllEditors + NULL backfill).
     /// Designer-first. Restore stays Admin-gated.
     /// </summary>
-    public partial class DeletePolicy : Migration
+    public partial class Phase524DeletePolicy : Migration
     {
         public const string MigrationId = "20260910010000_DeletePolicy";
 

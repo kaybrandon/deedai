@@ -11,13 +11,12 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.DependencyInjection;
-using DeletePolicyMigration = DeedAi.Infrastructure.Data.Migrations.DeletePolicy;
 
 namespace DeedAi.Tests;
 
 public sealed class Phase524Tests
 {
-    private const string MigrationId = DeletePolicyMigration.MigrationId;
+    private const string MigrationId = Phase524DeletePolicy.MigrationId;
     private const string PriorMigrationId = "20260909230000_DocumentListFieldNullDefaults";
 
     [Fact]
@@ -78,7 +77,7 @@ public sealed class Phase524Tests
     {
         Assert.True(string.CompareOrdinal(PriorMigrationId, MigrationId) < 0);
 
-        var type = typeof(DeletePolicyMigration);
+        var type = typeof(Phase524DeletePolicy);
         Assert.Equal(MigrationId, type.GetCustomAttribute<MigrationAttribute>()?.Id);
         Assert.Equal(typeof(DeedAiDbContext), type.GetCustomAttribute<DbContextAttribute>()?.ContextType);
         Assert.NotNull(type.GetMethod("BuildTargetModel", BindingFlags.Instance | BindingFlags.NonPublic));
@@ -278,9 +277,9 @@ public sealed class Phase524Tests
 
     private static void InvokeUp(MigrationBuilder builder)
     {
-        var up = typeof(DeletePolicyMigration).GetMethod("Up", BindingFlags.Instance | BindingFlags.NonPublic);
+        var up = typeof(Phase524DeletePolicy).GetMethod("Up", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(up);
-        up.Invoke(new DeletePolicyMigration(), [builder]);
+        up.Invoke(new Phase524DeletePolicy(), [builder]);
     }
 
     private static string Read(string relative)
