@@ -51,23 +51,34 @@ public sealed class Phase51Tests
     }
 
     [Fact]
-    public void Settings_nest_highlights_one_child_and_labels_software()
+    public void Settings_nest_has_systems_mid_level_then_software_users_api()
     {
         var shell = Read("spa/src/components/AppShell.tsx");
-        Assert.Contains("Software", shell, StringComparison.Ordinal);
-        Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
-        Assert.Contains("                    System", shell, StringComparison.Ordinal);
-        Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
+        Assert.Contains("data-nav=\"systems-mid\"", shell, StringComparison.Ordinal);
+        Assert.Contains("aria-controls=\"systems-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("id=\"systems-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("Systems", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("nav-group-toggle${onSettingsSection", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("is-active", shell, StringComparison.Ordinal);
-        Assert.Contains("childClass(onSystem)", shell, StringComparison.Ordinal);
+
+        var settingsNav = SliceBetween(shell, "id=\"settings-nav\"", "sidebar-identity");
+        Assert.Contains("data-nav=\"systems-mid\"", settingsNav, StringComparison.Ordinal);
+        var systemsIdx = settingsNav.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal);
+        var softwareIdx = settingsNav.IndexOf("to=\"/software\"", StringComparison.Ordinal);
+        var usersIdx = settingsNav.IndexOf("to=\"/users\"", StringComparison.Ordinal);
+        var apiIdx = settingsNav.IndexOf("to=\"/settings#swagger\"", StringComparison.Ordinal);
+        Assert.True(systemsIdx >= 0, "Systems mid-level nest is missing.");
+        Assert.True(softwareIdx > systemsIdx, "Software must be indented under Systems, not a Settings first child.");
+        Assert.True(usersIdx > systemsIdx, "Users must sit under Systems.");
+        Assert.True(apiIdx > systemsIdx, "API must sit under Systems.");
         Assert.Contains("childClass(onSoftware)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onUsers)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onApiDocs)", shell, StringComparison.Ordinal);
-        Assert.Contains("<h1>System</h1>", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("childClass(onSystemsPage)", shell, StringComparison.Ordinal);
+        Assert.Contains("<h1>Systems</h1>", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -151,6 +162,15 @@ public sealed class Phase51Tests
         Assert.True(start >= 0, marker);
         var next = source.IndexOf("\nexport function ", start + marker.Length, StringComparison.Ordinal);
         return next < 0 ? source[start..] : source[start..next];
+    }
+
+    private static string SliceBetween(string source, string startMarker, string endMarker)
+    {
+        var start = source.IndexOf(startMarker, StringComparison.Ordinal);
+        Assert.True(start >= 0, startMarker);
+        var end = source.IndexOf(endMarker, start, StringComparison.Ordinal);
+        Assert.True(end > start, endMarker);
+        return source[start..end];
     }
 
     private static string Read(string relative)

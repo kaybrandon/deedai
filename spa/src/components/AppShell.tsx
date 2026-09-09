@@ -26,12 +26,14 @@ export default function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const onSettingsSection = isSettingsSection(location.pathname);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [systemsOpen, setSystemsOpen] = useState(true);
   const title = productTitle(me?.clients);
   const identity = me?.displayName || me?.email || "signed-in user";
-  const onSystem = location.pathname === "/settings" && location.hash !== "#swagger";
+  const onSystemsPage = location.pathname === "/settings" && location.hash !== "#swagger";
   const onApiDocs = location.pathname === "/settings" && location.hash === "#swagger";
   const onSoftware = location.pathname === "/software" || location.pathname.startsWith("/software/");
   const onUsers = location.pathname === "/users" || location.pathname.startsWith("/users/");
+  const onSystemsSection = onSystemsPage || onApiDocs || onSoftware || onUsers;
 
   function closeNav() {
     setNavOpen(false);
@@ -41,7 +43,10 @@ export default function AppShell() {
     if (onSettingsSection) {
       setSettingsOpen(true);
     }
-  }, [onSettingsSection]);
+    if (onSystemsSection) {
+      setSystemsOpen(true);
+    }
+  }, [onSettingsSection, onSystemsSection]);
 
   return (
     <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
@@ -102,40 +107,58 @@ export default function AppShell() {
             </button>
             {settingsOpen && (
               <div className="nav-sub" id="settings-nav">
-                {canAdmin ? (
-                  <NavLink to="/settings" end className={() => childClass(onSystem)} onClick={closeNav}>
-                    System
-                  </NavLink>
-                ) : (
-                  <button
-                    className="nav-disabled"
-                    type="button"
-                    onClick={() => navigate("/denied", { state: { action: "change settings" } })}
-                  >
-                    System
-                  </button>
-                )}
-                <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
-                  Software
-                </NavLink>
-                {canAdmin ? (
-                  <NavLink to="/users" className={() => childClass(onUsers)} onClick={closeNav}>
-                    Users
-                  </NavLink>
-                ) : (
-                  <button
-                    className="nav-disabled"
-                    type="button"
-                    onClick={() => navigate("/denied", { state: { action: "manage users" } })}
-                  >
-                    Users
-                  </button>
-                )}
-                {canAdmin && (
-                  <NavLink to="/settings#swagger" className={() => childClass(onApiDocs)} onClick={closeNav}>
-                    API
-                  </NavLink>
-                )}
+                <div className="nav-group" data-nav="systems-mid">
+                  <div className="nav-mid-row">
+                    <button
+                      className="nav-group-caret-only"
+                      type="button"
+                      aria-expanded={systemsOpen}
+                      aria-controls="systems-nav"
+                      aria-label={systemsOpen ? "Collapse Systems" : "Expand Systems"}
+                      onClick={() => setSystemsOpen((open) => !open)}
+                    >
+                      <span className="nav-group-caret" aria-hidden="true">{systemsOpen ? "▾" : "▸"}</span>
+                    </button>
+                    {canAdmin ? (
+                      <NavLink to="/settings" end className={() => childClass(onSystemsPage)} onClick={closeNav}>
+                        Systems
+                      </NavLink>
+                    ) : (
+                      <button
+                        className="nav-mid-label"
+                        type="button"
+                        onClick={() => navigate("/denied", { state: { action: "change settings" } })}
+                      >
+                        Systems
+                      </button>
+                    )}
+                  </div>
+                  {systemsOpen && (
+                    <div className="nav-sub" id="systems-nav">
+                      <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
+                        Software
+                      </NavLink>
+                      {canAdmin ? (
+                        <NavLink to="/users" className={() => childClass(onUsers)} onClick={closeNav}>
+                          Users
+                        </NavLink>
+                      ) : (
+                        <button
+                          className="nav-disabled"
+                          type="button"
+                          onClick={() => navigate("/denied", { state: { action: "manage users" } })}
+                        >
+                          Users
+                        </button>
+                      )}
+                      {canAdmin && (
+                        <NavLink to="/settings#swagger" className={() => childClass(onApiDocs)} onClick={closeNav}>
+                          API
+                        </NavLink>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
