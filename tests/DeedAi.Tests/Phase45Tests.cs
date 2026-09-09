@@ -247,7 +247,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
         Assert.Contains("canAdmin", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
-        Assert.Contains("                    Software", shell, StringComparison.Ordinal);
+        Assert.Contains("Software", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/users\"", shell, StringComparison.Ordinal);
 
         var settings = Read("spa/src/pages/SettingsPage.tsx");

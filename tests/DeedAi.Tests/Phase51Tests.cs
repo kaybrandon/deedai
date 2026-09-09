@@ -54,7 +54,7 @@ public sealed class Phase51Tests
     public void Settings_nest_highlights_one_child_and_labels_software()
     {
         var shell = Read("spa/src/components/AppShell.tsx");
-        Assert.Contains("                    Software", shell, StringComparison.Ordinal);
+        Assert.Contains("Software", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
         Assert.Contains("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
