@@ -4,6 +4,19 @@ BIS Consultants **Deed AI** — Phase 2. Naming in this product is **Client** (n
 
 This repository replaces the README-only GitHub seed with a working Layout A application: a single .NET 10 API host serves the React/Vite SPA from `wwwroot` for Windows App Service `appdeedai`.
 
+## Docs
+
+Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root index).
+
+- [SOP.md](SOP.md) — SOP index
+- [AZURE-PROD-NOTE.md](docs/AZURE-PROD-NOTE.md) — live Azure ops note
+- [AZURE-PREP.md](docs/AZURE-PREP.md) — historical Azure prep note
+- [SOP-01-overview.md](docs/SOP-01-overview.md) — local / ops overview
+- [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
+- [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
+- [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- Phase 1 wires: [login](docs/wires/01-login.png) · [dashboard](docs/wires/02-dashboard.png) · [documents](docs/wires/03-documents.png) · [upload](docs/wires/04-upload.png) · [review](docs/wires/05-review.png)
+
 ## Stack
 
 | Piece | Choice |
