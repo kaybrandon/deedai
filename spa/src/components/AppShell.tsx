@@ -15,6 +15,10 @@ function productTitle(clients: { name: string }[] | undefined) {
   return "Deed AI";
 }
 
+function childClass(active: boolean) {
+  return active ? "active" : undefined;
+}
+
 export default function AppShell() {
   const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
@@ -22,8 +26,14 @@ export default function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const onSettingsSection = isSettingsSection(location.pathname);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [systemOpen, setSystemOpen] = useState(true);
   const title = productTitle(me?.clients);
   const identity = me?.displayName || me?.email || "signed-in user";
+  const onSystem = location.pathname === "/settings" && location.hash !== "#swagger";
+  const onApiDocs = location.pathname === "/settings" && location.hash === "#swagger";
+  const onSoftware = location.pathname === "/software" || location.pathname.startsWith("/software/");
+  const onUsers = location.pathname === "/users" || location.pathname.startsWith("/users/");
+  const onSystemSection = onSystem || onApiDocs || onSoftware || onUsers;
 
   function closeNav() {
     setNavOpen(false);
@@ -33,7 +43,10 @@ export default function AppShell() {
     if (onSettingsSection) {
       setSettingsOpen(true);
     }
-  }, [onSettingsSection]);
+    if (onSystemSection) {
+      setSystemOpen(true);
+    }
+  }, [onSettingsSection, onSystemSection]);
 
   return (
     <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
@@ -83,7 +96,7 @@ export default function AppShell() {
           )}
           <div className="nav-group" onClick={(e) => e.stopPropagation()}>
             <button
-              className={`nav-group-toggle${onSettingsSection ? " is-active" : ""}`}
+              className="nav-group-toggle"
               type="button"
               aria-expanded={settingsOpen}
               aria-controls="settings-nav"
@@ -94,40 +107,58 @@ export default function AppShell() {
             </button>
             {settingsOpen && (
               <div className="nav-sub" id="settings-nav">
-                {canAdmin ? (
-                  <NavLink to="/settings" end onClick={closeNav}>
-                    Systems
-                  </NavLink>
-                ) : (
-                  <button
-                    className="nav-disabled"
-                    type="button"
-                    onClick={() => navigate("/denied", { state: { action: "change settings" } })}
-                  >
-                    Systems
-                  </button>
-                )}
-                <NavLink to="/software" onClick={closeNav}>
-                  Software
-                </NavLink>
-                {canAdmin ? (
-                  <NavLink to="/users" onClick={closeNav}>
-                    Users
-                  </NavLink>
-                ) : (
-                  <button
-                    className="nav-disabled"
-                    type="button"
-                    onClick={() => navigate("/denied", { state: { action: "manage users" } })}
-                  >
-                    Users
-                  </button>
-                )}
-                {canAdmin && (
-                  <NavLink to="/settings#swagger" onClick={closeNav}>
-                    API
-                  </NavLink>
-                )}
+                <div className="nav-group" data-nav="system-mid">
+                  <div className="nav-mid-row">
+                    {canAdmin ? (
+                      <NavLink to="/settings" end className={() => childClass(onSystem)} onClick={closeNav}>
+                        System
+                      </NavLink>
+                    ) : (
+                      <button
+                        className="nav-mid-label"
+                        type="button"
+                        onClick={() => navigate("/denied", { state: { action: "change settings" } })}
+                      >
+                        System
+                      </button>
+                    )}
+                    <button
+                      className="nav-group-caret-only"
+                      type="button"
+                      aria-expanded={systemOpen}
+                      aria-controls="system-nav"
+                      aria-label={systemOpen ? "Collapse System" : "Expand System"}
+                      onClick={() => setSystemOpen((open) => !open)}
+                    >
+                      <span className="nav-group-caret" aria-hidden="true">{systemOpen ? "▾" : "▸"}</span>
+                    </button>
+                  </div>
+                  {systemOpen && (
+                    <div className="nav-sub" id="system-nav">
+                      <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
+                        Software
+                      </NavLink>
+                      {canAdmin ? (
+                        <NavLink to="/users" className={() => childClass(onUsers)} onClick={closeNav}>
+                          Users
+                        </NavLink>
+                      ) : (
+                        <button
+                          className="nav-disabled"
+                          type="button"
+                          onClick={() => navigate("/denied", { state: { action: "manage users" } })}
+                        >
+                          Users
+                        </button>
+                      )}
+                      {canAdmin && (
+                        <NavLink to="/settings#swagger" className={() => childClass(onApiDocs)} onClick={closeNav}>
+                          API
+                        </NavLink>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

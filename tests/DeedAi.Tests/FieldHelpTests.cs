@@ -53,7 +53,12 @@ public sealed class FieldHelpTests : IClassFixture<TestAppFactory>
             Assert.Contains($"\"{key}\"", text);
         }
 
-        Assert.Contains("data-help", File.ReadAllText(Path.Combine(RepoRoot(), "spa", "src", "components", "FieldHelp.tsx")));
+        var fieldHelp = File.ReadAllText(Path.Combine(RepoRoot(), "spa", "src", "components", "FieldHelp.tsx"));
+        Assert.Contains("data-help", fieldHelp);
+        Assert.Contains("title={text}", fieldHelp);
+        Assert.Contains("aria-describedby", fieldHelp);
+        Assert.DoesNotContain("field-help-btn", fieldHelp);
+        Assert.DoesNotContain("?", fieldHelp);
     }
 
     [Fact]

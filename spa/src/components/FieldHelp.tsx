@@ -1,61 +1,28 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { HELP, type HelpKey } from "../helpCatalog";
 
+/** Native title / visually-hidden description. No question-mark pills. */
 export function FieldHelp({ helpKey }: { helpKey: HelpKey }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement>(null);
-  const tooltipId = useId();
   const text = HELP[helpKey];
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const onPointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
+  const describedById = useId();
   return (
-    <span className="field-help" ref={rootRef} data-help={helpKey}>
-      <button
-        type="button"
-        className="field-help-btn"
-        aria-label={`Help: ${helpKey}`}
-        aria-expanded={open}
-        aria-controls={tooltipId}
-        onClick={() => setOpen((current) => !current)}
-      >
-        ?
-      </button>
-      {open && (
-        <span className="field-help-pop" id={tooltipId} role="tooltip">
-          {text}
-        </span>
-      )}
+    <span className="field-help" data-help={helpKey} title={text} aria-describedby={describedById}>
+      <span id={describedById} className="visually-hidden">
+        {text}
+      </span>
     </span>
   );
 }
 
 export function LabelWithHelp({ helpKey, children }: { helpKey: HelpKey; children: ReactNode }) {
+  const text = HELP[helpKey];
+  const describedById = useId();
   return (
-    <span className="field-label-text">
+    <span className="field-label-text" data-help={helpKey} title={text} aria-describedby={describedById}>
       {children}
-      <FieldHelp helpKey={helpKey} />
+      <span id={describedById} className="visually-hidden">
+        {text}
+      </span>
     </span>
   );
 }

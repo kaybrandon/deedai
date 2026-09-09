@@ -121,11 +121,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="page">
+    <section className="page page-detail">
       <div className="page-head">
         <div>
-          <h1>Systems</h1>
-          <p className="page-kicker">Workspace lists, session, Software maps, and API docs.</p>
+          <h1>System</h1>
+          <p className="page-kicker">Lists, session, Software maps, and API docs.</p>
         </div>
         <div className="row-actions">
           <a className="ghost swagger-open" href="#system-health">
@@ -166,8 +166,8 @@ export default function SettingsPage() {
 
       {session && (
         <section className="panel">
-          <h2>
-            Session Idle Timeout <FieldHelp helpKey="settings.idleTimeout" />
+          <h2 title="After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped." data-help="settings.idleTimeout">
+            Session Idle Timeout
           </h2>
           <p className="muted">
             Default is <strong>{session.defaultMinutes} minutes</strong> (App Setting{" "}

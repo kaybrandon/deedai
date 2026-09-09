@@ -114,10 +114,11 @@ export default function DocumentsPage() {
       </header>
       <form className="filter-row wrap" onSubmit={onSearch}>
         <input
-          className="grow"
+          className="search-field"
           placeholder="Search deeds"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search deeds"
         />
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
           <option value="">Status</option>

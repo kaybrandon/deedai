@@ -11,13 +11,13 @@ import {
   Tooltip
 } from "chart.js";
 import type { DashboardStackedSeries } from "./api";
-import { maskA } from "./theme";
+import { maskF } from "./theme";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, Filler, Legend, LineElement, LinearScale, PointElement, Tooltip);
 
 ChartJS.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif";
 ChartJS.defaults.font.size = 12;
-ChartJS.defaults.color = "#5A6B76";
+ChartJS.defaults.color = maskF.muted;
 ChartJS.defaults.plugins.legend.labels.boxWidth = 10;
 ChartJS.defaults.plugins.legend.labels.boxHeight = 10;
 ChartJS.defaults.plugins.legend.labels.padding = 12;
@@ -25,17 +25,17 @@ ChartJS.defaults.maintainAspectRatio = false;
 ChartJS.defaults.responsive = true;
 
 const FALLBACK: Record<string, string> = {
-  queued: maskA.queued,
-  processing: maskA.processing,
-  ready: maskA.ready,
-  failed: maskA.failed,
-  needsreview: maskA.review,
-  total: maskA.accent
+  queued: maskF.queued,
+  processing: maskF.processing,
+  ready: maskF.ready,
+  failed: maskF.failed,
+  needsreview: maskF.review,
+  total: maskF.teal
 };
 
-const PALETTE = [maskA.accent, maskA.ready, maskA.processing, maskA.review, maskA.failed, maskA.queued];
+const PALETTE = [maskF.teal, maskF.accent, maskF.ready, maskF.processing, maskF.review, maskF.failed, maskF.queued];
 
-/** Mask A tokens win for pipeline statuses so charts stay on-theme even if seed colors are older. */
+/** Mask F tokens win for pipeline statuses so charts stay on-theme even if seed colors are older. */
 export function seriesColor(key: string, color: string | null | undefined, index = 0): string {
   const mapped = FALLBACK[key.toLowerCase()];
   if (mapped) {

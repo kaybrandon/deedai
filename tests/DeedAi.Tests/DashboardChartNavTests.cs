@@ -140,7 +140,7 @@ public sealed class DashboardChartNavTests
     }
 
     [Fact]
-    public void Interactive_chart_hit_targets_are_at_least_44px_and_mask_a_is_unchanged()
+    public void Interactive_chart_hit_targets_are_at_least_44px_and_mask_f_is_wired()
     {
         var css = Read("spa/src/styles.css");
         var theme = Read("spa/src/theme.ts");
@@ -151,13 +151,13 @@ public sealed class DashboardChartNavTests
         Assert.Contains("min-width: 44px", css, StringComparison.Ordinal);
         Assert.Contains("maxBarThickness: 44", Read("spa/src/components/DashboardCharts.tsx"), StringComparison.Ordinal);
 
-        foreach (var token in new[] { "#F4F6F8", "#E8EEF2", "#4F7C8A", "#2C3A45", "#A8D5C0", "#E8B4B0" })
+        foreach (var token in new[] { "#1E2430", "#F0F2F5", "#0D8A7F", "#3B82F6", "#D8F0EA", "#F5D6D3" })
         {
             Assert.Contains(token, css, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(token, theme, StringComparison.OrdinalIgnoreCase);
         }
 
-        Assert.Contains("maskA", charts, StringComparison.Ordinal);
+        Assert.Contains("maskF", charts, StringComparison.Ordinal);
         Assert.DoesNotContain("County", css, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", css, StringComparison.Ordinal);
     }

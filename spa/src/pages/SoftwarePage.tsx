@@ -158,7 +158,7 @@ export default function SoftwarePage() {
   }
 
   return (
-    <section className="page">
+    <section className="page software-page">
       <h1>Software</h1>
       <p className="muted">
         Lookup and push to the external Software system. Typed Client settings, property resets, and Sales Tab codes live
@@ -167,6 +167,7 @@ export default function SoftwarePage() {
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
 
+      <div className="software-form">
       <section className="panel">
         <h2>Connection</h2>
         {status ? (
@@ -326,7 +327,66 @@ export default function SoftwarePage() {
           </form>
         </section>
       )}
+      </div>
 
+      {canEdit && (
+        <section className="panel software-instances">
+          <div className="software-instances-head">
+            <h2>Software Instances</h2>
+            <p className="muted">{configs.length === 1 ? "1 Client" : `${configs.length} Clients`}</p>
+          </div>
+          {configs.length === 0 ? (
+            <EmptyState title="No Client Software Yet" body="An Admin can type vendor, group, and Sales Tab settings per Client." />
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Vendor</th>
+                    <th>Group</th>
+                    <th>Sales Tab</th>
+                    <th>Resets</th>
+                    {canAdmin && <th>Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {configs.map((item) => (
+                    <tr
+                      key={item.clientId}
+                      className={item.clientId === configClientId ? "clickable-row is-editing" : "clickable-row"}
+                      onClick={() => canAdmin && setConfigClientId(item.clientId)}
+                    >
+                      <td>{item.clientName}</td>
+                      <td>{item.vendor || "—"}</td>
+                      <td>{item.groupCode || "—"}</td>
+                      <td>{item.displaySalesTab ? "On" : "Off"}</td>
+                      <td>{item.hasAnyReset ? resetLabels(item).join(", ") : "—"}</td>
+                      {canAdmin && (
+                      <td className="actions-cell">
+                        <button
+                          className="ghost"
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setConfigClientId(item.clientId);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="muted">Client / Software naming only.</p>
+        </section>
+      )}
+
+      <div className="software-form">
       {canAdmin && (
         <section className="panel">
           <h2>
@@ -585,6 +645,7 @@ export default function SoftwarePage() {
           </form>
         )}
       </section>
+      </div>
 
       {pendingMap && (
         <ConfirmSheet
