@@ -88,6 +88,20 @@ public sealed class OcrProcessor(
             fields.InstrumentDate = OcrFieldCleaner.Clean(result.Fields.InstrumentDate, trim, discard);
             fields.Consideration = OcrFieldCleaner.Clean(result.Fields.Consideration, trim, discard);
             fields.ParcelId = OcrFieldCleaner.Clean(result.Fields.ParcelId, trim, discard);
+            if (string.IsNullOrWhiteSpace(document.Pid) && !string.IsNullOrWhiteSpace(fields.ParcelId))
+            {
+                document.Pid = fields.ParcelId;
+            }
+
+            if (document.Grantors.Count == 0 && !string.IsNullOrWhiteSpace(fields.Grantor))
+            {
+                document.Grantors = [fields.Grantor];
+            }
+
+            if (document.Grantees.Count == 0 && !string.IsNullOrWhiteSpace(fields.Grantee))
+            {
+                document.Grantees = [fields.Grantee];
+            }
             fields.Client = OcrFieldCleaner.Clean(result.Fields.Client, trim, discard) ?? document.Client.Name;
             fields.Notes = OcrFieldCleaner.Clean(result.Fields.Notes, trim, discard);
             fields.IsDraft = false;

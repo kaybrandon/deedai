@@ -25,7 +25,17 @@ public sealed record DocumentListItem(
     string? ReviewStatus,
     IReadOnlyList<FlagSummary> Flags,
     string? ErrorMessage,
-    string DisplayStatus);
+    string DisplayStatus,
+    string? Volume = null,
+    string? Page = null,
+    string? DocumentNumber = null,
+    string? Pid = null,
+    string? MailingStreet = null,
+    string? MailingCity = null,
+    string? MailingState = null,
+    string? MailingZip = null,
+    IReadOnlyList<string>? Grantors = null,
+    IReadOnlyList<string>? Grantees = null);
 
 public sealed record DocumentDetail(
     Guid Id,
@@ -51,7 +61,17 @@ public sealed record DocumentDetail(
     string? LastSoftwareSyncDirection,
     string? LastSoftwareSyncFailReason,
     string? SoftwareRecordId,
-    string DisplayStatus);
+    string DisplayStatus,
+    string? DocumentNumber = null,
+    string? Volume = null,
+    string? Page = null,
+    string? Pid = null,
+    string? MailingStreet = null,
+    string? MailingCity = null,
+    string? MailingState = null,
+    string? MailingZip = null,
+    IReadOnlyList<string>? Grantors = null,
+    IReadOnlyList<string>? Grantees = null);
 
 public sealed record FieldDraft(
     string? Grantor,

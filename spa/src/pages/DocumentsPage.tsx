@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { endpoints, type ClientItem, type DocumentListItem, type UserSummary } from "../api";
 import { useAuth } from "../auth";
@@ -6,49 +6,41 @@ import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import OcrRibbon from "../components/OcrRibbon";
 import StatusChip from "../components/StatusChip";
+import {
+  applyDocumentsTable,
+  documentsApiQuery,
+  hasActiveDocumentsTableState,
+  hasDocumentsListFilters,
+  hasDocumentsTableParams,
+  nextDocumentsSort,
+  parseDocumentsTableQuery,
+  patchDocumentsTableQuery,
+  readStoredDocumentsTableQuery,
+  serializeDocumentsTableQuery,
+  writeStoredDocumentsTableQuery,
+  type DocumentsSortKey,
+  type DocumentsTableQuery
+} from "../documentsTable";
 import { displayStatus } from "../reviewStatus";
 import { ribbonStepForDocument } from "../theme";
 
-function filtersFromParams(params: URLSearchParams) {
-  return {
-    search: params.get("search") ?? "",
-    status: params.get("status") ?? "",
-    clientId: params.get("clientId") ?? "",
-    assignee: params.get("assigneeUserId") ?? "",
-    from: dateInput(params.get("from")),
-    to: dateInput(params.get("to")),
-    includeDeleted: params.get("includeDeleted") === "true"
-  };
-}
-
-function dateInput(value: string | null) {
-  if (!value) {
-    return "";
-  }
-  return value.length >= 10 ? value.slice(0, 10) : value;
-}
-
-function apiQuery(params: URLSearchParams) {
-  const next = new URLSearchParams(params);
-  const from = dateInput(next.get("from"));
-  const to = dateInput(next.get("to"));
-  if (from) next.set("from", new Date(from).toISOString());
-  if (to) next.set("to", new Date(`${to}T23:59:59`).toISOString());
-  return `?${next}`;
-}
+const statuses = [
+  { value: "Queued", label: "Queued" },
+  { value: "Processing", label: "Processing" },
+  { value: "Ready", label: "Ready" },
+  { value: "Failed", label: "Failed" },
+  { value: "NeedsReview", label: "Needs Review" }
+];
 
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryKey = searchParams.toString();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const query = useMemo(() => parseDocumentsTableQuery(searchParams), [searchParams]);
+  const [searchDraft, setSearchDraft] = useState(query.search);
+  const searchTyping = useRef(false);
+  const queryRef = useRef(query);
+  queryRef.current = query;
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [rows, setRows] = useState<DocumentListItem[]>([]);
@@ -58,114 +50,146 @@ export default function DocumentsPage() {
   const [pendingRestore, setPendingRestore] = useState<DocumentListItem | null>(null);
   const [pendingHard, setPendingHard] = useState<DocumentListItem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const fetchKey = [
+    query.status,
+    query.clientId,
+    query.assigneeUserId,
+    query.from,
+    query.to,
+    query.includeDeleted,
+    query.type
+  ].join("|");
 
-  async function fetchRows(params: URLSearchParams) {
-    setRows(await endpoints.documents(apiQuery(params)));
+  function applyQuery(next: DocumentsTableQuery) {
+    setSearchParams(serializeDocumentsTableQuery(next), { replace: true });
+    writeStoredDocumentsTableQuery(next);
+  }
+
+  function patchQuery(partial: Partial<DocumentsTableQuery>) {
+    applyQuery(patchDocumentsTableQuery(query, partial));
+  }
+
+  async function fetchRows(next: DocumentsTableQuery) {
+    setRows(await endpoints.documents(documentsApiQuery(next)));
     setSelected([]);
   }
 
   async function reload() {
-    await fetchRows(searchParams);
-  }
-
-  function onSearch(event: FormEvent) {
-    event.preventDefault();
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (status) params.set("status", status);
-    if (clientId) params.set("clientId", clientId);
-    if (assignee) params.set("assigneeUserId", assignee);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
-    if (includeDeleted && canAdmin) params.set("includeDeleted", "true");
-    setSearchParams(params, { replace: true });
+    await fetchRows(query);
   }
 
   useEffect(() => {
-    const next = filtersFromParams(searchParams);
-    setSearch(next.search);
-    setStatus(next.status);
-    setClientId(next.clientId);
-    setAssignee(next.assignee);
-    setFrom(next.from);
-    setTo(next.to);
-    setIncludeDeleted(next.includeDeleted);
-    void fetchRows(searchParams);
+    if (hasDocumentsTableParams(searchParams)) {
+      writeStoredDocumentsTableQuery(parseDocumentsTableQuery(searchParams));
+      return;
+    }
+    const stored = readStoredDocumentsTableQuery();
+    if (stored && hasActiveDocumentsTableState(stored)) {
+      setSearchParams(serializeDocumentsTableQuery(stored), { replace: true });
+      setSearchDraft(stored.search);
+    }
+    // Hydrate once from the URL or session so chart deep links win over a stale filter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey]);
+  }, []);
+
+  useEffect(() => {
+    if (!searchTyping.current) {
+      setSearchDraft(query.search);
+    }
+  }, [query.search]);
+
+  useEffect(() => {
+    if (searchDraft === queryRef.current.search) {
+      searchTyping.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      applyQuery(patchDocumentsTableQuery(queryRef.current, { search: searchDraft }));
+      searchTyping.current = false;
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [searchDraft]);
+
+  useEffect(() => {
+    void fetchRows(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchKey]);
 
   useEffect(() => {
     endpoints.clients().then(setClients).catch(() => undefined);
     endpoints.users().then(setUsers).catch(() => undefined);
   }, []);
 
+  const table = useMemo(
+    () => applyDocumentsTable(rows, { ...query, search: searchDraft }),
+    [rows, query, searchDraft]
+  );
+  const deedTypes = useMemo(
+    () => [...new Set(rows.map((row) => row.deedType).filter((value): value is string => Boolean(value)))].sort(),
+    [rows]
+  );
+
   function toggle(id: string) {
     setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   }
 
+  function cell(value: string | null | undefined) {
+    return value?.trim() ? value : "—";
+  }
+
   return (
     <section className="page has-ocr-ribbon">
-      <OcrRibbon current={ribbonStepForDocument(status || undefined, status === "NeedsReview" ? "NeedsReview" : status || undefined)} />
+      <OcrRibbon current={ribbonStepForDocument(query.status || undefined, query.status === "NeedsReview" ? "NeedsReview" : query.status || undefined)} />
       <header className="page-head">
         <div>
           <h1>Documents</h1>
           <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
         </div>
       </header>
-      <form className="filter-row wrap" onSubmit={onSearch}>
-        <input
-          className="search-field"
-          placeholder="Search deeds"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search deeds"
-        />
-        <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-          <option value="">Status</option>
-          <option>Queued</option>
-          <option>Processing</option>
-          <option>Ready</option>
-          <option>Failed</option>
-          <option value="NeedsReview">Needs Review</option>
-        </select>
-        <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
-          <option value="">Client</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
-        <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee">
-          <option value="">Assignee</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.displayName}
-            </option>
-          ))}
-        </select>
+      <div className="filter-row documents-filter-row">
+        <label className="documents-search-field">
+          Search
+          <input
+            className="search-field documents-search"
+            type="search"
+            placeholder="Search deeds"
+            value={searchDraft}
+            onChange={(e) => {
+              searchTyping.current = true;
+              setSearchDraft(e.target.value);
+            }}
+            aria-label="Search deeds"
+          />
+        </label>
         <label>
           From
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <input
+            type="date"
+            aria-label="From date"
+            value={query.from}
+            onChange={(e) => patchQuery({ from: e.target.value })}
+          />
         </label>
         <label>
           To
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <input
+            type="date"
+            aria-label="To date"
+            value={query.to}
+            onChange={(e) => patchQuery({ to: e.target.value })}
+          />
         </label>
         {canAdmin && (
           <label className="remember">
             <input
               type="checkbox"
-              checked={includeDeleted}
-              onChange={(e) => setIncludeDeleted(e.target.checked)}
+              checked={query.includeDeleted}
+              onChange={(e) => patchQuery({ includeDeleted: e.target.checked })}
             />
             Show Deleted
           </label>
         )}
-        <button className="primary" type="submit">
-          Search
-        </button>
-      </form>
+      </div>
       {canAdmin && rows.some((row) => row.canRetry) && (
         <div className="bulk-bar">
           <span>Failed deeds can be requeued to processing.</span>
@@ -178,7 +202,7 @@ export default function DocumentsPage() {
               await reload();
             }}
           >
-            Requeue Failed
+            Retry Failed
           </button>
         </div>
       )}
@@ -207,106 +231,221 @@ export default function DocumentsPage() {
         </div>
       )}
       {notice && <div className="success-banner">{notice}</div>}
-      {rows.length === 0 ? (
+      {rows.length === 0 && !hasDocumentsListFilters(query) ? (
+        <EmptyState title="No Documents Yet" body="Upload a PDF to get started." />
+      ) : table.total === 0 ? (
         <EmptyState title="No Documents Match" body="Try another Client, status, or upload a PDF to get started." />
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                {canEdit && <th />}
-                <th>Name</th>
-                <th>Client</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th>Assignee</th>
-                <th>Flags</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className={row.isDeleted ? "deleted-row" : undefined}>
-                  {canEdit && (
-                    <td>
-                      <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />
-                    </td>
-                  )}
-                  <td>{row.name}</td>
-                  <td>{row.client}</td>
-                  <td>
-                    <StatusChip status={displayStatus(row)} title={row.errorMessage} />
-                  </td>
-                  <td>
-                    {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                  </td>
-                  <td>
-                    {canEdit ? (
+        <>
+          <div className="table-wrap documents-table-wrap">
+            <table className="documents-table" data-table="documents" aria-label="Documents">
+              <thead>
+                <tr>
+                  {canEdit && <th />}
+                  <th>Name</th>
+                  <SortFilterTh
+                    label="Status"
+                    sortKey="status"
+                    query={query}
+                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
+                    filter={
                       <select
-                        value={row.assigneeUserId ?? ""}
-                        aria-label={`Assignee for ${row.name}`}
-                        onChange={async (e) => {
-                          await endpoints.assign(row.id, e.target.value || null);
-                          await reload();
-                        }}
+                        className="th-filter"
+                        aria-label="Filter Status"
+                        value={query.status}
+                        onChange={(e) => patchQuery({ status: e.target.value })}
                       >
-                        <option value="">Unassigned</option>
+                        <option value="">All Statuses</option>
+                        {statuses.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SortFilterTh
+                    label="Client"
+                    sortKey="client"
+                    query={query}
+                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Client"
+                        value={query.clientId}
+                        onChange={(e) => patchQuery({ clientId: e.target.value })}
+                      >
+                        <option value="">All Clients</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SortFilterTh label="Volume" sortKey="volume" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <SortFilterTh label="Page" sortKey="page" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <SortFilterTh
+                    label="Type"
+                    sortKey="type"
+                    query={query}
+                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Type"
+                        value={query.type}
+                        onChange={(e) => patchQuery({ type: e.target.value })}
+                      >
+                        <option value="">All Types</option>
+                        {deedTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SortFilterTh label="PID" sortKey="pid" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <SortFilterTh label="Doc #" sortKey="documentNumber" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <SortFilterTh
+                    label="Assignee"
+                    sortKey="assignee"
+                    query={query}
+                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Assignee"
+                        value={query.assigneeUserId}
+                        onChange={(e) => patchQuery({ assigneeUserId: e.target.value })}
+                      >
+                        <option value="">All Assignees</option>
                         {users.map((user) => (
                           <option key={user.id} value={user.id}>
                             {user.displayName}
                           </option>
                         ))}
                       </select>
-                    ) : (
-                      row.assignee ?? "—"
-                    )}
-                  </td>
-                  <td>
-                    {row.flags.map((flag) => (
-                      <span key={flag.id} className="flag-pill" style={{ background: flag.color }}>
-                        {flag.name}
-                      </span>
-                    ))}
-                    {row.flags.length === 0 && "—"}
-                  </td>
-                  <td className="actions-cell">
-                    <button className="ghost" type="button" onClick={() => navigate(`/documents/${row.id}`)}>
-                      Open
-                    </button>
-                    {row.canRetry && canEdit && (
-                      <button
-                        className="primary"
-                        type="button"
-                        onClick={async () => {
-                          await endpoints.retry(row.id);
-                          setNotice("Queued for OCR");
-                          await reload();
-                        }}
-                      >
-                        Retry
-                      </button>
-                    )}
-                    {canEdit && !row.isDeleted && (
-                      <button className="ghost" type="button" onClick={() => setPendingDelete(row)}>
-                        Delete
-                      </button>
-                    )}
-                    {canAdmin && row.isDeleted && (
-                      <>
-                        <button className="primary" type="button" onClick={() => setPendingRestore(row)}>
-                          Restore
-                        </button>
-                        <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
-                          Hard Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
+                    }
+                  />
+                  <SortFilterTh label="Updated" sortKey="updated" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <th>Flags</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {table.rows.map((row) => (
+                  <tr key={row.id} className={row.isDeleted ? "deleted-row" : undefined}>
+                    {canEdit && (
+                      <td>
+                        <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />
+                      </td>
+                    )}
+                    <td>{row.name}</td>
+                    <td>
+                      <StatusChip status={displayStatus(row)} title={row.errorMessage} />
+                    </td>
+                    <td>{row.client}</td>
+                    <td>{cell(row.volume)}</td>
+                    <td>{cell(row.page)}</td>
+                    <td>{cell(row.deedType)}</td>
+                    <td>{cell(row.pid)}</td>
+                    <td>{cell(row.documentNumber)}</td>
+                    <td>
+                      {canEdit ? (
+                        <select
+                          value={row.assigneeUserId ?? ""}
+                          aria-label={`Assignee for ${row.name}`}
+                          onChange={async (e) => {
+                            await endpoints.assign(row.id, e.target.value || null);
+                            await reload();
+                          }}
+                        >
+                          <option value="">Unassigned</option>
+                          {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        row.assignee ?? "—"
+                      )}
+                    </td>
+                    <td>
+                      {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </td>
+                    <td>
+                      {row.flags.map((flag) => (
+                        <span key={flag.id} className="flag-pill" style={{ background: flag.color }}>
+                          {flag.name}
+                        </span>
+                      ))}
+                      {row.flags.length === 0 && "—"}
+                    </td>
+                    <td className="actions-cell">
+                      <button className="ghost" type="button" onClick={() => navigate(`/documents/${row.id}`)}>
+                        Open
+                      </button>
+                      {row.canRetry && canEdit && (
+                        <button
+                          className="primary"
+                          type="button"
+                          onClick={async () => {
+                            await endpoints.retry(row.id);
+                            setNotice("Queued for OCR");
+                            await reload();
+                          }}
+                        >
+                          Retry
+                        </button>
+                      )}
+                      {canEdit && !row.isDeleted && (
+                        <button className="ghost" type="button" onClick={() => setPendingDelete(row)}>
+                          Delete
+                        </button>
+                      )}
+                      {canAdmin && row.isDeleted && (
+                        <>
+                          <button className="primary" type="button" onClick={() => setPendingRestore(row)}>
+                            Restore
+                          </button>
+                          <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
+                            Hard Delete
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="documents-table-meta">
+            Showing {table.rows.length} of {table.total}
+          </div>
+          {table.totalPages > 1 && (
+            <div className="documents-pager">
+              <button className="ghost" type="button" disabled={table.page <= 1} onClick={() => patchQuery({ page: table.page - 1 })}>
+                Previous
+              </button>
+              <span>
+                Page {table.page} of {table.totalPages}
+              </span>
+              <button
+                className="ghost"
+                type="button"
+                disabled={table.page >= table.totalPages}
+                onClick={() => patchQuery({ page: table.page + 1 })}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
       {pendingDelete && (
         <ConfirmSheet
@@ -352,5 +491,35 @@ export default function DocumentsPage() {
         />
       )}
     </section>
+  );
+}
+
+function SortFilterTh({
+  label,
+  sortKey,
+  query,
+  onSort,
+  filter
+}: {
+  label: string;
+  sortKey: DocumentsSortKey;
+  query: DocumentsTableQuery;
+  onSort: (key: DocumentsSortKey) => void;
+  filter?: ReactNode;
+}) {
+  const active = query.sort === sortKey;
+  const ariaSort = active ? (query.dir === "asc" ? "ascending" : "descending") : "none";
+  return (
+    <th className="documents-th" aria-sort={ariaSort}>
+      <div className="documents-th-line">
+        <button type="button" className={`th-sort${active ? " is-active" : ""}`} onClick={() => onSort(sortKey)}>
+          {label}
+          <span className="th-sort-affordance" aria-hidden="true">
+            {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
+          </span>
+        </button>
+        {filter}
+      </div>
+    </th>
   );
 }

@@ -22,6 +22,7 @@ public sealed class AdminDocumentsController(DeedAiDbContext db, IBlobStorage bl
             .Where(x => x.DeletedAt != null)
             .Include(x => x.Client)
             .Include(x => x.Assignee)
+            .Include(x => x.Fields)
             .Include(x => x.Flags).ThenInclude(x => x.Flag)
             .AsQueryable();
         if (clientId is not null)
@@ -94,23 +95,5 @@ public sealed class AdminDocumentsController(DeedAiDbContext db, IBlobStorage bl
     }
 
     private static DocumentListItem ToListItem(DeedAi.Domain.Entities.Document x) =>
-        new(
-            x.Id,
-            x.Name,
-            x.Client.Name,
-            x.ClientId,
-            x.Status,
-            x.UpdatedAt,
-            x.Assignee?.DisplayName,
-            x.AssigneeUserId,
-            x.Status == DocumentStatuses.Failed,
-            x.DeletedAt != null,
-            x.DeedType,
-            x.ReviewStatus,
-            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
-            x.ErrorMessage,
-            ReviewWorkflow.DisplayStatus(
-                x.Status,
-                x.ReviewStatus,
-                ReviewWorkflow.HasNeedsReviewFlag(x.Flags.Select(f => (f.FlagDefinitionId, f.Flag?.Name)))));
+        DocumentListMapping.ToListItem(x);
 }

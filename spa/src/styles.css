@@ -531,6 +531,69 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   color: var(--muted);
 }
 .users-pager { margin-top: 4px; }
+.documents-filter-row { align-items: end; }
+.filter-row > .documents-search-field,
+.filter-row > input.documents-search {
+  flex: 0 1 360px;
+  width: 360px;
+  min-width: 220px;
+  max-width: 360px;
+}
+.documents-search-field input.documents-search,
+input.documents-search {
+  width: 100%;
+  max-width: 360px;
+}
+.documents-filter-row input,
+.documents-filter-row select,
+.documents-table .th-filter,
+.documents-table select {
+  min-height: var(--action-h);
+  min-width: 44px;
+}
+.documents-table-wrap {
+  overflow: auto;
+  max-height: calc(100vh - var(--topbar-h) - var(--ribbon-h) - 180px);
+}
+.documents-table {
+  --row-h: var(--table-row-h, var(--action-h));
+  --cell-pad-y: var(--table-cell-pad-y, 6px);
+  --cell-pad-x: var(--table-cell-pad-x, 12px);
+}
+.documents-table th,
+.documents-table td {
+  padding: var(--cell-pad-y) var(--cell-pad-x);
+  height: var(--row-h);
+  min-height: var(--row-h);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.documents-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--table-header-bg, var(--sidebar));
+  box-shadow: 0 1px 0 var(--border);
+}
+.documents-table tbody tr:nth-child(even) { background: var(--table-stripe, var(--bg)); }
+.documents-th { padding: 0 var(--cell-pad-x); }
+.documents-th-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--row-h);
+}
+.documents-table-meta,
+.documents-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.documents-pager { margin-top: 4px; }
 .photo-editor {
   display: flex;
   align-items: center;
@@ -565,7 +628,8 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   min-width: 44px;
   max-width: none;
 }
-.filter-row > label.users-search-field {
+.filter-row > label.users-search-field,
+.filter-row > label.documents-search-field {
   flex: 0 1 360px;
   width: 360px;
   min-width: 220px;

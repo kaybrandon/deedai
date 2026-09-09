@@ -26,6 +26,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         [FromQuery] bool includeDeleted,
+        [FromQuery] string? deedType,
         CancellationToken cancellationToken)
     {
         var role = ClientAccess.Role(User);
@@ -33,39 +34,25 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         IQueryable<Document> query = includeDeleted && AppRoles.CanAdmin(role)
             ? db.Documents.IgnoreQueryFilters()
             : db.Documents;
-        query = ClientAccess.VisibleDocuments(query, allowed)
-            .Include(x => x.Client)
-            .Include(x => x.Assignee)
-            .Include(x => x.Flags).ThenInclude(x => x.Flag);
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(x => x.Name.Contains(search));
-        }
-
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            query = query.Where(x => x.Status == status || x.ReviewStatus == status);
-        }
-
-        if (clientId is not null)
-        {
-            query = query.Where(x => x.ClientId == clientId);
-        }
-
-        if (assigneeUserId is not null)
-        {
-            query = query.Where(x => x.AssigneeUserId == assigneeUserId);
-        }
-
-        if (flagId is not null)
-        {
-            query = query.Where(x => x.Flags.Any(f => f.FlagDefinitionId == flagId));
-        }
+        query = DocumentFilters.Apply(
+            ClientAccess.VisibleDocuments(query, allowed)
+                .Include(x => x.Client)
+                .Include(x => x.Assignee)
+                .Include(x => x.Fields)
+                .Include(x => x.Flags).ThenInclude(x => x.Flag),
+            null,
+            status,
+            clientId,
+            assigneeUserId,
+            flagId,
+            from,
+            to,
+            deedType);
 
         var rows = await query.AsNoTracking().ToListAsync(cancellationToken);
         rows = DocumentFilters.ApplyDates(rows, from, to).ToList();
-        return rows.OrderByDescending(x => x.UpdatedAt).Select(ToListItem).ToList();
+        rows = DocumentFilters.ApplySearch(rows, search).ToList();
+        return rows.OrderByDescending(x => x.UpdatedAt).Select(DocumentListMapping.ToListItem).ToList();
     }
 
     [HttpGet("{id:guid}")]
@@ -126,7 +113,17 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             document.LastSoftwareSyncDirection,
             document.LastSoftwareSyncFailReason,
             document.SoftwareRecordId,
-            DisplayStatus(document));
+            DisplayStatus(document),
+            document.DocumentNumber,
+            document.Volume,
+            document.Page,
+            document.Pid ?? fields?.ParcelId,
+            document.MailingStreet,
+            document.MailingCity,
+            document.MailingState,
+            document.MailingZip,
+            PartyNames.Normalize(document.Grantors, fields?.Grantor),
+            PartyNames.Normalize(document.Grantees, fields?.Grantee));
     }
 
     [HttpGet("{id:guid}/file")]
@@ -180,6 +177,21 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         fields.IsDraft = request.IsDraft;
         fields.UpdatedAt = DateTimeOffset.UtcNow;
         document.UpdatedAt = DateTimeOffset.UtcNow;
+        if (document.Grantors.Count <= 1)
+        {
+            document.Grantors = PartyNames.Normalize(null, request.Grantor).ToList();
+        }
+
+        if (document.Grantees.Count <= 1)
+        {
+            document.Grantees = PartyNames.Normalize(null, request.Grantee).ToList();
+        }
+
+        if (string.IsNullOrWhiteSpace(document.Pid) && !string.IsNullOrWhiteSpace(request.ParcelId))
+        {
+            document.Pid = request.ParcelId;
+        }
+
         if (request.DeedType is not null)
         {
             document.DeedType = request.DeedType;
@@ -495,23 +507,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    private static DocumentListItem ToListItem(Document x) =>
-        new(
-            x.Id,
-            x.Name,
-            x.Client.Name,
-            x.ClientId,
-            x.Status,
-            x.UpdatedAt,
-            x.Assignee?.DisplayName,
-            x.AssigneeUserId,
-            x.Status == DocumentStatuses.Failed,
-            x.DeletedAt != null,
-            x.DeedType,
-            x.ReviewStatus,
-            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
-            x.ErrorMessage,
-            DisplayStatus(x));
+    private static DocumentListItem ToListItem(Document x) => DocumentListMapping.ToListItem(x);
 
     private async Task<ActionResult?> ApplyReviewStatusAsync(
         Document document,

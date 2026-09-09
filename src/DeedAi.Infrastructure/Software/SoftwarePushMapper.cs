@@ -82,6 +82,7 @@ public static class SoftwarePushMapper
             [DeedFields.InstrumentDate] = document.Fields?.InstrumentDate,
             [DeedFields.Consideration] = document.Fields?.Consideration,
             [DeedFields.ParcelId] = document.Fields?.ParcelId,
+            [DeedFields.LegalDescription] = document.Fields?.LegalDescription,
             [DeedFields.Client] = document.Fields?.Client ?? document.Client.Name,
             [DeedFields.Notes] = document.Fields?.Notes
         };
