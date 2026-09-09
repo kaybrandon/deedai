@@ -65,7 +65,8 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
         var client = await Authed("viewer@bisconsultants.com");
         var from = new DateTimeOffset(2024, 8, 12, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2024, 8, 12, 23, 59, 59, TimeSpan.Zero);
-        var response = await client.GetAsync($"/api/dashboard/export?from={from:o}&to={to:o}");
+        var response = await client.GetAsync(
+            $"/api/dashboard/export?from={Uri.EscapeDataString(from.ToString("o"))}&to={Uri.EscapeDataString(to.ToString("o"))}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var expected = DeedPdfWriter.DashboardFileName(from, to);
         Assert.Equal("deedai-dashboard-2024-08-12-to-2024-08-12.pdf", expected);
