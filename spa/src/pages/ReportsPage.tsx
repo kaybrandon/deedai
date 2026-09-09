@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { endpoints, type ClientItem, type FlagItem, type UserSummary } from "../api";
 import EmptyState from "../components/EmptyState";
+import { LabelWithHelp } from "../components/FieldHelp";
 
 interface ReportRow {
   id: string;
@@ -87,39 +88,51 @@ export default function ReportsPage() {
       </div>
       <form className="filter-row wrap" onSubmit={load}>
         <input className="grow" placeholder="Search name, grantor, parcel" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-          <option value="">Status</option>
-          <option>Queued</option>
-          <option>Processing</option>
-          <option>Ready</option>
-          <option>Failed</option>
-        </select>
-        <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
-          <option value="">Client</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
-        <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee">
-          <option value="">Assignee</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.displayName}
-            </option>
-          ))}
-        </select>
-        <select value={flagId} onChange={(e) => setFlagId(e.target.value)} aria-label="Flag">
-          <option value="">Flag</option>
-          {flags.map((flag) => (
-            <option key={flag.id} value={flag.id}>
-              {flag.name}
-            </option>
-          ))}
-        </select>
         <label>
-          From
+          <LabelWithHelp helpKey="reports.status">Status</LabelWithHelp>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+            <option value="">Status</option>
+            <option>Queued</option>
+            <option>Processing</option>
+            <option>Ready</option>
+            <option>Failed</option>
+          </select>
+        </label>
+        <label>
+          <LabelWithHelp helpKey="reports.client">Client</LabelWithHelp>
+          <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
+            <option value="">Client</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <LabelWithHelp helpKey="reports.assignee">Assignee</LabelWithHelp>
+          <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Assignee">
+            <option value="">Assignee</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <LabelWithHelp helpKey="reports.flag">Flag</LabelWithHelp>
+          <select value={flagId} onChange={(e) => setFlagId(e.target.value)} aria-label="Flag">
+            <option value="">Flag</option>
+            {flags.map((flag) => (
+              <option key={flag.id} value={flag.id}>
+                {flag.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <LabelWithHelp helpKey="reports.date">From</LabelWithHelp>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label>

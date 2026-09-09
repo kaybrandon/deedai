@@ -137,6 +137,7 @@ export default function RestorePage() {
           body="This deed will appear on Documents again for its Client."
           confirmLabel="Restore"
           danger={false}
+          helpKey="restore.confirmRestore"
           onCancel={() => setPending(null)}
           onConfirm={() => void confirm()}
         />
@@ -146,6 +147,7 @@ export default function RestorePage() {
           title={`Permanently delete ${pending.row.name}?`}
           body="Hard-delete cannot be undone. The PDF blob is removed."
           confirmLabel="Hard delete"
+          helpKey="restore.confirmHardDelete"
           onCancel={() => setPending(null)}
           onConfirm={() => void confirm()}
         />

@@ -16,6 +16,7 @@ import {
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import { FieldHelp, LabelWithHelp } from "../components/FieldHelp";
 
 const RESET_FLAGS: { key: keyof SoftwareClientConfig; label: string }[] = [
   { key: "resetExemptions", label: "Exemptions" },
@@ -202,7 +203,7 @@ export default function SoftwarePage() {
                 checked={settings.pushEnabled}
                 onChange={(e) => void saveSettings({ ...settings, pushEnabled: e.target.checked })}
               />
-              Enable Software push
+              <LabelWithHelp helpKey="software.enablePush">Enable Software push</LabelWithHelp>
             </label>
             <label>
               Default Software group
@@ -246,7 +247,7 @@ export default function SoftwarePage() {
             }}
           >
             <label>
-              Vendor
+              <LabelWithHelp helpKey="software.vendor">Vendor</LabelWithHelp>
               <input value={draft.vendor ?? ""} onChange={(e) => setDraft({ ...draft, vendor: e.target.value })} />
             </label>
             <label>
@@ -254,11 +255,11 @@ export default function SoftwarePage() {
               <input value={draft.apiUrl ?? ""} onChange={(e) => setDraft({ ...draft, apiUrl: e.target.value })} />
             </label>
             <label>
-              Group code
+              <LabelWithHelp helpKey="software.groupCode">Group code</LabelWithHelp>
               <input value={draft.groupCode ?? ""} onChange={(e) => setDraft({ ...draft, groupCode: e.target.value })} />
             </label>
             <label>
-              Mapped date/label depth
+              <LabelWithHelp helpKey="software.dateLabelDepth">Mapped date/label depth</LabelWithHelp>
               <select
                 value={draft.dateLabelDepth}
                 onChange={(e) => setDraft({ ...draft, dateLabelDepth: Number(e.target.value) })}
@@ -270,7 +271,7 @@ export default function SoftwarePage() {
               </select>
             </label>
             <label>
-              Consideration threshold
+              <LabelWithHelp helpKey="sales.considerationThreshold">Consideration threshold</LabelWithHelp>
               <input
                 type="number"
                 min={0}
@@ -285,7 +286,7 @@ export default function SoftwarePage() {
                 checked={draft.removeLeadingZeros}
                 onChange={(e) => setDraft({ ...draft, removeLeadingZeros: e.target.checked })}
               />
-              Remove leading zeros
+              <LabelWithHelp helpKey="software.removeLeadingZeros">Remove leading zeros</LabelWithHelp>
             </label>
             <label className="remember">
               <input
@@ -293,7 +294,7 @@ export default function SoftwarePage() {
                 checked={draft.displaySalesTab}
                 onChange={(e) => setDraft({ ...draft, displaySalesTab: e.target.checked })}
               />
-              Display Sales Tab
+              <LabelWithHelp helpKey="software.displaySalesTab">Display Sales Tab</LabelWithHelp>
             </label>
             <label className="remember">
               <input
@@ -301,7 +302,7 @@ export default function SoftwarePage() {
                 checked={draft.sendConsideration}
                 onChange={(e) => setDraft({ ...draft, sendConsideration: e.target.checked })}
               />
-              Send consideration
+              <LabelWithHelp helpKey="software.sendConsideration">Send consideration</LabelWithHelp>
             </label>
             <div style={{ gridColumn: "1 / -1" }}>
               <h3>Property resets on push</h3>
@@ -328,7 +329,9 @@ export default function SoftwarePage() {
 
       {canAdmin && (
         <section className="panel">
-          <h2>Sales Tab codes</h2>
+          <h2>
+            Sales Tab codes <FieldHelp helpKey="sales.codes" />
+          </h2>
           <p className="muted">
             Codes assigned when Display Sales Tab is on and consideration meets the Client threshold. Editors assign them
             on the Sales page.

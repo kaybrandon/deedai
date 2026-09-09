@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { endpoints, type ClientItem, type SaleRow, type SalesPage, type SalesTabCodeItem } from "../api";
 import { useAuth } from "../auth";
 import EmptyState from "../components/EmptyState";
+import { FieldHelp, LabelWithHelp } from "../components/FieldHelp";
 
 export default function SalesPage() {
   const { canEdit } = useAuth();
@@ -65,7 +66,9 @@ export default function SalesPage() {
 
   return (
     <section className="page">
-      <h1>Sales</h1>
+      <h1>
+        Sales <FieldHelp helpKey="sales.codes" />
+      </h1>
       <p className="muted">
         Sales Tab codes for deeds that meet the Client consideration threshold when Display Sales Tab is on. Admin and
         Editor only.
@@ -104,7 +107,8 @@ export default function SalesPage() {
       ) : (
         <>
           <p className="muted">
-            Threshold {page.considerationThreshold ?? 0}. Codes:{" "}
+            <LabelWithHelp helpKey="sales.considerationThreshold">Threshold</LabelWithHelp>{" "}
+            {page.considerationThreshold ?? 0}. Codes:{" "}
             {codes.length === 0 ? "none yet" : codes.map((code) => `${code.code} (${code.label})`).join(", ")}
           </p>
           {page.rows.length === 0 ? (
