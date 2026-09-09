@@ -79,7 +79,7 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
         var to = new DateTimeOffset(2024, 8, 15, 3, 59, 59, TimeSpan.Zero);
 
         Assert.Equal(
-            "deedai-dashboard-2024-08-15-to-2024-08-15.pdf",
+            "deedai-dashboard-2024-08-14-to-2024-08-15.pdf",
             DeedPdfWriter.DashboardFileName(from, to));
         Assert.Equal(
             "deedai-dashboard-2024-08-14-to-2024-08-14.pdf",
