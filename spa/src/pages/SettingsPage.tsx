@@ -146,8 +146,11 @@ export default function SettingsPage() {
 
   return (
     <section className="page">
-      <div className="review-header">
-        <h1>Settings</h1>
+      <div className="page-head">
+        <div>
+          <h1>Settings</h1>
+          <p className="page-kicker">Workspace lists, session, Software maps, and API docs.</p>
+        </div>
         <div className="row-actions">
           <button className="ghost" type="button" onClick={() => endpoints.exportSettings("json").catch((e) => setError(e.message))}>
             Export JSON

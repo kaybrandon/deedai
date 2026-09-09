@@ -1,6 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
-import { endpoints, type ClientItem, type DashboardCounts } from "../api";
-import EmptyState from "../components/EmptyState";
+import {
+  endpoints,
+  type ClientItem,
+  type DashboardByUser,
+  type DashboardCounts,
+  type DashboardStatusMix,
+  type DashboardVolume
+} from "../api";
+import { ByUserChart, StatusMixChart, VolumeChart } from "../components/DashboardCharts";
 
 function defaultBounds() {
   return { from: "2024-08-01", to: toInput(new Date()) };
@@ -17,19 +24,40 @@ export default function DashboardPage() {
   const [clientId, setClientId] = useState("");
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
+  const [mix, setMix] = useState<DashboardStatusMix | null>(null);
+  const [byUser, setByUser] = useState<DashboardByUser | null>(null);
+  const [volume, setVolume] = useState<DashboardVolume | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function load(event?: FormEvent) {
-    event?.preventDefault();
+  function query() {
     const params = new URLSearchParams();
     if (from) params.set("from", new Date(from).toISOString());
     if (to) params.set("to", new Date(`${to}T23:59:59`).toISOString());
     if (clientId) params.set("clientId", clientId);
+    return `?${params}`;
+  }
+
+  async function load(event?: FormEvent) {
+    event?.preventDefault();
+    setLoading(true);
+    const params = query();
     try {
-      setCounts(await endpoints.counts(`?${params}`));
+      const [nextCounts, nextMix, nextByUser, nextVolume] = await Promise.all([
+        endpoints.counts(params),
+        endpoints.statusMix(params),
+        endpoints.byUser(params),
+        endpoints.volume(params)
+      ]);
+      setCounts(nextCounts);
+      setMix(nextMix);
+      setByUser(nextByUser);
+      setVolume(nextVolume);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load dashboard.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -39,12 +67,15 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const empty = counts !== null && counts.uploaded === 0;
-
   return (
     <section className="page">
-      <h1>Dashboard</h1>
-      <form className="filter-row" onSubmit={load}>
+      <header className="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="page-kicker">Counts and charts for Clients you can access.</p>
+        </div>
+      </header>
+      <form className="filter-row wrap" onSubmit={load}>
         <label>
           From
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -64,22 +95,32 @@ export default function DashboardPage() {
             ))}
           </select>
         </label>
-        <button className="primary" type="submit">
-          Search
+        <button className="primary" type="submit" disabled={loading}>
+          {loading ? "Loading…" : "Apply"}
         </button>
       </form>
       {error && <div className="denied-box">{error}</div>}
-      {empty ? (
-        <EmptyState title="No deeds in this range" body="Upload a PDF or widen the dates to see dashboard counts." />
-      ) : (
-        <div className="cards">
-          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} />
-          <CountCard label="Queued" value={counts?.queued ?? 0} />
-          <CountCard label="Processing" value={counts?.processing ?? 0} />
-          <CountCard label="Ready" value={counts?.ready ?? 0} />
-          <CountCard label="Failed" value={counts?.failed ?? 0} danger />
-        </div>
-      )}
+      <div className="cards">
+        <CountCard label="Uploaded" value={counts?.uploaded ?? 0} />
+        <CountCard label="Queued" value={counts?.queued ?? 0} />
+        <CountCard label="Processing" value={counts?.processing ?? 0} />
+        <CountCard label="Ready" value={counts?.ready ?? 0} />
+        <CountCard label="Failed" value={counts?.failed ?? 0} danger />
+      </div>
+      <div className="chart-grid">
+        <article className="chart-card">
+          <h2>Status mix</h2>
+          <StatusMixChart data={mix} />
+        </article>
+        <article className="chart-card">
+          <h2>By user</h2>
+          <ByUserChart data={byUser} />
+        </article>
+        <article className="chart-card chart-card-wide">
+          <h2>Volume over time</h2>
+          <VolumeChart data={volume} />
+        </article>
+      </div>
     </section>
   );
 }

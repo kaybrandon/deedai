@@ -1,5 +1,10 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.3 SPA shell + Chart.js
+- Dense SaaS shell (~200px sidebar, 48px top bar, 16/12 padding). Compact status cards and denser tables; actions stay ≥44px. No horizontal page scroll at ~768px.
+- Dashboard Chart.js wired to existing `GET /api/dashboard/charts/status-mix`, `by-user`, and `volume` plus `GET /api/dashboard/counts`. Same date-range / Client filter and role/ClientAccess as the APIs. Empty chart states when no data.
+- First-surface visual refresh only (Login, Dashboard, Documents, Review, Users / Settings / Reports). No Phase 4.2 PDF / Needs-review / health-link / Authorize-size work. Client / Software naming only.
+
 ## 2026-09-09 — Phase 4.1 Swagger + field Help
 - Admin Settings **Enable Swagger UI** (DB-persisted, off by default). `/swagger` is 404 when off; JWT Authorize + Copy Bearer when on. API auth unchanged.
 - Static field Help tooltips on Must fields (Client / Software wording only). No Azure deploy / App Service changes.

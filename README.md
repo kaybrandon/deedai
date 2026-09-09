@@ -31,6 +31,12 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 4.3 acceptance
+
+- **SPA shell:** Dense SaaS layout (~200px sidebar, 48px top bar, 16/12 padding). Compact count cards and denser tables. Tap targets stay ≥44px. No horizontal page scroll around 768px. Not an AdminLTE clone.
+- **Dashboard charts:** Chart.js on existing APIs — `GET /api/dashboard/charts/status-mix` (donut), `GET /api/dashboard/charts/by-user` (stacked bar, Must), `GET /api/dashboard/charts/volume` (line over time), plus existing `GET /api/dashboard/counts`. One date-range / Client filter drives counts and charts. Empty states when a series has no data. Same role / ClientAccess as the APIs (no extra client-side data).
+- **Surfaces:** Visual density on Login, Dashboard, Documents, Review, Users, Settings, and Reports. Phase 4.2 Musts (Review PDF preview, Needs-review logic, Settings health link, Swagger Authorize sizing) are out of scope.
+
 ## Phase 4.1 acceptance
 
 - **Swagger (Admin):** Settings toggle **Enable Swagger UI** is database-persisted (`AppSettings.Swagger.Enabled`) and **off by default**. When on, `/swagger` serves Swagger UI with JWT Authorize and a **Copy Bearer** control. When off, `/swagger` (and the OpenAPI JSON) return **404** — not the SPA. Enabling Swagger does not open anonymous API access. Non-admins cannot see or change the toggle. Optional `Swagger__Enabled=true` seeds ON in non-Production only; Production stays off unless an Admin turns it on.

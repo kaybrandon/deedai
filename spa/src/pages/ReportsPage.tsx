@@ -72,8 +72,11 @@ export default function ReportsPage() {
 
   return (
     <section className="page">
-      <div className="review-header">
-        <h1>Reports</h1>
+      <div className="page-head">
+        <div>
+          <h1>Reports</h1>
+          <p className="page-kicker">Export deeds visible to your role and Clients.</p>
+        </div>
         <div className="row-actions">
           <button className="ghost" type="button" onClick={() => void exportFile("csv", "deedai-report.csv")}>
             Export CSV
