@@ -15,6 +15,14 @@ export const HELP = {
     "When on, the consideration amount is included on Software push. When off, consideration is omitted from the payload.",
   "software.dateLabelDepth":
     "How many mapped dates and labels to send on push: instrument only, plus updated, or plus created.",
+  "software.imageCodes":
+    "Image codes this Client sends on Software lookup and push. Add codes here; they stay scoped to this Software instance.",
+  "software.grantee":
+    "How multiple Grantee names combine for Software lookup and push. First, last, or joined. The label is Grantee.",
+  "software.certifiedYear":
+    "Certified Software year used on lookup and push when a year is required. Leave blank when the vendor does not use years.",
+  "software.defaultYear":
+    "Default Software year sent on lookup and push when a year is not taken from the deed. Must be a sensible year.",
   "sales.codes":
     "Sales Tab codes Editors can assign when Display Sales Tab is on and consideration meets the Client threshold.",
   "sales.considerationThreshold":
@@ -77,6 +85,10 @@ export const MUST_HELP_KEYS: HelpKey[] = [
   "software.displaySalesTab",
   "software.sendConsideration",
   "software.dateLabelDepth",
+  "software.imageCodes",
+  "software.grantee",
+  "software.certifiedYear",
+  "software.defaultYear",
   "sales.codes",
   "sales.considerationThreshold",
   "reports.date",

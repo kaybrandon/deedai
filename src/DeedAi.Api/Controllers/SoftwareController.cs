@@ -104,6 +104,21 @@ public sealed class SoftwareController(
             return BadRequest(new { message = "Consideration threshold cannot be negative." });
         }
 
+        if (request.GranteeCombiner is { } combiner && !GranteeCombiners.IsKnown(combiner))
+        {
+            return BadRequest(new { message = "Grantee combiner must be first, last, and, ampersand, semicolon, or comma." });
+        }
+
+        if (!SoftwareYears.IsValid(request.CertifiedYear, out var certifiedError))
+        {
+            return BadRequest(new { message = certifiedError });
+        }
+
+        if (!SoftwareYears.IsValid(request.DefaultYear, out var defaultYearError))
+        {
+            return BadRequest(new { message = defaultYearError });
+        }
+
         var item = await db.SoftwareClientConfigs.FirstOrDefaultAsync(x => x.ClientId == clientId, cancellationToken);
         if (item is null)
         {
@@ -125,8 +140,122 @@ public sealed class SoftwareController(
         item.ResetSalesTab = request.ResetSalesTab;
         item.ResetAgents = request.ResetAgents;
         item.ResetMortgageCodes = request.ResetMortgageCodes;
+        item.GranteeCombiner = GranteeCombiners.Normalize(request.GranteeCombiner);
+        item.CertifiedYear = request.CertifiedYear;
+        item.DefaultYear = request.DefaultYear;
+        item.LookupImageCode = TrimOrEmpty(request.LookupImageCode, 32);
+        item.PushImageCode = TrimOrEmpty(request.PushImageCode, 32);
+        item.SalesRatioCode = TrimOrEmpty(request.SalesRatioCode, 32);
+        item.FinanceCode = TrimOrEmpty(request.FinanceCode, 32);
+        item.InstrumentCode = TrimOrEmpty(request.InstrumentCode, 32);
+        item.CoalesceNullDepthFields();
         await db.SaveChangesAsync(cancellationToken);
-        return ToConfig(item, client.Name);
+        var imageCodes = await LoadImageCodesAsync([clientId], cancellationToken);
+        return ToConfig(item, client.Name, imageCodes);
+    }
+
+    [HttpGet("software/image-codes")]
+    [Authorize(Policy = RolePolicies.CanEdit)]
+    public async Task<ActionResult<IReadOnlyList<SoftwareImageCodeItem>>> ImageCodes(CancellationToken cancellationToken)
+    {
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        return await LoadImageCodesAsync(allowed, cancellationToken);
+    }
+
+    [HttpPost("software/image-codes")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<SoftwareImageCodeItem>> CreateImageCode(
+        [FromBody] UpsertSoftwareImageCodeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var error = ValidateImageCode(request);
+        if (error is not null)
+        {
+            return BadRequest(new { message = error });
+        }
+
+        if (!await db.Clients.AnyAsync(x => x.Id == request.ClientId, cancellationToken))
+        {
+            return BadRequest(new { message = "Client not found." });
+        }
+
+        var item = new SoftwareImageCode
+        {
+            Id = Guid.NewGuid(),
+            ClientId = request.ClientId,
+            Code = request.Code.Trim().ToUpperInvariant(),
+            Label = request.Label.Trim(),
+            DeedType = string.IsNullOrWhiteSpace(request.DeedType) ? "" : request.DeedType.Trim(),
+            UseOnLookup = request.UseOnLookup,
+            UseOnPush = request.UseOnPush,
+            IsActive = request.IsActive,
+            SortOrder = request.SortOrder
+        };
+        db.SoftwareImageCodes.Add(item);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "An image code with that value already exists for this Client." });
+        }
+
+        return ToImageCode(await ReloadImageCode(item.Id, cancellationToken));
+    }
+
+    [HttpPut("software/image-codes/{id:guid}")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<SoftwareImageCodeItem>> UpdateImageCode(
+        Guid id,
+        [FromBody] UpsertSoftwareImageCodeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var error = ValidateImageCode(request);
+        if (error is not null)
+        {
+            return BadRequest(new { message = error });
+        }
+
+        var item = await db.SoftwareImageCodes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        item.ClientId = request.ClientId;
+        item.Code = request.Code.Trim().ToUpperInvariant();
+        item.Label = request.Label.Trim();
+        item.DeedType = string.IsNullOrWhiteSpace(request.DeedType) ? "" : request.DeedType.Trim();
+        item.UseOnLookup = request.UseOnLookup;
+        item.UseOnPush = request.UseOnPush;
+        item.IsActive = request.IsActive;
+        item.SortOrder = request.SortOrder;
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "An image code with that value already exists for this Client." });
+        }
+
+        return ToImageCode(await ReloadImageCode(id, cancellationToken));
+    }
+
+    [HttpDelete("software/image-codes/{id:guid}")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<IActionResult> DeleteImageCode(Guid id, CancellationToken cancellationToken)
+    {
+        var item = await db.SoftwareImageCodes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        db.SoftwareImageCodes.Remove(item);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = "Image code removed." });
     }
 
     [HttpGet("software/sales-tab-codes")]
@@ -324,9 +453,15 @@ public sealed class SoftwareController(
         [FromQuery] string? client,
         [FromQuery] string? instrumentDate,
         [FromQuery] string? deedType,
+        [FromQuery] int? year,
+        [FromQuery] string? imageCode,
         CancellationToken cancellationToken)
     {
-        var query = new SoftwareLookupQuery(parcelId, grantor, grantee, client, instrumentDate, deedType);
+        var query = await EnrichLookupAsync(
+            new SoftwareLookupQuery(parcelId, grantor, grantee, client, instrumentDate, deedType, year, imageCode),
+            clientId: null,
+            deedType,
+            cancellationToken);
         if (!HasKeyField(query))
         {
             return BadRequest(new { message = "Lookup Software by parcel ID, grantor, grantee, Client, or instrument date." });
@@ -350,7 +485,7 @@ public sealed class SoftwareController(
             return NotFound();
         }
 
-        var query = QueryFor(document);
+        var query = await QueryForAsync(document, cancellationToken);
         if (!HasKeyField(query))
         {
             return BadRequest(new { message = "Add a Parcel ID, grantor, grantee, or Client before looking up Software." });
@@ -467,15 +602,6 @@ public sealed class SoftwareController(
         });
     }
 
-    private static SoftwareLookupQuery QueryFor(Document document) =>
-        new(
-            document.EffectivePid,
-            PartyNames.Primary(document.Grantors, document.Fields?.Grantor),
-            PartyNames.Primary(document.Grantees, document.Fields?.Grantee),
-            document.Fields?.Client ?? document.Client.Name,
-            document.Fields?.InstrumentDate,
-            document.DeedType);
-
     private static bool HasKeyField(SoftwareLookupQuery query) =>
         !string.IsNullOrWhiteSpace(query.ParcelId)
         || !string.IsNullOrWhiteSpace(query.Grantor)
@@ -493,7 +619,8 @@ public sealed class SoftwareController(
             policy.SoftwareFieldDefaultsJson,
             KeyConfigured(),
             await LoadClientConfigsAsync(null, cancellationToken),
-            await LoadSalesCodesAsync(null, cancellationToken));
+            await LoadSalesCodesAsync(null, cancellationToken),
+            await LoadImageCodesAsync(null, cancellationToken));
 
     private bool KeyConfigured() => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
 
@@ -505,11 +632,18 @@ public sealed class SoftwareController(
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
         var configs = await db.SoftwareClientConfigs.AsNoTracking().ToListAsync(cancellationToken);
+        foreach (var config in configs)
+        {
+            config.CoalesceNullDepthFields();
+        }
+
+        var imageCodes = await LoadImageCodesAsync(allowed, cancellationToken);
         return clients
             .Select(client =>
             {
                 var config = configs.FirstOrDefault(x => x.ClientId == client.Id);
-                return config is null ? EmptyConfig(client) : ToConfig(config, client.Name);
+                var scoped = imageCodes.Where(x => x.ClientId == client.Id).ToList();
+                return config is null ? EmptyConfig(client, scoped) : ToConfig(config, client.Name, scoped);
             })
             .ToList();
     }
@@ -532,12 +666,19 @@ public sealed class SoftwareController(
     private async Task<SalesTabCode> ReloadSalesCode(Guid id, CancellationToken cancellationToken) =>
         await db.SalesTabCodes.AsNoTracking().Include(x => x.Client).FirstAsync(x => x.Id == id, cancellationToken);
 
-    private static SoftwareClientConfigItem EmptyConfig(Client client) =>
+    private static SoftwareClientConfigItem EmptyConfig(Client client, IReadOnlyList<SoftwareImageCodeItem>? imageCodes = null) =>
         new(client.Id, client.Name, null, null, null, false, 1, false, true, 0,
-            false, false, false, false, false, false, false);
+            false, false, false, false, false, false, false,
+            GranteeCombiners.First, null, null, "", "", "", "", "",
+            imageCodes ?? []);
 
-    private static SoftwareClientConfigItem ToConfig(SoftwareClientConfig item, string clientName) =>
-        new(
+    private static SoftwareClientConfigItem ToConfig(
+        SoftwareClientConfig item,
+        string clientName,
+        IReadOnlyList<SoftwareImageCodeItem>? imageCodes = null)
+    {
+        item.CoalesceNullDepthFields();
+        return new(
             item.ClientId,
             clientName,
             item.Vendor,
@@ -554,7 +695,17 @@ public sealed class SoftwareController(
             item.ResetSalesTab,
             item.ResetAgents,
             item.ResetMortgageCodes,
-            item.HasAnyReset);
+            item.HasAnyReset,
+            item.GranteeCombiner,
+            item.CertifiedYear,
+            item.DefaultYear,
+            item.LookupImageCode,
+            item.PushImageCode,
+            item.SalesRatioCode,
+            item.FinanceCode,
+            item.InstrumentCode,
+            imageCodes ?? []);
+    }
 
     private static SalesTabCodeItem ToSalesCode(SalesTabCode item) =>
         new(item.Id, item.ClientId, item.Client?.Name, item.Code, item.Label,
@@ -569,6 +720,128 @@ public sealed class SoftwareController(
 
         var trimmed = value.Trim();
         return trimmed.Length <= max ? trimmed : trimmed[..max];
+    }
+
+    private static string TrimOrEmpty(string? value, int max) =>
+        TrimOrNull(value, max) ?? "";
+
+    private async Task<List<SoftwareImageCodeItem>> LoadImageCodesAsync(
+        IReadOnlyList<Guid>? allowed,
+        CancellationToken cancellationToken)
+    {
+        var rows = await db.SoftwareImageCodes.AsNoTracking()
+            .Include(x => x.Client)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Code)
+            .ToListAsync(cancellationToken);
+        foreach (var row in rows)
+        {
+            row.CoalesceNullFields();
+        }
+
+        return rows
+            .Where(x => ClientAccess.CanSee(allowed, x.ClientId))
+            .Select(ToImageCode)
+            .ToList();
+    }
+
+    private async Task<SoftwareImageCode> ReloadImageCode(Guid id, CancellationToken cancellationToken) =>
+        await db.SoftwareImageCodes.AsNoTracking().Include(x => x.Client).FirstAsync(x => x.Id == id, cancellationToken);
+
+    private static SoftwareImageCodeItem ToImageCode(SoftwareImageCode item)
+    {
+        item.CoalesceNullFields();
+        return new(
+            item.Id,
+            item.ClientId,
+            item.Client?.Name,
+            item.Code,
+            item.Label,
+            string.IsNullOrWhiteSpace(item.DeedType) ? null : item.DeedType,
+            item.UseOnLookup,
+            item.UseOnPush,
+            item.IsActive,
+            item.SortOrder);
+    }
+
+    private static string? ValidateImageCode(UpsertSoftwareImageCodeRequest request)
+    {
+        if (request.ClientId == Guid.Empty)
+        {
+            return "Image codes are Client-scoped.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Code))
+        {
+            return "Image code is required.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Label))
+        {
+            return "Image code label is required.";
+        }
+
+        return null;
+    }
+
+    private async Task<SoftwareLookupQuery> QueryForAsync(Document document, CancellationToken cancellationToken)
+    {
+        var config = await db.SoftwareClientConfigs.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ClientId == document.ClientId, cancellationToken);
+        config?.CoalesceNullDepthFields();
+        var codes = await db.SoftwareImageCodes.AsNoTracking()
+            .Where(x => x.ClientId == document.ClientId)
+            .OrderBy(x => x.SortOrder)
+            .ToListAsync(cancellationToken);
+        return new SoftwareLookupQuery(
+            document.EffectivePid,
+            PartyNames.Primary(document.Grantors, document.Fields?.Grantor),
+            GranteeCombiners.Combine(document.Grantees, document.Fields?.Grantee, config?.GranteeCombiner),
+            document.Fields?.Client ?? document.Client.Name,
+            document.Fields?.InstrumentDate,
+            document.DeedType,
+            SoftwareYears.Prefer(config?.DefaultYear, config?.CertifiedYear),
+            SoftwareImageCodes.ForLookup(config, codes, document.DeedType));
+    }
+
+    private async Task<SoftwareLookupQuery> EnrichLookupAsync(
+        SoftwareLookupQuery query,
+        Guid? clientId,
+        string? deedType,
+        CancellationToken cancellationToken)
+    {
+        SoftwareClientConfig? config = null;
+        if (clientId is { } id)
+        {
+            config = await db.SoftwareClientConfigs.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ClientId == id, cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(query.Client))
+        {
+            var client = await db.Clients.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Name == query.Client, cancellationToken);
+            if (client is not null)
+            {
+                config = await db.SoftwareClientConfigs.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.ClientId == client.Id, cancellationToken);
+                clientId = client.Id;
+            }
+        }
+
+        config?.CoalesceNullDepthFields();
+        var codes = clientId is { } scoped
+            ? await db.SoftwareImageCodes.AsNoTracking().Where(x => x.ClientId == scoped).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken)
+            : [];
+        return query with
+        {
+            Year = query.Year ?? SoftwareYears.Prefer(config?.DefaultYear, config?.CertifiedYear),
+            ImageCode = string.IsNullOrWhiteSpace(query.ImageCode)
+                ? SoftwareImageCodes.ForLookup(config, codes, deedType ?? query.DeedType)
+                : query.ImageCode.Trim(),
+            Grantee = string.IsNullOrWhiteSpace(query.Grantee)
+                ? query.Grantee
+                : query.Grantee
+        };
     }
 
     private static string? ValidateSalesCode(UpsertSalesTabCodeRequest request)
@@ -600,9 +873,9 @@ public sealed class SoftwareController(
 
     private static string? ValidateMap(UpsertSoftwareFieldMapRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.DeedField) || !DeedFields.All.Contains(request.DeedField.Trim(), StringComparer.OrdinalIgnoreCase))
+        if (!DeedFields.IsKnown(request.DeedField))
         {
-            return "Deed field must be grantor, grantee, instrumentDate, consideration, parcelId, client, or notes.";
+            return "Deed field must be a known Software map key (grantor, grantee, mailing, volume, page, documentNumber, years, imageCode, and the other typed deed fields).";
         }
 
         if (string.IsNullOrWhiteSpace(request.SoftwareField))

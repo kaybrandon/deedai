@@ -6,7 +6,8 @@ public sealed record SoftwareSettingsResponse(
     string? FieldDefaultsJson,
     bool KeyConfigured,
     IReadOnlyList<SoftwareClientConfigItem> ClientConfigs,
-    IReadOnlyList<SalesTabCodeItem> SalesTabCodes);
+    IReadOnlyList<SalesTabCodeItem> SalesTabCodes,
+    IReadOnlyList<SoftwareImageCodeItem> ImageCodes);
 
 public sealed record UpdateSoftwareSettingsRequest(
     bool PushEnabled,
@@ -43,7 +44,16 @@ public sealed record SoftwareClientConfigItem(
     bool ResetSalesTab,
     bool ResetAgents,
     bool ResetMortgageCodes,
-    bool HasAnyReset);
+    bool HasAnyReset,
+    string GranteeCombiner,
+    int? CertifiedYear,
+    int? DefaultYear,
+    string LookupImageCode,
+    string PushImageCode,
+    string SalesRatioCode,
+    string FinanceCode,
+    string InstrumentCode,
+    IReadOnlyList<SoftwareImageCodeItem> ImageCodes);
 
 public sealed record UpdateSoftwareClientConfigRequest(
     string? Vendor,
@@ -59,7 +69,37 @@ public sealed record UpdateSoftwareClientConfigRequest(
     bool ResetSalesLetter,
     bool ResetSalesTab,
     bool ResetAgents,
-    bool ResetMortgageCodes);
+    bool ResetMortgageCodes,
+    string? GranteeCombiner = null,
+    int? CertifiedYear = null,
+    int? DefaultYear = null,
+    string? LookupImageCode = null,
+    string? PushImageCode = null,
+    string? SalesRatioCode = null,
+    string? FinanceCode = null,
+    string? InstrumentCode = null);
+
+public sealed record SoftwareImageCodeItem(
+    Guid Id,
+    Guid ClientId,
+    string? ClientName,
+    string Code,
+    string Label,
+    string? DeedType,
+    bool UseOnLookup,
+    bool UseOnPush,
+    bool IsActive,
+    int SortOrder);
+
+public sealed record UpsertSoftwareImageCodeRequest(
+    Guid ClientId,
+    string Code,
+    string Label,
+    string? DeedType,
+    bool UseOnLookup,
+    bool UseOnPush,
+    bool IsActive,
+    int SortOrder);
 
 public sealed record SalesTabCodeItem(
     Guid Id,

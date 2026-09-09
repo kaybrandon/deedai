@@ -692,6 +692,13 @@ export const endpoints = {
     api<SalesTabCodeItem>("/api/software/sales-tab-codes", { method: "POST", body: JSON.stringify(body) }),
   deleteSalesTabCode: (id: string) =>
     api<{ message: string }>(`/api/software/sales-tab-codes/${id}`, { method: "DELETE" }),
+  softwareImageCodes: () => api<SoftwareImageCodeItem[]>("/api/software/image-codes"),
+  createSoftwareImageCode: (body: object) =>
+    api<SoftwareImageCodeItem>("/api/software/image-codes", { method: "POST", body: JSON.stringify(body) }),
+  updateSoftwareImageCode: (id: string, body: object) =>
+    api<SoftwareImageCodeItem>(`/api/software/image-codes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteSoftwareImageCode: (id: string) =>
+    api<{ message: string }>(`/api/software/image-codes/${id}`, { method: "DELETE" }),
   assignSalesTabCode: (id: string, code: string | null) =>
     api<SaleRow>(`/api/sales/${id}/code`, { method: "PUT", body: JSON.stringify({ code }) }),
   softwareFieldMaps: () => api<SoftwareFieldMapItem[]>("/api/software/field-maps"),
@@ -729,6 +736,7 @@ export interface SoftwareSettings {
   keyConfigured: boolean;
   clientConfigs: SoftwareClientConfig[];
   salesTabCodes: SalesTabCodeItem[];
+  imageCodes: SoftwareImageCodeItem[];
 }
 
 export interface SoftwareClientConfig {
@@ -749,6 +757,28 @@ export interface SoftwareClientConfig {
   resetAgents: boolean;
   resetMortgageCodes: boolean;
   hasAnyReset: boolean;
+  granteeCombiner: string;
+  certifiedYear: number | null;
+  defaultYear: number | null;
+  lookupImageCode: string;
+  pushImageCode: string;
+  salesRatioCode: string;
+  financeCode: string;
+  instrumentCode: string;
+  imageCodes: SoftwareImageCodeItem[];
+}
+
+export interface SoftwareImageCodeItem {
+  id: string;
+  clientId: string;
+  clientName: string | null;
+  code: string;
+  label: string;
+  deedType: string | null;
+  useOnLookup: boolean;
+  useOnPush: boolean;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface SalesTabCodeItem {
@@ -798,4 +828,37 @@ export interface SaleRow {
   updatedAt: string;
 }
 
-export const DEED_FIELDS = ["grantor", "grantee", "instrumentDate", "consideration", "parcelId", "client", "notes"];
+export const DEED_FIELDS = [
+  "grantor",
+  "grantee",
+  "instrumentDate",
+  "consideration",
+  "parcelId",
+  "legalDescription",
+  "client",
+  "notes",
+  "documentNumber",
+  "volume",
+  "page",
+  "deedType",
+  "pid",
+  "mailingStreet",
+  "mailingCity",
+  "mailingState",
+  "mailingZip",
+  "imageCode",
+  "certifiedYear",
+  "defaultYear",
+  "salesRatioCode",
+  "financeCode",
+  "instrumentCode"
+];
+
+export const GRANTEE_COMBINERS = [
+  { value: "first", label: "First Grantee" },
+  { value: "last", label: "Last Grantee" },
+  { value: "and", label: "Join with and" },
+  { value: "ampersand", label: "Join with &" },
+  { value: "semicolon", label: "Join with semicolon" },
+  { value: "comma", label: "Join with comma" }
+];

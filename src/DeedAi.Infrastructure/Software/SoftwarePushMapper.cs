@@ -38,7 +38,12 @@ public static class SoftwarePushMapper
         IReadOnlyList<SalesTabCode> salesCodes,
         CancellationToken cancellationToken)
     {
-        var values = ResolveFieldValues(document, policy, clientConfig);
+        var imageCodes = await db.SoftwareImageCodes.AsNoTracking()
+            .Where(x => x.ClientId == document.ClientId)
+            .OrderBy(x => x.SortOrder)
+            .ThenBy(x => x.Code)
+            .ToListAsync(cancellationToken);
+        var values = ResolveFieldValues(document, policy, clientConfig, imageCodes);
         var maps = await db.SoftwareFieldMaps.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.SortOrder)
@@ -73,18 +78,36 @@ public static class SoftwarePushMapper
     public static Dictionary<string, string?> ResolveFieldValues(
         Document document,
         AppPolicy policy,
-        SoftwareClientConfig? clientConfig = null)
+        SoftwareClientConfig? clientConfig = null,
+        IReadOnlyList<SoftwareImageCode>? imageCodes = null)
     {
+        clientConfig?.CoalesceNullDepthFields();
+        var pushImage = SoftwareImageCodes.ForPush(clientConfig, imageCodes, document.DeedType);
         var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
             [DeedFields.Grantor] = PartyNames.Primary(document.Grantors, document.Fields?.Grantor),
-            [DeedFields.Grantee] = PartyNames.Primary(document.Grantees, document.Fields?.Grantee),
+            [DeedFields.Grantee] = GranteeCombiners.Combine(document.Grantees, document.Fields?.Grantee, clientConfig?.GranteeCombiner),
             [DeedFields.InstrumentDate] = document.Fields?.InstrumentDate,
             [DeedFields.Consideration] = document.Fields?.Consideration,
             [DeedFields.ParcelId] = document.EffectivePid,
             [DeedFields.LegalDescription] = document.Fields?.LegalDescription,
             [DeedFields.Client] = document.Fields?.Client ?? document.Client.Name,
-            [DeedFields.Notes] = document.Fields?.Notes
+            [DeedFields.Notes] = document.Fields?.Notes,
+            [DeedFields.DocumentNumber] = BlankToNull(document.DocumentNumber),
+            [DeedFields.Volume] = BlankToNull(document.Volume),
+            [DeedFields.Page] = BlankToNull(document.Page),
+            [DeedFields.DeedType] = BlankToNull(document.DeedType),
+            [DeedFields.Pid] = BlankToNull(document.EffectivePid),
+            [DeedFields.MailingStreet] = BlankToNull(document.MailingStreet),
+            [DeedFields.MailingCity] = BlankToNull(document.MailingCity),
+            [DeedFields.MailingState] = BlankToNull(document.MailingState),
+            [DeedFields.MailingZip] = BlankToNull(document.MailingZip),
+            [DeedFields.ImageCode] = pushImage,
+            [DeedFields.CertifiedYear] = SoftwareYears.Format(clientConfig?.CertifiedYear),
+            [DeedFields.DefaultYear] = SoftwareYears.Format(clientConfig?.DefaultYear),
+            [DeedFields.SalesRatioCode] = BlankToNull(clientConfig?.SalesRatioCode),
+            [DeedFields.FinanceCode] = BlankToNull(clientConfig?.FinanceCode),
+            [DeedFields.InstrumentCode] = BlankToNull(clientConfig?.InstrumentCode)
         };
 
         ApplyJsonDefaults(values, policy.SoftwareFieldDefaultsJson);
@@ -102,6 +125,10 @@ public static class SoftwarePushMapper
         if (config.RemoveLeadingZeros && values.TryGetValue(DeedFields.ParcelId, out var parcel))
         {
             values[DeedFields.ParcelId] = SalesTabRules.StripLeadingZeros(parcel);
+            if (values.ContainsKey(DeedFields.Pid))
+            {
+                values[DeedFields.Pid] = SalesTabRules.StripLeadingZeros(values[DeedFields.Pid]);
+            }
         }
 
         if (!config.SendConsideration)
@@ -135,6 +162,42 @@ public static class SoftwarePushMapper
         if (!string.IsNullOrWhiteSpace(config.GroupCode))
         {
             mapped["GroupCode"] = config.GroupCode.Trim();
+        }
+
+        if (values.TryGetValue(DeedFields.ImageCode, out var imageCode) && !string.IsNullOrWhiteSpace(imageCode))
+        {
+            mapped["Image.Code"] = imageCode;
+        }
+
+        if (values.TryGetValue(DeedFields.CertifiedYear, out var certified) && !string.IsNullOrWhiteSpace(certified))
+        {
+            mapped["Year.Certified"] = certified;
+        }
+
+        if (values.TryGetValue(DeedFields.DefaultYear, out var defaultYear) && !string.IsNullOrWhiteSpace(defaultYear))
+        {
+            mapped["Year.Default"] = defaultYear;
+        }
+
+        var year = SoftwareYears.Format(SoftwareYears.Prefer(config.DefaultYear, config.CertifiedYear));
+        if (!string.IsNullOrWhiteSpace(year))
+        {
+            mapped["Year"] = year;
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.SalesRatioCode))
+        {
+            mapped["SalesRatio.Code"] = config.SalesRatioCode.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.FinanceCode))
+        {
+            mapped["Finance.Code"] = config.FinanceCode.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.InstrumentCode))
+        {
+            mapped["Instrument.Code"] = config.InstrumentCode.Trim();
         }
 
         ApplyDateLabelDepth(mapped, document, config, values);
@@ -269,4 +332,7 @@ public static class SoftwarePushMapper
             // keep existing values
         }
     }
+
+    private static string? BlankToNull(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

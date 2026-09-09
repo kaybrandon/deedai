@@ -6,6 +6,12 @@
 - Editors see a read-only Delete Policy hint. Last Admin who changed the policy is stored as a lightweight audit.
 - Designer-first EF migration `20260910010000_DeletePolicy` adds `DeletePolicySettings` with null-safe `WhoCanDelete` (DEFAULT AllEditors + NULL backfill). Client / Software only. No Super Admin / County / CAMA.
 
+## 2026-09-09 — Phase 5.2.3 Software settings depth
+- Admin Software settings add Client-scoped image codes (lookup/push), Grantee combiner (never CAMA), certified + default year with a sensible range, and the sales-ratio / finance / instrument triad.
+- Field maps expose the remaining typed deed keys (mailing, volume, page, document number, PID, legal, image code, years) so Harris-class maps match configured legacy keys. API names are Software only — no `cama*`.
+- Lookup and push send combined Grantee, year, and image code when set. Six push resets, role-gated Push/lookup/retry/last-sync, Property defaults stay removed, Settings → System → Software nest, Mask F 680px form / full-width instances, no FieldHelp `?` pills, KV-only secrets.
+- Designer-first EF migration `20260910020000_Phase523SoftwareDepth` (after Delete Policy) backfills new string columns and adds SQL defaults (lesson from #35/#36). No Azure deploy.
+
 ## 2026-09-09 — Phase 5.2.1 Review field depth
 - Review is Mask F 3-col queue | PDF | extracted fields. Multi grantor/grantee rows add/remove, persist order, reject empty rows, ≥44px, ConfirmSheet when a named row is removed.
 - Document Number, Volume, Page, Deed Type, PID, and Mailing street/city/state/ZIP save on the document using locked 5.2.2 names. No `docNo` / `vol` / County / CAMA.

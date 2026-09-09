@@ -6,7 +6,9 @@ public sealed record SoftwareLookupQuery(
     string? Grantee,
     string? Client,
     string? InstrumentDate,
-    string? DeedType);
+    string? DeedType,
+    int? Year = null,
+    string? ImageCode = null);
 
 public sealed record SoftwareLookupResult(
     string ParcelId,

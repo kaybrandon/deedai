@@ -70,6 +70,8 @@ public sealed class FieldHelpTests : IClassFixture<TestAppFactory>
             "software.enablePush", "software.vendor", "software.groupCode",
             "software.removeLeadingZeros", "software.displaySalesTab",
             "software.sendConsideration", "software.dateLabelDepth",
+            "software.imageCodes", "software.grantee",
+            "software.certifiedYear", "software.defaultYear",
             "sales.codes", "sales.considerationThreshold");
         AssertHelp(root, "pages/SalesPage.tsx", "sales.codes", "sales.considerationThreshold");
         AssertHelp(root, "pages/ReportsPage.tsx",

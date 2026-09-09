@@ -96,6 +96,8 @@ public sealed class HttpSoftwareClient(
         if (!string.IsNullOrWhiteSpace(query.Client)) yield return new("client", query.Client.Trim());
         if (!string.IsNullOrWhiteSpace(query.InstrumentDate)) yield return new("instrumentDate", query.InstrumentDate.Trim());
         if (!string.IsNullOrWhiteSpace(query.DeedType)) yield return new("deedType", query.DeedType.Trim());
+        if (query.Year is { } year) yield return new("year", year.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (!string.IsNullOrWhiteSpace(query.ImageCode)) yield return new("imageCode", query.ImageCode.Trim());
     }
 
     private static string? Read(JsonElement root, string name) =>
