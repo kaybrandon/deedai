@@ -34,7 +34,8 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 ## Phase 5.1 acceptance
 
 - **Mask F theme:** Mockitt Admin tokens — rail `#1E2430` · canvas `#F0F2F5` · surface `#FFFFFF` · text `#1A1F2A` · muted `#5C6573` · teal `#0D8A7F` · accent `#3B82F6` · Ready `#D8F0EA`/`#0B5F56` · Failed `#F5D6D3`/`#8B2E28`. Dark rail sitewide. Inter. Radii 5/8. Spacing 4/8/12/16.
-- **Density:** Sidebar ~220px · top bar 48px · ribbon 42px · hit ≥44px · btn 32px · search max 360px · filters ~240px · forms ~32rem · Settings/Software detail ~680px · content max ~1440px.
+- **Density:** Sidebar ~220px · top bar 48px · ribbon 42px · hit ≥44px · btn 32px · search max 360px · filters ~240px · forms ~32rem · Settings/Software detail ~680px · content max ~1440px. Software Instances table fills remaining width.
+- **Software layout:** Client software form stays ~680px. Existing Client configs render as a full-width **Software Instances** table (no invented Environment / County / CAMA fields).
 - **Documents:** exactly one search, in the filter row only (≤360px). No topbar search duplicate.
 - **Settings nest:** one child active at a time. Child label **Software** (never Systems / County / CAMA). Parent Settings is not highlighted with a child. `/settings` child is **Workspace**.
 - **Help:** no FieldHelp `?` pills. Help is label `title` / `aria-describedby` only — not a second page Help widget.

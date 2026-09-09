@@ -326,6 +326,22 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .page-detail h1 { margin-bottom: 8px; }
 .page-detail .page-kicker,
 .page-detail > .muted { margin: 0 0 12px; }
+.software-page { max-width: var(--content-max); }
+.software-form { max-width: var(--detail-w); }
+.software-form .panel { padding: 12px; margin-top: 12px; }
+.software-form .form-grid,
+.software-form .inline-form,
+.software-form .compact-form { max-width: var(--form-w); gap: 8px 12px; }
+.software-instances { margin-top: 12px; max-width: none; }
+.software-instances-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.software-instances-head h2 { margin: 0; }
+.software-instances .table-wrap { max-width: none; }
 .page-head, .review-header {
   display: flex;
   justify-content: space-between;

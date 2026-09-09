@@ -99,7 +99,13 @@ public sealed class Phase51Tests
         Assert.Contains("--detail-w: 680px", css, StringComparison.Ordinal);
         Assert.Contains("--form-w: 32rem", css, StringComparison.Ordinal);
         Assert.Contains("className=\"page page-detail\"", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
-        Assert.Contains("className=\"page page-detail\"", Read("spa/src/pages/SoftwarePage.tsx"), StringComparison.Ordinal);
+        var software = Read("spa/src/pages/SoftwarePage.tsx");
+        Assert.Contains("className=\"page software-page\"", software, StringComparison.Ordinal);
+        Assert.Contains("className=\"software-form\"", software, StringComparison.Ordinal);
+        Assert.Contains("className=\"panel software-instances\"", software, StringComparison.Ordinal);
+        Assert.Contains("Software Instances", software, StringComparison.Ordinal);
+        Assert.Contains(".software-form { max-width: var(--detail-w); }", css, StringComparison.Ordinal);
+        Assert.Contains(".software-instances { margin-top: 12px; max-width: none; }", css, StringComparison.Ordinal);
     }
 
     [Fact]
