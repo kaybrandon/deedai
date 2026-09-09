@@ -167,7 +167,7 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   min-height: var(--action-h);
 }
 .sidebar nav { display: grid; gap: 4px; }
-.sidebar a, .nav-disabled {
+.sidebar a, .nav-disabled, .nav-group-toggle {
   color: #cbd5e1;
   text-decoration: none;
   min-height: var(--action-h);
@@ -180,9 +180,30 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   text-align: left;
   font-weight: 600;
   font-size: 13px;
+  width: 100%;
+  cursor: pointer;
 }
-.sidebar a:hover, .nav-disabled:hover { background: var(--navy-soft); color: #fff; }
-.sidebar a.active { background: var(--blue); color: #fff; }
+.sidebar a:hover, .nav-disabled:hover, .nav-group-toggle:hover { background: var(--navy-soft); color: #fff; }
+.sidebar a.active, .nav-group-toggle.is-active { background: var(--blue); color: #fff; }
+.nav-group { display: grid; gap: 4px; }
+.nav-group-toggle {
+  justify-content: space-between;
+  gap: 8px;
+}
+.nav-group-caret {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.nav-sub {
+  display: grid;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 1px solid #334155;
+  margin-left: 12px;
+}
+.nav-sub a, .nav-sub .nav-disabled {
+  font-size: 12px;
+}
 .sidebar-logout { margin-top: auto; background: transparent; color: #e2e8f0; border-color: #334155; }
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .main-body { flex: 1; min-width: 0; }
