@@ -1,8 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { endpoints, type ClientItem, type Role, type UserDetail } from "../api";
+import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail } from "../api";
 import { useAuth } from "../auth";
+import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import PasswordField from "../components/PasswordField";
+import { validatePassword } from "../password";
 
 const roles: Role[] = ["Admin", "Editor", "Uploader", "Viewer"];
 
@@ -24,6 +27,8 @@ export default function UsersPage() {
   const [form, setForm] = useState(blank);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [pendingDisable, setPendingDisable] = useState<UserDetail | null>(null);
 
   async function load() {
     setUsers(await endpoints.adminUsers());
@@ -40,11 +45,13 @@ export default function UsersPage() {
 
   function startCreate() {
     setEditing("new");
+    setPasswordError(null);
     setForm({ ...blank, clientIds: clients.map((c) => c.id) });
   }
 
   function startEdit(user: UserDetail) {
     setEditing(user.id);
+    setPasswordError(null);
     setForm({
       email: user.email,
       displayName: user.displayName,
@@ -58,6 +65,12 @@ export default function UsersPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    const nextPasswordError = validatePassword(form.password, editing === "new");
+    if (nextPasswordError) {
+      setPasswordError(nextPasswordError);
+      return;
+    }
+    setPasswordError(null);
     const body = {
       email: form.email,
       displayName: form.displayName,
@@ -77,7 +90,12 @@ export default function UsersPage() {
       setEditing(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed.");
+      const apiError = err as ApiError;
+      if (apiError.field === "password") {
+        setPasswordError(apiError.message);
+      } else {
+        setError(apiError.message ?? "Save failed.");
+      }
     }
   }
 
@@ -132,15 +150,7 @@ export default function UsersPage() {
                       Edit
                     </button>
                     {user.isActive && (
-                      <button
-                        className="ghost"
-                        type="button"
-                        onClick={async () => {
-                          await endpoints.disableUser(user.id);
-                          setNotice("User disabled.");
-                          await load();
-                        }}
-                      >
+                      <button className="ghost" type="button" onClick={() => setPendingDisable(user)}>
                         Disable
                       </button>
                     )}
@@ -172,16 +182,19 @@ export default function UsersPage() {
                 ))}
               </select>
             </label>
-            <label>
-              {editing === "new" ? "Password" : "New password (optional)"}
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required={editing === "new"}
-                minLength={editing === "new" ? 8 : undefined}
-              />
-            </label>
+            <PasswordField
+              id="user-password"
+              label={editing === "new" ? "Password" : "New password (optional)"}
+              value={form.password}
+              required={editing === "new"}
+              error={passwordError}
+              onChange={(password) => {
+                setForm({ ...form, password });
+                if (passwordError) {
+                  setPasswordError(null);
+                }
+              }}
+            />
           </div>
           <label className="remember">
             <input
@@ -213,6 +226,27 @@ export default function UsersPage() {
             </button>
           </div>
         </form>
+      )}
+
+      {pendingDisable && (
+        <ConfirmSheet
+          title="Disable this user?"
+          body={`${pendingDisable.displayName} will not be able to sign in. An Admin can re-enable them later.`}
+          confirmLabel="Disable"
+          onCancel={() => setPendingDisable(null)}
+          onConfirm={async () => {
+            try {
+              await endpoints.disableUser(pendingDisable.id);
+              setPendingDisable(null);
+              setNotice("User disabled.");
+              setError(null);
+              await load();
+            } catch (err) {
+              setPendingDisable(null);
+              setError(err instanceof Error ? err.message : "Disable failed.");
+            }
+          }}
+        />
       )}
     </section>
   );
