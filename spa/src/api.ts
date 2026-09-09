@@ -320,6 +320,33 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await response.json()) as T;
 }
 
+export function fileNameFromDisposition(disposition: string | null, fallbackName: string): string {
+  if (!disposition) {
+    return fallbackName;
+  }
+
+  const star = disposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+  if (star?.[1]) {
+    try {
+      return decodeURIComponent(star[1].trim());
+    } catch {
+      return star[1].trim();
+    }
+  }
+
+  const quoted = disposition.match(/(?:^|;)\s*filename="([^"]+)"/i);
+  if (quoted?.[1]) {
+    return quoted[1];
+  }
+
+  const plain = disposition.match(/(?:^|;)\s*filename=(?!\*)([^;]+)/i);
+  if (plain?.[1]) {
+    return plain[1].trim();
+  }
+
+  return fallbackName;
+}
+
 export async function download(path: string, fallbackName: string): Promise<void> {
   const headers = new Headers();
   const t = token();
@@ -331,10 +358,8 @@ export async function download(path: string, fallbackName: string): Promise<void
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  const disposition = response.headers.get("content-disposition");
-  const match = disposition?.match(/filename="?([^"]+)"?/);
   link.href = url;
-  link.download = match?.[1] ?? fallbackName;
+  link.download = fileNameFromDisposition(response.headers.get("content-disposition"), fallbackName);
   document.body.appendChild(link);
   link.click();
   link.remove();
