@@ -9,14 +9,7 @@ import {
   type DashboardVolume
 } from "../api";
 import { ByUserChart, StatusMixChart, VolumeChart } from "../components/DashboardCharts";
-
-function documentsPath(status: string | undefined, clientId: string) {
-  const params = new URLSearchParams();
-  if (status) params.set("status", status);
-  if (clientId) params.set("clientId", clientId);
-  const query = params.toString();
-  return query ? `/documents?${query}` : "/documents";
-}
+import { documentsPath } from "../documentsPath";
 
 function defaultBounds() {
   return { from: "2024-08-01", to: toInput(new Date()) };
@@ -187,20 +180,20 @@ export default function DashboardPage() {
       {error && <div className="denied-box no-print">{error}</div>}
       <div className="dashboard-print-surface">
         <div className="cards">
-          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath(undefined, applied.clientId)} />
-          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath("Queued", applied.clientId)} />
-          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath("Processing", applied.clientId)} />
-          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath("Ready", applied.clientId)} />
-          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath("Failed", applied.clientId)} />
+          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath({ clientId: applied.clientId })} />
+          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath({ status: "Queued", clientId: applied.clientId })} />
+          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath({ status: "Processing", clientId: applied.clientId })} />
+          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath({ status: "Ready", clientId: applied.clientId })} />
+          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath({ status: "Failed", clientId: applied.clientId })} />
         </div>
         <div className="chart-grid">
           <article className="chart-card">
             <h2>Status mix</h2>
-            <StatusMixChart data={mix} />
+            <StatusMixChart data={mix} clientId={applied.clientId} />
           </article>
           <article className="chart-card">
             <h2>By user</h2>
-            <ByUserChart data={byUser} />
+            <ByUserChart data={byUser} clientId={applied.clientId} />
           </article>
           <article className="chart-card chart-card-wide">
             <h2>Volume over time</h2>

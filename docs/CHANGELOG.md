@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Dashboard chart rename + clickable filters
+- Chart titles stay sentence case with the rest of the dashboard: **Status mix**, **By user**, **Volume over time**.
+- Status mix donut segments and ≥44px legend links open Documents with the same `status` + `clientId` query as the count cards.
+- By user bars and ≥44px user links open Documents with `assigneeUserId` + `clientId`. Unassigned has no Documents assignee filter, so that column is not a link.
+- Volume stays non-clickable: Documents list/UI has no `from`/`to` filter. Mask A tokens unchanged. No EF migration.
+
 ## 2026-09-09 — Phase 4.2.4 no-store on Swagger index.html
 - Swashbuckle served `/swagger/index.html` (and `index.js`) with `Cache-Control: max-age=604800, private`. QA2 could keep a 7-day stale shell while authorize.js was already no-store, so `__deedAiMeasureAuthorize` stayed undefined.
 - `/swagger` middleware now sets `Cache-Control: no-store` on those shell responses via `Response.OnStarting` (same contract as authorize.js/css). Pin-last-only 4.2.3 is unchanged: single JS after `index.js`, HeadContent CSS only, no `InjectJavascript`.
