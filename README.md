@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-5.2.3-SOFTWARE-DEPTH-AC.md](docs/PHASE-5.2.3-SOFTWARE-DEPTH-AC.md) — Phase 5.2.3 Software settings depth
 - [PHASE-5.2.4-DELETE-POLICY-AC.md](docs/PHASE-5.2.4-DELETE-POLICY-AC.md) — Phase 5.2.4 Delete Policy
 - Phase 1 wires: [login](docs/wires/01-login.png) · [dashboard](docs/wires/02-dashboard.png) · [documents](docs/wires/03-documents.png) · [upload](docs/wires/04-upload.png) · [review](docs/wires/05-review.png)
 
@@ -39,7 +40,17 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Restore:** Restore stays Admin-gated. Policy change does not alter restore or hard-delete.
 - **Carry:** 4 roles · Client/Software · Mask F density · no secrets · Designer-first EF migration `20260910010000_DeletePolicy` · null-safe `WhoCanDelete` (DEFAULT AllEditors + NULL backfill + null-safe materialize) · health 200.
 - **Should:** Audit last Admin who changed the policy. Editors see a read-only Delete Policy hint on Documents.
-- **Won’t:** Super Admin matrix · hard-delete · County/CAMA · Statuses catalog (5.2.5) · Property defaults · Software settings depth (5.2.3).
+- **Won’t:** Super Admin matrix · hard-delete · County/CAMA · Statuses catalog (5.2.5) · Property defaults.
+
+## Phase 5.2.3 acceptance
+
+- **Image codes:** Admin view/edit Client-scoped image codes for Software lookup and push. Persist per Software instance.
+- **Grantee combiner:** First / last / joined Grantee names on lookup and push. Label **Grantee**, never CAMA.
+- **Certified / default year:** Persist on the Client Software instance, validate 1900–current+2, send on lookup/push when set.
+- **Fuller field maps:** Typed maps include mailing, volume, page, document number, PID, legal, image code, and years — not only the original seven deed fields. No `cama*` API names.
+- **Should:** Sales ratio / finance / instrument codes on the instance. Lookup sends year + image code (no Harris SOAP client).
+- **Carry:** Six push resets · role-gated Push / lookup / retry / last-sync · Property defaults stay removed · Settings → System → Software · Mask F 680px form / full-width instances · no FieldHelp `?` pills · KV-only secrets.
+- **Hard gates:** Designer-first migration `20260910020000_Phase523SoftwareDepth` (after `20260910010000_DeletePolicy`) with backfill + SQL defaults. No Azure deploy.
 
 ## Phase 5.2.1 acceptance
 
@@ -123,7 +134,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Settings nest:** Settings → System (mid-level, singular) → Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Never Systems / County / CAMA.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
-- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909230000_DocumentListFieldNullDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
+- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260910020000_Phase523SoftwareDepth` (after `20260910010000_DeletePolicy`) is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
 
 ## Phase 4.3 acceptance
 

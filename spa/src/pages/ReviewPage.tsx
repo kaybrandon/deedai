@@ -258,11 +258,15 @@ export default function ReviewPage() {
       return;
     }
     const client = encodeURIComponent(doc.client);
+    const year = clientConfig?.defaultYear ?? clientConfig?.certifiedYear;
+    const image = clientConfig?.lookupImageCode?.trim();
+    const extras = `${year ? `&year=${year}` : ""}${image ? `&imageCode=${encodeURIComponent(image)}` : ""}`;
     const seen = new Set<string>();
     const results: SoftwareLookup[] = [];
     for (const params of [
-      `?parcelId=${encodeURIComponent(query)}&client=${client}`,
-      `?grantor=${encodeURIComponent(query)}&client=${client}`
+      `?parcelId=${encodeURIComponent(query)}&client=${client}${extras}`,
+      `?grantor=${encodeURIComponent(query)}&client=${client}${extras}`,
+      `?grantee=${encodeURIComponent(query)}&client=${client}${extras}`
     ]) {
       try {
         const row = await endpoints.softwareLookupKeys(params);

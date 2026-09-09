@@ -279,6 +279,8 @@ public sealed class DatabaseSeeder(
                 Map(DeedFields.Notes, "Notes", "Notes", 7));
         }
 
+        await EnsureFullerFieldMapsAsync(cancellationToken);
+
         if (!await db.SoftwareClientConfigs.AnyAsync(cancellationToken))
         {
             db.SoftwareClientConfigs.AddRange(
@@ -299,7 +301,15 @@ public sealed class DatabaseSeeder(
                     ResetSalesLetter = false,
                     ResetSalesTab = false,
                     ResetAgents = false,
-                    ResetMortgageCodes = false
+                    ResetMortgageCodes = false,
+                    GranteeCombiner = GranteeCombiners.And,
+                    CertifiedYear = DateTime.UtcNow.Year - 1,
+                    DefaultYear = DateTime.UtcNow.Year,
+                    LookupImageCode = "WD",
+                    PushImageCode = "WD",
+                    SalesRatioCode = "SR",
+                    FinanceCode = "CV",
+                    InstrumentCode = "WD"
                 },
                 new SoftwareClientConfig
                 {
@@ -313,6 +323,35 @@ public sealed class DatabaseSeeder(
                     DisplaySalesTab = false,
                     SendConsideration = true,
                     ConsiderationThreshold = 0
+                });
+        }
+
+        if (!await db.SoftwareImageCodes.AnyAsync(cancellationToken))
+        {
+            db.SoftwareImageCodes.AddRange(
+                new SoftwareImageCode
+                {
+                    Id = Guid.Parse("53000000-0000-0000-0000-000000000001"),
+                    ClientId = AcmeId,
+                    Code = "WD",
+                    Label = "Warranty Deed",
+                    DeedType = "Warranty Deed",
+                    UseOnLookup = true,
+                    UseOnPush = true,
+                    IsActive = true,
+                    SortOrder = 1
+                },
+                new SoftwareImageCode
+                {
+                    Id = Guid.Parse("53000000-0000-0000-0000-000000000002"),
+                    ClientId = AcmeId,
+                    Code = "QCD",
+                    Label = "Quitclaim Deed",
+                    DeedType = "Quitclaim Deed",
+                    UseOnLookup = true,
+                    UseOnPush = true,
+                    IsActive = true,
+                    SortOrder = 2
                 });
         }
 
@@ -354,6 +393,51 @@ public sealed class DatabaseSeeder(
             IsActive = true,
             SortOrder = sort
         };
+
+    private async Task EnsureFullerFieldMapsAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.SoftwareFieldMaps.AsNoTracking()
+            .Select(x => x.DeedField)
+            .ToListAsync(cancellationToken);
+        var have = existing.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var extra = new (string Field, string Software, string Group, int Sort)[]
+        {
+            (DeedFields.LegalDescription, "LegalDescription", "Property", 8),
+            (DeedFields.DocumentNumber, "DocumentNumber", "Instrument", 9),
+            (DeedFields.Volume, "Volume", "Instrument", 10),
+            (DeedFields.Page, "Page", "Instrument", 11),
+            (DeedFields.DeedType, "DeedType", "Instrument", 12),
+            (DeedFields.Pid, "Pid", "Property", 13),
+            (DeedFields.MailingStreet, "MailingStreet", "Mailing", 14),
+            (DeedFields.MailingCity, "MailingCity", "Mailing", 15),
+            (DeedFields.MailingState, "MailingState", "Mailing", 16),
+            (DeedFields.MailingZip, "MailingZip", "Mailing", 17),
+            (DeedFields.ImageCode, "ImageCode", "Image", 18),
+            (DeedFields.CertifiedYear, "CertifiedYear", "Year", 19),
+            (DeedFields.DefaultYear, "DefaultYear", "Year", 20),
+            (DeedFields.SalesRatioCode, "SalesRatioCode", "Sales", 21),
+            (DeedFields.FinanceCode, "FinanceCode", "Sales", 22),
+            (DeedFields.InstrumentCode, "InstrumentCode", "Sales", 23)
+        };
+
+        foreach (var (field, software, group, sort) in extra)
+        {
+            if (have.Contains(field))
+            {
+                continue;
+            }
+
+            db.SoftwareFieldMaps.Add(new SoftwareFieldMap
+            {
+                Id = Guid.Parse($"41000000-0000-0000-0000-0000000001{sort:D2}"),
+                DeedField = field,
+                SoftwareField = software,
+                SoftwareGroup = group,
+                IsActive = true,
+                SortOrder = sort
+            });
+        }
+    }
 
     private async Task SeedTeamsAsync(CancellationToken cancellationToken)
     {

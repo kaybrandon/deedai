@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DEED_FIELDS,
+  GRANTEE_COMBINERS,
   endpoints,
   type ClientItem,
   type DeedTypeItem,
@@ -9,6 +10,7 @@ import {
   type SalesTabCodeItem,
   type SoftwareClientConfig,
   type SoftwareFieldMapItem,
+  type SoftwareImageCodeItem,
   type SoftwareLookup,
   type SoftwareSettings,
   type SoftwareStatus
@@ -64,7 +66,16 @@ export default function SoftwarePage() {
   });
   const [pendingMap, setPendingMap] = useState<SoftwareFieldMapItem | null>(null);
   const [pendingCode, setPendingCode] = useState<SalesTabCodeItem | null>(null);
+  const [pendingImage, setPendingImage] = useState<SoftwareImageCodeItem | null>(null);
   const [pendingPush, setPendingPush] = useState<string | null>(null);
+  const [imageForm, setImageForm] = useState({
+    code: "",
+    label: "",
+    deedType: "",
+    useOnLookup: true,
+    useOnPush: true,
+    sortOrder: 10
+  });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -133,7 +144,15 @@ export default function SoftwarePage() {
       resetSalesLetter: next.resetSalesLetter,
       resetSalesTab: next.resetSalesTab,
       resetAgents: next.resetAgents,
-      resetMortgageCodes: next.resetMortgageCodes
+      resetMortgageCodes: next.resetMortgageCodes,
+      granteeCombiner: next.granteeCombiner,
+      certifiedYear: next.certifiedYear,
+      defaultYear: next.defaultYear,
+      lookupImageCode: next.lookupImageCode,
+      pushImageCode: next.pushImageCode,
+      salesRatioCode: next.salesRatioCode,
+      financeCode: next.financeCode,
+      instrumentCode: next.instrumentCode
     });
     setConfigs((current) => current.map((item) => (item.clientId === saved.clientId ? saved : item)));
     setDraft(saved);
@@ -161,8 +180,8 @@ export default function SoftwarePage() {
     <section className="page software-page">
       <h1>Software</h1>
       <p className="muted">
-        Lookup and push to the external Software system. Typed Client settings, property resets, and Sales Tab codes live
-        here. Advanced deed-type maps stay in Settings.
+        Lookup and push to the external Software system. Typed Client settings, image codes, Grantee combine, years, and
+        the six property resets live here. Advanced deed-type maps stay in Settings.
       </p>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
@@ -222,8 +241,8 @@ export default function SoftwarePage() {
         <section className="panel">
           <h2>Client Software Settings</h2>
           <p className="muted">
-            Vendor, API URL, group code, Sales Tab, and the six property resets are stored per Client. The API key stays
-            in Key Vault / App Settings and is never shown here.
+            Vendor, API URL, group code, Sales Tab, image codes, Grantee, years, and the six property resets are stored
+            per Client. The API key stays in Key Vault / App Settings and is never shown here.
           </p>
           <label className="compact-field">
             Client
@@ -305,6 +324,177 @@ export default function SoftwarePage() {
               />
               <LabelWithHelp helpKey="software.sendConsideration">Send Consideration</LabelWithHelp>
             </label>
+            <label>
+              <LabelWithHelp helpKey="software.grantee">Grantee</LabelWithHelp>
+              <select
+                value={draft.granteeCombiner || "first"}
+                onChange={(e) => setDraft({ ...draft, granteeCombiner: e.target.value })}
+                aria-label="Grantee"
+              >
+                {GRANTEE_COMBINERS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <LabelWithHelp helpKey="software.certifiedYear">Certified Year</LabelWithHelp>
+              <input
+                type="number"
+                min={1900}
+                max={new Date().getFullYear() + 2}
+                placeholder="Certified year"
+                value={draft.certifiedYear ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, certifiedYear: e.target.value === "" ? null : Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              <LabelWithHelp helpKey="software.defaultYear">Default Year</LabelWithHelp>
+              <input
+                type="number"
+                min={1900}
+                max={new Date().getFullYear() + 2}
+                placeholder="Default year"
+                value={draft.defaultYear ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, defaultYear: e.target.value === "" ? null : Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              Lookup Image Code
+              <input
+                value={draft.lookupImageCode ?? ""}
+                onChange={(e) => setDraft({ ...draft, lookupImageCode: e.target.value })}
+                placeholder="Default lookup image code"
+              />
+            </label>
+            <label>
+              Push Image Code
+              <input
+                value={draft.pushImageCode ?? ""}
+                onChange={(e) => setDraft({ ...draft, pushImageCode: e.target.value })}
+                placeholder="Default push image code"
+              />
+            </label>
+            <label>
+              Sales Ratio Code
+              <input
+                value={draft.salesRatioCode ?? ""}
+                onChange={(e) => setDraft({ ...draft, salesRatioCode: e.target.value })}
+              />
+            </label>
+            <label>
+              Finance Code
+              <input
+                value={draft.financeCode ?? ""}
+                onChange={(e) => setDraft({ ...draft, financeCode: e.target.value })}
+              />
+            </label>
+            <label>
+              Instrument Code
+              <input
+                value={draft.instrumentCode ?? ""}
+                onChange={(e) => setDraft({ ...draft, instrumentCode: e.target.value })}
+              />
+            </label>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <h3>
+                Image Codes <FieldHelp helpKey="software.imageCodes" />
+              </h3>
+              <p className="muted">Client-scoped codes used on Software lookup and push for this instance.</p>
+              {(draft.imageCodes ?? []).length === 0 ? (
+                <EmptyState title="No Image Codes" body="Add an image code this Client uses on Software lookup or push." />
+              ) : (
+                <ul className="setting-list">
+                  {(draft.imageCodes ?? []).map((code) => (
+                    <li key={code.id}>
+                      <span>
+                        {code.code} — {code.label}
+                        <span className="muted">
+                          {code.deedType ? ` · ${code.deedType}` : ""}
+                          {code.useOnLookup ? " · lookup" : ""}
+                          {code.useOnPush ? " · push" : ""}
+                          {code.isActive ? "" : " · inactive"}
+                        </span>
+                      </span>
+                      <button className="link" type="button" onClick={() => setPendingImage(code)}>
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="inline-form">
+                <input
+                  placeholder="Code"
+                  value={imageForm.code}
+                  onChange={(e) => setImageForm({ ...imageForm, code: e.target.value })}
+                />
+                <input
+                  placeholder="Label"
+                  value={imageForm.label}
+                  onChange={(e) => setImageForm({ ...imageForm, label: e.target.value })}
+                />
+                <select
+                  value={imageForm.deedType}
+                  onChange={(e) => setImageForm({ ...imageForm, deedType: e.target.value })}
+                  aria-label="Image code deed type"
+                >
+                  <option value="">Any Deed Type</option>
+                  {deedTypes.map((item) => (
+                    <option key={item.id} value={item.deedType}>
+                      {item.deedType}
+                    </option>
+                  ))}
+                </select>
+                <label className="remember">
+                  <input
+                    type="checkbox"
+                    checked={imageForm.useOnLookup}
+                    onChange={(e) => setImageForm({ ...imageForm, useOnLookup: e.target.checked })}
+                  />
+                  Lookup
+                </label>
+                <label className="remember">
+                  <input
+                    type="checkbox"
+                    checked={imageForm.useOnPush}
+                    onChange={(e) => setImageForm({ ...imageForm, useOnPush: e.target.checked })}
+                  />
+                  Push
+                </label>
+                <button
+                  className="primary"
+                  type="button"
+                  onClick={async () => {
+                    if (!imageForm.code.trim() || !imageForm.label.trim()) {
+                      setError("Image code and label are required.");
+                      return;
+                    }
+                    await endpoints.createSoftwareImageCode({
+                      clientId: draft.clientId,
+                      code: imageForm.code,
+                      label: imageForm.label,
+                      deedType: imageForm.deedType || null,
+                      useOnLookup: imageForm.useOnLookup,
+                      useOnPush: imageForm.useOnPush,
+                      isActive: true,
+                      sortOrder: imageForm.sortOrder
+                    });
+                    setImageForm({ code: "", label: "", deedType: "", useOnLookup: true, useOnPush: true, sortOrder: 10 });
+                    setNotice("Image code saved.");
+                    setError(null);
+                    await load();
+                  }}
+                >
+                  Add Image Code
+                </button>
+              </div>
+            </div>
             <div style={{ gridColumn: "1 / -1" }}>
               <h3>Property Resets on Push</h3>
               <p className="muted">When set, push clears that Software property group. Confirm before a destructive push.</p>
@@ -345,6 +535,8 @@ export default function SoftwarePage() {
                     <th>Client</th>
                     <th>Vendor</th>
                     <th>Group</th>
+                    <th>Grantee</th>
+                    <th>Year</th>
                     <th>Sales Tab</th>
                     <th>Resets</th>
                     {canAdmin && <th>Actions</th>}
@@ -360,6 +552,8 @@ export default function SoftwarePage() {
                       <td>{item.clientName}</td>
                       <td>{item.vendor || "—"}</td>
                       <td>{item.groupCode || "—"}</td>
+                      <td>{item.granteeCombiner || "first"}</td>
+                      <td>{item.defaultYear ?? item.certifiedYear ?? "—"}</td>
                       <td>{item.displaySalesTab ? "On" : "Off"}</td>
                       <td>{item.hasAnyReset ? resetLabels(item).join(", ") : "—"}</td>
                       {canAdmin && (
@@ -567,7 +761,10 @@ export default function SoftwarePage() {
 
       <section className="panel">
         <h2>Field Map</h2>
-        <p className="muted">Map deed fields to Software fields and groups. These mappings are used on push.</p>
+        <p className="muted">
+          Map typed deed fields to Software fields and groups used on push — including mailing, volume, page, document
+          number, PID, image code, and years. Software labels only.
+        </p>
         {maps.length === 0 ? (
           <EmptyState title="No Field Maps Yet" body="Add a deed field → Software field map so push uses the right group." />
         ) : (
@@ -657,6 +854,20 @@ export default function SoftwarePage() {
             await endpoints.deleteSoftwareFieldMap(pendingMap.id);
             setPendingMap(null);
             setNotice("Field Map removed.");
+            await load();
+          }}
+        />
+      )}
+      {pendingImage && (
+        <ConfirmSheet
+          title={`Remove image code ${pendingImage.code}?`}
+          body="Lookup and push will stop using this Client-scoped image code."
+          confirmLabel="Remove"
+          onCancel={() => setPendingImage(null)}
+          onConfirm={async () => {
+            await endpoints.deleteSoftwareImageCode(pendingImage.id);
+            setPendingImage(null);
+            setNotice("Image code removed.");
             await load();
           }}
         />

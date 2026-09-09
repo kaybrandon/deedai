@@ -1,3 +1,4 @@
+using System.Globalization;
 using DeedAi.Domain.Abstractions;
 
 namespace DeedAi.Infrastructure.Software;
@@ -35,7 +36,9 @@ public sealed class MockSoftwareClient : ISoftwareClient
                 ["mailingCity"] = "Springfield",
                 ["mailingState"] = "IL",
                 ["mailingZip"] = "62701",
-                ["source"] = "mock"
+                ["source"] = "mock",
+                ["year"] = query.Year?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "",
+                ["imageCode"] = query.ImageCode ?? ""
             }));
     }
 

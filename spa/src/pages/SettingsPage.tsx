@@ -251,8 +251,8 @@ export default function SettingsPage() {
         <section className="panel">
           <h2>Software Defaults</h2>
           <p className="muted">
-            Enable push and the fallback Software group here. Vendor, API URL, group code, Sales Tab, date/label depth,
-            and property resets are typed per Client on the{" "}
+            Enable push and the fallback Software group here. Vendor, API URL, group code, Sales Tab, image codes,
+            Grantee, years, date/label depth, and property resets are typed per Client on the{" "}
             <button className="link" type="button" onClick={() => navigate("/software")}>
               Software
             </button>{" "}

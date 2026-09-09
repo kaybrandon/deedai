@@ -1,3 +1,5 @@
+using DeedAi.Domain;
+
 namespace DeedAi.Domain.Entities;
 
 public sealed class SoftwareClientConfig
@@ -19,7 +21,25 @@ public sealed class SoftwareClientConfig
     public bool ResetSalesTab { get; set; }
     public bool ResetAgents { get; set; }
     public bool ResetMortgageCodes { get; set; }
+    public string GranteeCombiner { get; set; } = GranteeCombiners.First;
+    public int? CertifiedYear { get; set; }
+    public int? DefaultYear { get; set; }
+    public string LookupImageCode { get; set; } = "";
+    public string PushImageCode { get; set; } = "";
+    public string SalesRatioCode { get; set; } = "";
+    public string FinanceCode { get; set; } = "";
+    public string InstrumentCode { get; set; } = "";
 
     public bool HasAnyReset =>
         ResetExemptions || ResetSupplementYear || ResetSalesLetter || ResetSalesTab || ResetAgents || ResetMortgageCodes;
+
+    public void CoalesceNullDepthFields()
+    {
+        GranteeCombiner = GranteeCombiners.Normalize(GranteeCombiner);
+        LookupImageCode ??= "";
+        PushImageCode ??= "";
+        SalesRatioCode ??= "";
+        FinanceCode ??= "";
+        InstrumentCode ??= "";
+    }
 }

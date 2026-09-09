@@ -13,6 +13,10 @@ public static class FieldHelpCatalog
     public const string SoftwareDisplaySalesTab = "software.displaySalesTab";
     public const string SoftwareSendConsideration = "software.sendConsideration";
     public const string SoftwareDateLabelDepth = "software.dateLabelDepth";
+    public const string SoftwareImageCodes = "software.imageCodes";
+    public const string SoftwareGrantee = "software.grantee";
+    public const string SoftwareCertifiedYear = "software.certifiedYear";
+    public const string SoftwareDefaultYear = "software.defaultYear";
     public const string SalesCodes = "sales.codes";
     public const string SalesConsiderationThreshold = "sales.considerationThreshold";
     public const string ReportsDate = "reports.date";
@@ -55,6 +59,10 @@ public static class FieldHelpCatalog
         SoftwareDisplaySalesTab,
         SoftwareSendConsideration,
         SoftwareDateLabelDepth,
+        SoftwareImageCodes,
+        SoftwareGrantee,
+        SoftwareCertifiedYear,
+        SoftwareDefaultYear,
         SalesCodes,
         SalesConsiderationThreshold,
         ReportsDate,
@@ -86,6 +94,10 @@ public static class FieldHelpCatalog
         [SoftwareDisplaySalesTab] = "When on, the Sales page lists this Client’s deeds that meet the consideration threshold so Editors can assign a Sales Tab code.",
         [SoftwareSendConsideration] = "When on, the consideration amount is included on Software push. When off, consideration is omitted from the payload.",
         [SoftwareDateLabelDepth] = "How many mapped dates and labels to send on push: instrument only, plus updated, or plus created.",
+        [SoftwareImageCodes] = "Image codes this Client sends on Software lookup and push. Add codes here; they stay scoped to this Software instance.",
+        [SoftwareGrantee] = "How multiple Grantee names combine for Software lookup and push. First, last, or joined. The label is Grantee.",
+        [SoftwareCertifiedYear] = "Certified Software year used on lookup and push when a year is required. Leave blank when the vendor does not use years.",
+        [SoftwareDefaultYear] = "Default Software year sent on lookup and push when a year is not taken from the deed. Must be a sensible year.",
         [SalesCodes] = "Sales Tab codes Editors can assign when Display Sales Tab is on and consideration meets the Client threshold.",
         [SalesConsiderationThreshold] = "Deeds at or above this amount appear on the Sales page when Display Sales Tab is on for the Client.",
         [ReportsDate] = "Limit the report to deeds updated in this date range. Leave both dates blank to include every date you can see.",

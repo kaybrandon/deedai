@@ -33,6 +33,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<SoftwareFieldMap> SoftwareFieldMaps => Set<SoftwareFieldMap>();
     public DbSet<SoftwareClientConfig> SoftwareClientConfigs => Set<SoftwareClientConfig>();
+    public DbSet<SoftwareImageCode> SoftwareImageCodes => Set<SoftwareImageCode>();
     public DbSet<SalesTabCode> SalesTabCodes => Set<SalesTabCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -360,7 +361,30 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.ApiUrl).HasMaxLength(256);
             entity.Property(x => x.GroupCode).HasMaxLength(32);
             entity.Property(x => x.ConsiderationThreshold).HasPrecision(18, 2);
+            entity.Property(x => x.GranteeCombiner).HasMaxLength(32).HasDefaultValue(GranteeCombiners.First);
+            entity.Property(x => x.LookupImageCode).HasMaxLength(32).HasDefaultValue("");
+            entity.Property(x => x.PushImageCode).HasMaxLength(32).HasDefaultValue("");
+            entity.Property(x => x.SalesRatioCode).HasMaxLength(32).HasDefaultValue("");
+            entity.Property(x => x.FinanceCode).HasMaxLength(32).HasDefaultValue("");
+            entity.Property(x => x.InstrumentCode).HasMaxLength(32).HasDefaultValue("");
             entity.Ignore(x => x.HasAnyReset);
+            entity.HasOne(x => x.Client)
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SoftwareImageCode>(entity =>
+        {
+            entity.ToTable("SoftwareImageCodes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Label).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.DeedType).HasMaxLength(64);
+            entity.Property(x => x.Code).HasDefaultValue("");
+            entity.Property(x => x.Label).HasDefaultValue("");
+            entity.Property(x => x.DeedType).HasDefaultValue("");
+            entity.HasIndex(x => new { x.ClientId, x.Code }).IsUnique();
             entity.HasOne(x => x.Client)
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)

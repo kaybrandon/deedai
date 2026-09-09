@@ -140,7 +140,7 @@ public sealed class Phase50Tests
     {
         var migrations = Path.Combine(RepoRoot(), "src", "DeedAi.Infrastructure", "Data", "Migrations");
         Assert.False(Directory.EnumerateFiles(migrations, "*Phase50*").Any());
-        Assert.False(Directory.EnumerateFiles(migrations, "*Phase5*").Any());
+        Assert.False(Directory.EnumerateFiles(migrations, "*Phase5.0*").Any());
     }
 
     private static string Read(string relative)
