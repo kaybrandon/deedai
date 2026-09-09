@@ -111,8 +111,11 @@ export default function UsersPage() {
 
   return (
     <section className="page">
-      <div className="review-header">
-        <h1>Users</h1>
+      <div className="page-head">
+        <div>
+          <h1>Users</h1>
+          <p className="page-kicker">Roles and Client access for this workspace.</p>
+        </div>
         <button className="primary" type="button" onClick={startCreate}>
           Add user
         </button>

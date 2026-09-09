@@ -47,8 +47,13 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={onSubmit}>
-        <h1>Deed AI</h1>
-        <p className="subtitle">Sign in to continue</p>
+        <div className="login-brand">
+          <span className="brand-mark" aria-hidden="true">
+            D
+          </span>
+          <h1>Deed AI</h1>
+        </div>
+        <p className="subtitle">Sign in to your Client workspace</p>
         {idleReason && (
           <div className="session-banner" role="status">
             Your session expired due to inactivity. Sign in again.

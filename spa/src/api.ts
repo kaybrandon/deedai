@@ -186,6 +186,41 @@ export interface DashboardCounts {
   failed: number;
 }
 
+export interface DashboardStatusSlice {
+  status: string;
+  label: string;
+  count: number;
+  color: string | null;
+}
+
+export interface DashboardStatusMix {
+  total: number;
+  series: DashboardStatusSlice[];
+}
+
+export interface DashboardUserColumn {
+  userId: string | null;
+  displayName: string;
+}
+
+export interface DashboardStackedSeries {
+  key: string;
+  label: string;
+  data: number[];
+  color: string | null;
+}
+
+export interface DashboardByUser {
+  labels: string[];
+  users: DashboardUserColumn[];
+  series: DashboardStackedSeries[];
+}
+
+export interface DashboardVolume {
+  labels: string[];
+  series: DashboardStackedSeries[];
+}
+
 export interface SoftwareLookup {
   parcelId: string;
   owner: string | null;
@@ -343,6 +378,9 @@ export const endpoints = {
     api<UserDetail>(`/api/admin/users/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   disableUser: (id: string) => api<{ message: string }>(`/api/admin/users/${id}`, { method: "DELETE" }),
   counts: (query: string) => api<DashboardCounts>(`/api/dashboard/counts${query}`),
+  statusMix: (query: string) => api<DashboardStatusMix>(`/api/dashboard/charts/status-mix${query}`),
+  byUser: (query: string) => api<DashboardByUser>(`/api/dashboard/charts/by-user${query}`),
+  volume: (query: string) => api<DashboardVolume>(`/api/dashboard/charts/volume${query}`),
   documents: (query: string) => api<DocumentListItem[]>(`/api/documents${query}`),
   document: (id: string) => api<DocumentDetail>(`/api/documents/${id}`),
   saveFields: (id: string, fields: FieldDraft & { deedType?: string | null; reviewStatus?: string | null }) =>

@@ -49,7 +49,12 @@ export default function DocumentsPage() {
 
   return (
     <section className="page">
-      <h1>Documents</h1>
+      <header className="page-head">
+        <div>
+          <h1>Documents</h1>
+          <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
+        </div>
+      </header>
       <form className="filter-row wrap" onSubmit={load}>
         <input
           className="grow"

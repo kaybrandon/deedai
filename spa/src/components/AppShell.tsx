@@ -1,15 +1,26 @@
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
 export default function AppShell() {
   const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
+  const [navOpen, setNavOpen] = useState(false);
+
+  function closeNav() {
+    setNavOpen(false);
+  }
 
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">Deed AI</div>
-        <nav>
+    <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
+      <aside className="sidebar" id="app-sidebar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            D
+          </span>
+          Deed AI
+        </div>
+        <nav onClick={closeNav}>
           <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/documents">Documents</NavLink>
           {canUpload ? (
@@ -69,9 +80,7 @@ export default function AppShell() {
               Settings
             </button>
           )}
-          {canAdmin && (
-            <NavLink to="/settings#swagger">API</NavLink>
-          )}
+          {canAdmin && <NavLink to="/settings#swagger">API</NavLink>}
         </nav>
         <button
           className="ghost sidebar-logout"
@@ -84,9 +93,22 @@ export default function AppShell() {
           Sign out
         </button>
       </aside>
+      {navOpen && <button className="nav-backdrop" type="button" aria-label="Close menu" onClick={closeNav} />}
       <div className="main">
         <header className="topbar">
-          <span className="role-pill">{me?.role}</span>
+          <button
+            className="ghost nav-toggle"
+            type="button"
+            aria-expanded={navOpen}
+            aria-controls="app-sidebar"
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            Menu
+          </button>
+          <div className="topbar-meta">
+            <span className="topbar-name">{me?.displayName ?? me?.email}</span>
+            <span className="role-pill">{me?.role}</span>
+          </div>
         </header>
         <Outlet />
       </div>
