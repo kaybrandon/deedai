@@ -19,6 +19,8 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<DocumentLink> DocumentLinks => Set<DocumentLink>();
     public DbSet<DocumentTeamMember> DocumentTeamMembers => Set<DocumentTeamMember>();
     public DbSet<SoftwareSyncLog> SoftwareSyncLogs => Set<SoftwareSyncLog>();
+    public DbSet<SessionSettings> SessionSettings => Set<SessionSettings>();
+    public DbSet<OcrCleanupRule> OcrCleanupRules => Set<OcrCleanupRule>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
     public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
@@ -323,6 +325,24 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SessionSettings>(entity =>
+        {
+            entity.ToTable("SessionSettings");
+            entity.HasKey(x => x.Id);
+        });
+
+        modelBuilder.Entity<OcrCleanupRule>(entity =>
+        {
+            entity.ToTable("OcrCleanupRules");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Kind).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Value).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => new { x.Kind, x.Value }).IsUnique();
+            entity.ToTable(t => t.HasCheckConstraint(
+                "CK_OcrCleanupRules_Kind",
+                $"Kind IN ('{OcrCleanupKinds.Trim}','{OcrCleanupKinds.Discard}')"));
         });
     }
 }

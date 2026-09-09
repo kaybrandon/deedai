@@ -2,7 +2,7 @@
 
 BIS Consultants **Deed AI** — Phase 3. Naming in this product is **Client** (never County) and **Software** (never CAMA). Roles: **Admin**, **Editor**, **Uploader**, **Viewer**.
 
-This repository replaces the README-only GitHub seed with a working Layout A application: a single .NET 10 API host serves the React/Vite SPA from `wwwroot` for Windows App Service `appdeedai`.
+This repository replaces the README-only GitHub seed with a working Layout A application: a single .NET 10 API host serves the React/Vite SPA from `wwwroot` for Windows App Service `appdeedai`. Phase 1–3 are live there; see [AZURE-PROD-NOTE.md](docs/AZURE-PROD-NOTE.md) for deploy and the UploadedBy FK hotfix.
 
 ## Docs
 
@@ -129,7 +129,11 @@ chmod +x scripts/publish-layout-a.sh
 
 Writes `artifacts/layout-a/deedai-win-x64.zip` (framework-dependent `win-x64`, IIS in-process) plus a copy at `artifacts/appdeedai-windows.zip`, and a continuous WebJob at `App_Data/jobs/continuous/ocr-worker`.
 
-Deploy the zip to **appdeedai**. Set the App Service stack to **.NET 10**. Apply settings from `.env.example` (secrets live in App Settings / Key Vault, never in source or migrations).
+Deploy the zip to **appdeedai**. Set the App Service stack to **.NET 10**. Startup runs EF `MigrateAsync` (Phase 3+ SQL Server scripts tolerate a partial apply). Apply settings from `.env.example` (secrets live in App Settings / Key Vault, never in source or migrations).
+
+If login 401s after rotating Key Vault `AdminSeedPassword`, restart the app — startup now updates the `admin@bisconsultants.com` hash. Do not wipe the database. Session idle timeout defaults to **30 minutes** (`Session__IdleTimeoutMinutes` and/or Admin Settings).
+
+**500.30 reminder:** resume serverless `dbdeedai` if paused; `UploadedBy` → Users must stay `ON DELETE NO ACTION` (SQL Server rejects a second cascade path next to Assignee `SET NULL`).
 
 Suggested production App Settings / Key Vault names (placeholders only):
 
@@ -148,6 +152,7 @@ Database__Provider=SqlServer
 Storage__Mode=Azure
 Queue__Mode=Azure
 Ocr__RunInProcess=false
+Session__IdleTimeoutMinutes=30
 ```
 
 Document Intelligence uses **BISDocumentIntelligenceEndpoint** + **DocumentIntelligenceKey**. Leftover `DocumentIntelligenceEndpoint` is ignored. The DI resource may be Central US — set the explicit endpoint.

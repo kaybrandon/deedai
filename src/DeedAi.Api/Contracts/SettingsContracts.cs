@@ -41,3 +41,11 @@ public sealed record NotifyPreviewResponse(
     IReadOnlyList<string> Events);
 
 public sealed record NotifyRecipientItem(string Email, string DisplayName, string Reason);
+
+public sealed record SessionConfigResponse(int IdleTimeoutMinutes, int DefaultMinutes, string Source);
+
+public sealed record UpdateSessionSettingsRequest(int IdleTimeoutMinutes);
+
+public sealed record OcrCleanupItem(Guid Id, string Kind, string Value, bool IsActive, int SortOrder);
+
+public sealed record UpsertOcrCleanupRequest(string Kind, string Value, bool IsActive, int SortOrder);

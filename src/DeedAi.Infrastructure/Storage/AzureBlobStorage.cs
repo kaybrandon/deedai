@@ -41,4 +41,18 @@ public sealed class AzureBlobStorage(BlobServiceClient serviceClient, string con
         var blob = container.GetBlobClient(path);
         await blob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
     }
+
+    public async Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var container = serviceClient.GetBlobContainerClient(containerName);
+            _ = await container.ExistsAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

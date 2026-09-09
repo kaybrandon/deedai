@@ -91,7 +91,8 @@ public sealed class UploadsController(DeedAiDbContext db, IBlobStorage blobs, IO
                 false,
                 null,
                 null,
-                []));
+                [],
+                null));
         }
 
         return new UploadResult(created.Count, created, errors);

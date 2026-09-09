@@ -35,7 +35,4 @@ public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
         return items;
     }
 
-    [HttpGet("health")]
-    [AllowAnonymous]
-    public IActionResult Health() => Ok(new { status = "ok", product = "Deed AI" });
 }

@@ -6,4 +6,7 @@ public interface IBlobStorage
     Task<Stream> OpenReadAsync(string path, CancellationToken cancellationToken);
     Task<bool> ExistsAsync(string path, CancellationToken cancellationToken);
     Task DeleteAsync(string path, CancellationToken cancellationToken);
+
+    /// <summary>Reachability only — never return connection strings or keys.</summary>
+    Task<bool> CanReachAsync(CancellationToken cancellationToken);
 }

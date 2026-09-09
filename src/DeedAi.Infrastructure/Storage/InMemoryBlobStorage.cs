@@ -38,4 +38,10 @@ public sealed class InMemoryBlobStorage : IBlobStorage
         _blobs.TryRemove(path, out _);
         return Task.CompletedTask;
     }
+
+    public Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
 }

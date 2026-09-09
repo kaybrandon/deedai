@@ -94,6 +94,22 @@ export default function DocumentsPage() {
           Search
         </button>
       </form>
+      {canAdmin && rows.some((row) => row.canRetry) && (
+        <div className="bulk-bar">
+          <span>Failed deeds can be requeued to processing.</span>
+          <button
+            className="primary"
+            type="button"
+            onClick={async () => {
+              const result = await endpoints.requeueFailed();
+              setNotice(result.message);
+              await load();
+            }}
+          >
+            Requeue failed
+          </button>
+        </div>
+      )}
       {canEdit && selected.length > 0 && (
         <div className="bulk-bar">
           <span>{selected.length} selected</span>
@@ -147,7 +163,7 @@ export default function DocumentsPage() {
                   <td>{row.name}</td>
                   <td>{row.client}</td>
                   <td>
-                    <StatusChip status={row.status} />
+                    <StatusChip status={row.status} title={row.errorMessage} />
                   </td>
                   <td>
                     {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}

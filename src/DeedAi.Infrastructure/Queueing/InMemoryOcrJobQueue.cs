@@ -52,6 +52,12 @@ public sealed class InMemoryOcrJobQueue : IOcrJobQueue
         return Task.CompletedTask;
     }
 
+    public Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
+
     public Task EnqueuePoisonForTestsAsync(OcrJobMessage message, int dequeueCount)
     {
         _ready.Enqueue(new HeldMessage

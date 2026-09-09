@@ -211,12 +211,39 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             return NotFound();
         }
 
+        var previous = document.ErrorMessage;
+        var hadFailedJson = !string.IsNullOrWhiteSpace(document.DiRawBlobPath)
+                            && document.Status == DocumentStatuses.Failed
+                            && (previous?.Contains("JSON", StringComparison.OrdinalIgnoreCase) ?? false);
         document.Status = DocumentStatuses.Queued;
         document.ErrorMessage = null;
         document.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await queue.EnqueueAsync(new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath }, cancellationToken);
-        return Ok(new { message = "Queued for OCR", status = document.Status });
+        var message = hadFailedJson
+            ? "Requeued failed JSON extract for OCR."
+            : "Queued for OCR";
+        return Ok(new { message, status = document.Status, previousError = previous });
+    }
+
+    [HttpPost("requeue-failed")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<IActionResult> RequeueFailed(CancellationToken cancellationToken)
+    {
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        var failed = await ClientAccess.VisibleDocuments(db.Documents, allowed)
+            .Where(x => x.Status == DocumentStatuses.Failed)
+            .ToListAsync(cancellationToken);
+        foreach (var document in failed)
+        {
+            document.Status = DocumentStatuses.Queued;
+            document.ErrorMessage = null;
+            document.UpdatedAt = DateTimeOffset.UtcNow;
+            await queue.EnqueueAsync(new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath }, cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = $"Requeued {failed.Count} failed deed(s).", count = failed.Count });
     }
 
     [HttpPut("{id:guid}/assignee")]
@@ -471,5 +498,6 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             x.DeletedAt != null,
             x.DeedType,
             x.ReviewStatus,
-            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList());
+            x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
+            x.ErrorMessage);
 }

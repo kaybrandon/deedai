@@ -382,6 +382,126 @@ public sealed class SettingsController(DeedAiDbContext db) : ControllerBase
         return ToNotification(item);
     }
 
+    [HttpGet("session")]
+    public async Task<ActionResult<SessionConfigResponse>> Session(CancellationToken cancellationToken)
+    {
+        var item = await db.SessionSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+        if (item is not null)
+        {
+            return new SessionConfigResponse(item.IdleTimeoutMinutes, SessionSettings.DefaultIdleTimeoutMinutes, "admin");
+        }
+
+        var configured = DependencyInjection.FirstValue(
+            configuration,
+            "SessionIdleTimeoutMinutes",
+            "Session:IdleTimeoutMinutes");
+        if (int.TryParse(configured, out var minutes))
+        {
+            return new SessionConfigResponse(SessionSettings.Clamp(minutes), SessionSettings.DefaultIdleTimeoutMinutes, "appSetting");
+        }
+
+        return new SessionConfigResponse(SessionSettings.DefaultIdleTimeoutMinutes, SessionSettings.DefaultIdleTimeoutMinutes, "default");
+    }
+
+    [HttpPut("session")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<SessionConfigResponse>> UpdateSession(
+        [FromBody] UpdateSessionSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var item = await db.SessionSettings.FirstOrDefaultAsync(cancellationToken);
+        if (item is null)
+        {
+            item = new SessionSettings { Id = SessionSettings.SingletonId };
+            db.SessionSettings.Add(item);
+        }
+
+        item.IdleTimeoutMinutes = SessionSettings.Clamp(request.IdleTimeoutMinutes);
+        item.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return new SessionConfigResponse(item.IdleTimeoutMinutes, SessionSettings.DefaultIdleTimeoutMinutes, "admin");
+    }
+
+    [HttpGet("ocr-cleanup")]
+    public async Task<ActionResult<IReadOnlyList<OcrCleanupItem>>> OcrCleanup(CancellationToken cancellationToken) =>
+        await db.OcrCleanupRules.AsNoTracking()
+            .OrderBy(x => x.Kind)
+            .ThenBy(x => x.SortOrder)
+            .ThenBy(x => x.Value)
+            .Select(x => new OcrCleanupItem(x.Id, x.Kind, x.Value, x.IsActive, x.SortOrder))
+            .ToListAsync(cancellationToken);
+
+    [HttpPost("ocr-cleanup")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<OcrCleanupItem>> CreateOcrCleanup(
+        [FromBody] UpsertOcrCleanupRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsCleanupKind(request.Kind) || string.IsNullOrWhiteSpace(request.Value))
+        {
+            return BadRequest(new { message = "Kind must be Trim or Discard, and a value is required. No secrets in cleanup lists." });
+        }
+
+        var value = request.Value.Trim();
+        if (await db.OcrCleanupRules.AnyAsync(x => x.Kind == request.Kind && x.Value == value, cancellationToken))
+        {
+            return Conflict(new { message = "That cleanup rule already exists." });
+        }
+
+        var item = new OcrCleanupRule
+        {
+            Id = Guid.NewGuid(),
+            Kind = request.Kind.Trim(),
+            Value = value,
+            IsActive = request.IsActive,
+            SortOrder = request.SortOrder
+        };
+        db.OcrCleanupRules.Add(item);
+        await db.SaveChangesAsync(cancellationToken);
+        return new OcrCleanupItem(item.Id, item.Kind, item.Value, item.IsActive, item.SortOrder);
+    }
+
+    [HttpPut("ocr-cleanup/{id:guid}")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<OcrCleanupItem>> UpdateOcrCleanup(
+        Guid id,
+        [FromBody] UpsertOcrCleanupRequest request,
+        CancellationToken cancellationToken)
+    {
+        var item = await db.OcrCleanupRules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        if (!IsCleanupKind(request.Kind) || string.IsNullOrWhiteSpace(request.Value))
+        {
+            return BadRequest(new { message = "Kind must be Trim or Discard, and a value is required." });
+        }
+
+        item.Kind = request.Kind.Trim();
+        item.Value = request.Value.Trim();
+        item.IsActive = request.IsActive;
+        item.SortOrder = request.SortOrder;
+        await db.SaveChangesAsync(cancellationToken);
+        return new OcrCleanupItem(item.Id, item.Kind, item.Value, item.IsActive, item.SortOrder);
+    }
+
+    [HttpDelete("ocr-cleanup/{id:guid}")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<IActionResult> DeleteOcrCleanup(Guid id, CancellationToken cancellationToken)
+    {
+        var item = await db.OcrCleanupRules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (item is null)
+        {
+            return NotFound();
+        }
+
+        db.OcrCleanupRules.Remove(item);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = "OCR cleanup rule removed." });
+    }
+
     [HttpGet("property-defaults")]
     [Authorize(Policy = RolePolicies.CanAdmin)]
     public async Task<ActionResult<IReadOnlyList<PropertyDefaultItem>>> PropertyDefaults(CancellationToken cancellationToken)
@@ -623,4 +743,8 @@ public sealed class SettingsController(DeedAiDbContext db) : ControllerBase
 
         return null;
     }
+
+    private static bool IsCleanupKind(string? kind) =>
+        string.Equals(kind, OcrCleanupKinds.Trim, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(kind, OcrCleanupKinds.Discard, StringComparison.OrdinalIgnoreCase);
 }

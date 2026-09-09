@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddDbContext<DeedAiDbContext>(options => ConfigureDatabase(options, configuration));
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<OcrProcessor>();
+        services.AddScoped<Health.RuntimeHealth>();
         services.AddScoped<IOcrNotifier, OcrNotifier>();
         services.AddHttpClient(nameof(SendGridEmailSender));
         services.AddHttpClient(nameof(HttpSoftwareClient));
