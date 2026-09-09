@@ -112,7 +112,15 @@ public sealed class Phase511Tests
         Assert.Contains("<h2>{editing === \"new\" ? \"New User\" : \"Edit User\"}</h2>", page, StringComparison.Ordinal);
         Assert.Contains("to=\"/users\"", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
-        Assert.Contains("                    Systems", shell, StringComparison.Ordinal);
+        Assert.Contains("data-nav=\"system-mid\"", shell, StringComparison.Ordinal);
+        Assert.Contains("id=\"system-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("                    System", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("nav-sub-nested", shell, StringComparison.Ordinal);
+        Assert.True(
+            shell.IndexOf("id=\"system-nav\"", StringComparison.Ordinal)
+            < shell.IndexOf("to=\"/users\"", StringComparison.Ordinal),
+            "Users must nest under System.");
         Assert.DoesNotContain("County", page, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", page, StringComparison.Ordinal);
         Assert.DoesNotContain("County", helper, StringComparison.Ordinal);

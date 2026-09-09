@@ -4,7 +4,7 @@
 - Admin Users is a real data table matching Mask F SoT density (`05-settings-users`): hug 44px rows, sticky gray header, zebra stripes, role chips, single-line sort+filter headings. One filter-row Search ≤360px across display name, full name, and email. No top-bar search.
 - Column headings sort Display Name, Email, Role, Client(s), and Status. Role / Client / Status filters sit on those headings.
 - Multi-Client users list every assignment in Client(s). ConfirmSheet disable and add/edit photo/password stay. URL + session persist sort/filter. Empty / no-match + page size 50. Client / Software only. No EF migration. No zipdeploy.
-- Settings nest stays Mask F: Settings → System (singular mid-parent) → indented Software · Users · API. Never Systems plural.
+- Settings nest stays Mask F: Settings → System (singular mid-parent) → indented Software · Users · API. Never Systems plural. Users stays Admin-only.
 
 ## 2026-09-09 — Phase 5.1 Mask F Mockitt Admin theme
 - Mask F tokens and dark rail (`#1E2430`) on Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software.

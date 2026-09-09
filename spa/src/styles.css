@@ -510,7 +510,7 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   min-height: 24px;
   padding: 0 8px;
   border-radius: 6px;
-  background: var(--navy-soft);
+  background: var(--table-header-bg, #E8EEF2);
   color: var(--text);
   font-size: 12px;
   font-weight: 700;
