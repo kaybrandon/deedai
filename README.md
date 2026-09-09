@@ -61,7 +61,8 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Users group-by Client:** the Users list is grouped by Client. A user assigned to more than one Client appears under each of those groups. Groups collapse/expand. Users with no Client access sit in a **No Client access** group.
 - **Profile photo:** upload, replace, and clear (ConfirmSheet on remove). Stored in blob storage. Shown in the header and on Users. JPEG/PNG/WebP/GIF, 2 MB max. Default avatar is initials when there is no photo.
 - **Header title:** `{Client} Deed AI` only when the signed-in user's effective scope is exactly one Client; otherwise the product name **Deed AI**.
-- **Left shell identity:** **Logged in as {name/email}** plus a **My profile** entry (≥44px) for display name, full name, photo, and password change.
+- **Left shell identity:** **Logged in as {name/email}** plus a **My profile** entry (≥44px) for display name, full name, photo, password change, and assigned Client(s) from existing identity / Client access (clear empty state when none).
+- **Settings → Systems:** the nested Settings nav item is labeled **Systems** so the hierarchy is Settings → Systems / Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
 - **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. EF migration `20260909160000_Phase45UsersIdentity` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask A shell. No zipdeploy.

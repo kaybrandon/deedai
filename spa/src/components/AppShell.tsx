@@ -96,7 +96,7 @@ export default function AppShell() {
               <div className="nav-sub" id="settings-nav">
                 {canAdmin ? (
                   <NavLink to="/settings" end onClick={closeNav}>
-                    Settings
+                    Systems
                   </NavLink>
                 ) : (
                   <button
@@ -104,7 +104,7 @@ export default function AppShell() {
                     type="button"
                     onClick={() => navigate("/denied", { state: { action: "change settings" } })}
                   >
-                    Settings
+                    Systems
                   </button>
                 )}
                 <NavLink to="/software" onClick={closeNav}>

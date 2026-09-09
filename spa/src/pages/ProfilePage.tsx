@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
-import { endpoints, type ApiError } from "../api";
+import { endpoints, type ApiError, type ClientScope } from "../api";
 import { useAuth } from "../auth";
+import EmptyState from "../components/EmptyState";
 import PasswordPair, { passwordPairErrors } from "../components/PasswordPair";
 import PhotoEditor from "../components/PhotoEditor";
 
@@ -54,11 +55,12 @@ export default function ProfilePage() {
       <div className="page-head">
         <div>
           <h1>My profile</h1>
-          <p className="page-kicker">Your name, photo, and password for Deed AI.</p>
+          <p className="page-kicker">Your name, photo, password, and assigned Client(s).</p>
         </div>
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
+      <AssignedClients clients={me?.clients ?? []} />
       <form className="panel compact-form" onSubmit={onSubmit}>
         <PhotoEditor
           userId={me?.id}
@@ -124,6 +126,28 @@ export default function ProfilePage() {
           </button>
         </div>
       </form>
+    </section>
+  );
+}
+
+function AssignedClients({ clients }: { clients: ClientScope[] }) {
+  return (
+    <section className="panel compact-form profile-clients" aria-labelledby="profile-clients-heading">
+      <h2 id="profile-clients-heading">Assigned Client(s)</h2>
+      {clients.length === 0 ? (
+        <EmptyState
+          title="No Client assigned"
+          body="An Admin can assign Client access on Users. You will only see deeds for Clients you are assigned."
+        />
+      ) : (
+        <ul className="profile-client-list">
+          {clients.map((client) => (
+            <li key={client.id} className="profile-client-chip">
+              {client.name}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

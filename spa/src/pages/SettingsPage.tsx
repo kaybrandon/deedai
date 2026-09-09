@@ -149,7 +149,7 @@ export default function SettingsPage() {
     <section className="page">
       <div className="page-head">
         <div>
-          <h1>Settings</h1>
+          <h1>Systems</h1>
           <p className="page-kicker">Workspace lists, session, Software maps, and API docs.</p>
         </div>
         <div className="row-actions">
