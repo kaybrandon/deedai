@@ -273,9 +273,16 @@ export interface DashboardByUser {
   series: DashboardStackedSeries[];
 }
 
+export interface DashboardVolumeBucket {
+  label: string;
+  from: string;
+  to: string;
+}
+
 export interface DashboardVolume {
   labels: string[];
   series: DashboardStackedSeries[];
+  buckets: DashboardVolumeBucket[];
 }
 
 export interface SoftwareLookup {

@@ -1,9 +1,8 @@
-import type { ActiveElement, ChartEvent } from "chart.js";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import type { ActiveElement, Chart, ChartEvent } from "chart.js";
+import { Bar, Doughnut } from "react-chartjs-2";
 import { Link, useNavigate } from "react-router-dom";
-import type { DashboardByUser, DashboardStatusMix, DashboardVolume, DashboardUserColumn } from "../api";
+import type { DashboardByUser, DashboardStatusMix, DashboardVolume, DashboardVolumeBucket, DashboardUserColumn } from "../api";
 import { hasSeriesData, seriesColor } from "../charts";
-import { maskF } from "../theme";
 import { documentsPath } from "../documentsPath";
 import EmptyState from "./EmptyState";
 
@@ -180,6 +179,27 @@ export function ByUserChart({
   );
 }
 
+const VOLUME_TEAL = "#0D8A7F";
+
+function volumeBuckets(data: DashboardVolume): DashboardVolumeBucket[] {
+  if (data.buckets?.length === data.labels.length) {
+    return data.buckets;
+  }
+  return data.labels.map((label) => ({ label, from: label, to: label }));
+}
+
+function weekIndex(event: ChartEvent, elements: ActiveElement[], chart: Chart) {
+  if (elements[0]) {
+    return elements[0].index;
+  }
+  const native = event.native;
+  if (!native || !("offsetX" in native) || typeof native.offsetX !== "number") {
+    return -1;
+  }
+  const value = chart.scales.x.getValueForPixel(native.offsetX);
+  return typeof value === "number" ? value : -1;
+}
+
 export function VolumeChart({
   data,
   clientId = ""
@@ -188,44 +208,41 @@ export function VolumeChart({
 } & ChartNavFilters) {
   const navigate = useNavigate();
   const total = data?.series.find((item) => item.key === "total") ?? data?.series[0];
-  if (!data || data.labels.length === 0 || !total || !hasSeriesData([total])) {
+  if (!data || !total || data.labels.length === 0 || !hasSeriesData([total])) {
     return <EmptyState title={emptyCopy.volume.title} body={emptyCopy.volume.body} />;
   }
 
-  function goDay(day: string | undefined) {
-    if (!day) {
+  const buckets = volumeBuckets(data);
+
+  function goWeek(index: number | undefined) {
+    const bucket = buckets[index ?? -1];
+    if (!bucket) {
       return;
     }
-    navigate(documentsPath({ from: day, to: day, clientId }));
+    navigate(documentsPath({ from: bucket.from, to: bucket.to, clientId }));
   }
-
-  const daysWithVolume = data.labels.filter((_, index) => (total?.data[index] ?? 0) > 0);
 
   return (
     <>
       <div className="chart-canvas chart-canvas-wide chart-canvas-clickable" role="img" aria-label="Deed Volume Over Time">
-        <Line
+        <Bar
           data={{
             labels: data.labels,
             datasets: [
               {
                 label: total.label,
                 data: total.data,
-                borderColor: maskF.teal,
-                backgroundColor: "rgba(13, 138, 127, 0.14)",
-                fill: true,
-                tension: 0.3,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointHitRadius: 12,
-                borderWidth: 2
+                backgroundColor: VOLUME_TEAL,
+                borderSkipped: false,
+                borderRadius: 3,
+                maxBarThickness: 44
               }
             ]
           }}
           options={{
             interaction: { mode: "index", intersect: false },
             onHover: pointerOnHit,
-            onClick: (_event, elements) => goDay(data.labels[elements[0]?.index ?? -1]),
+            onClick: (event, elements, chart) => goWeek(weekIndex(event, elements, chart)),
             plugins: { legend: { display: false } },
             scales: {
               x: { grid: { display: false } },
@@ -236,19 +253,19 @@ export function VolumeChart({
       </div>
       <ul className="chart-key" aria-label="Volume series">
         <li>
-          <span className="chart-legend-swatch" style={{ background: maskF.teal }} />
+          <span className="chart-legend-swatch" style={{ background: VOLUME_TEAL }} />
           {total.label}
         </li>
       </ul>
       <ul className="chart-legend">
-        {daysWithVolume.map((day) => (
-          <li key={day}>
+        {buckets.map((bucket) => (
+          <li key={`${bucket.from}-${bucket.to}`}>
             <Link
               className="chart-legend-link"
-              to={documentsPath({ from: day, to: day, clientId })}
-              aria-label={`View documents from ${day}`}
+              to={documentsPath({ from: bucket.from, to: bucket.to, clientId })}
+              aria-label={`View documents from ${bucket.from} to ${bucket.to}`}
             >
-              {day}
+              {bucket.from} – {bucket.to}
             </Link>
           </li>
         ))}

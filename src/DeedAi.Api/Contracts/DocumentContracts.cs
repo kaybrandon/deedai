@@ -107,9 +107,15 @@ public sealed record DashboardByUser(
     IReadOnlyList<DashboardUserColumn> Users,
     IReadOnlyList<DashboardStackedSeries> Series);
 
+public sealed record DashboardVolumeBucket(
+    string Label,
+    string From,
+    string To);
+
 public sealed record DashboardVolume(
     IReadOnlyList<string> Labels,
-    IReadOnlyList<DashboardStackedSeries> Series);
+    IReadOnlyList<DashboardStackedSeries> Series,
+    IReadOnlyList<DashboardVolumeBucket> Buckets);
 
 public sealed record UploadResult(int Queued, IReadOnlyList<DocumentListItem> Documents, IReadOnlyList<string> Errors);
 

@@ -12,6 +12,11 @@
 - FieldHelp `?` pills removed. Help is native `title` / `aria-describedby`. Settings and Software forms hug ~680px / ~32rem with 4/8/12 spacing. Software Instances table uses remaining page width (Client configs — no invented Environment / County / CAMA columns).
 - Volume Over Time is a single teal series `#0D8A7F`. Review uses a 3-column grid. Disable user still uses ConfirmSheet. No EF migration. No zipdeploy. Mask A remains on production until this ships.
 
+## 2026-09-09 — Phase 5.0.2 Volume Over Time weekly bars
+- Volume Over Time is a **bar** chart (not line/area) with **one teal Uploaded series** per ISO week — no stacked status bars. Title Case title unchanged.
+- X-axis buckets are **ISO weeks** (Monday–Sunday). Click a week bar or ≥44px keyboard link opens Documents with `from`/`to` for that week and keeps Client when set. Empty week → Documents empty state.
+- PDF volume table column is **Week**. No EF migration. Mask A tokens unchanged (separate from Mask F).
+
 ## 2026-09-09 — Phase 4.8 Admin email (SendGrid | SMTP)
 - Admin Settings email panel switches **SendGrid** or **SMTP**. Secrets stay in Key Vault; UI shows configured yes/no and SendGrid last-4 only.
 - Status panel: active mode, configured?, last success/fail. Test send to a typed address with ConfirmSheet and Pass/Fail.

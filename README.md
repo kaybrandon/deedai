@@ -52,6 +52,13 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Help:** no FieldHelp `?` pills. Help is label `title` / `aria-describedby` only — not a second page Help widget.
 - **Carry:** Phase 5.0.1 chart-click + Title Case. Client / Software naming · 4 roles · no secrets · no EF migration · no zipdeploy. Mask A stays on production until this ships.
 
+## Phase 5.0.2 acceptance
+
+- **Volume Over Time** (exact Title Case) is a **bar** chart — not line or area. One teal (`#0D8A7F`) **Uploaded** series per week; no stacked status series.
+- X-axis buckets are **ISO weeks** (Monday–Sunday), not days. API `GET /api/dashboard/charts/volume` returns week-start labels plus `buckets[].from` / `buckets[].to`.
+- Click a week bar or a ≥44px keyboard week link → Documents with `from`/`to` covering that week range. Client filter is preserved when set. An empty week shows the Documents empty state.
+- Client / Software naming only. No secrets. No zipdeploy. No EF migration. Separate from Mask F.
+
 ## Phase 5.0 acceptance
 
 - **Mask A theme (superseded by 5.1 in this tree):** Mist Slate + Teal tokens — bg `#F4F6F8`, sidebar `#E8EEF2`, accent `#4F7C8A`, text `#2C3A45`, Ready `#A8D5C0`, Failed `#E8B4B0`. Production remains Mask A until 5.1 deploys.

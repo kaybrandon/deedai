@@ -125,7 +125,10 @@ public sealed class DashboardChartNavTests
         var api = Read("src/DeedAi.Api/Controllers/DocumentsController.cs");
 
         var volumeFn = SliceFunction(charts, "export function VolumeChart");
-        Assert.Contains("documentsPath({ from: day, to: day, clientId })", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("documentsPath({ from: bucket.from, to: bucket.to, clientId })", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("from: day, to: day", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("<Line", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("<Bar", volumeFn, StringComparison.Ordinal);
         Assert.Contains("onClick:", volumeFn, StringComparison.Ordinal);
         Assert.Contains("chart-legend-link", volumeFn, StringComparison.Ordinal);
         Assert.Contains("<VolumeChart data={volume} {...applied} />", page, StringComparison.Ordinal);
