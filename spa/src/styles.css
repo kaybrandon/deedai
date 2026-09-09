@@ -45,7 +45,7 @@ label { display: grid; gap: 4px; font-weight: 600; font-size: 12px; color: #3341
 .field-error { font-size: 12px; font-weight: 600; color: var(--danger); }
 input[aria-invalid="true"] { border-color: var(--danger); }
 h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
-.boot { padding: 48px; text-align: center; }
+.boot { padding: 48px; text-align: center; flex: 1; display: grid; place-items: center; }
 
 .primary { background: var(--blue); color: #fff; border: none; font-weight: 700; }
 .primary:hover { background: var(--blue-dark); }
@@ -55,9 +55,19 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .link { background: none; border: none; color: var(--blue); min-height: var(--action-h); padding: 0; font-weight: 600; }
 .muted { color: var(--muted); font-weight: 500; }
 
-.login-page,
-.boot-page {
+.app-frame {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.app-frame-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.login-page {
+  flex: 1;
   display: flex;
   flex-direction: column;
   background:
@@ -70,7 +80,6 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   place-items: center;
   padding: 16px;
 }
-.boot-page .boot { flex: 1; display: grid; place-items: center; }
 .site-footer {
   flex-shrink: 0;
   text-align: center;
@@ -79,6 +88,8 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   font-weight: 500;
   color: var(--muted);
   line-height: 1.4;
+  border-top: 1px solid var(--border);
+  background: #fff;
 }
 .site-footer a {
   color: inherit;
@@ -135,7 +146,7 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 }
 .denied-box { background: var(--danger-bg); color: var(--failed-fg); }
 
-.shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 100vh; }
+.shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); flex: 1; min-height: 0; }
 .sidebar {
   background: var(--navy);
   color: #cbd5e1;
@@ -173,9 +184,8 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .sidebar a:hover, .nav-disabled:hover { background: var(--navy-soft); color: #fff; }
 .sidebar a.active { background: var(--blue); color: #fff; }
 .sidebar-logout { margin-top: auto; background: transparent; color: #e2e8f0; border-color: #334155; }
-.main { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .main-body { flex: 1; min-width: 0; }
-.main .site-footer { border-top: 1px solid var(--border); background: #fff; }
 .topbar {
   display: flex;
   justify-content: flex-end;

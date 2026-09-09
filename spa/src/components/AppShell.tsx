@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
-import SiteFooter from "./SiteFooter";
 
 export default function AppShell() {
   const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
@@ -114,7 +113,6 @@ export default function AppShell() {
         <div className="main-body">
           <Outlet />
         </div>
-        <SiteFooter />
       </div>
     </div>
   );
