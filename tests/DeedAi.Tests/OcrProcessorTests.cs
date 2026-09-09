@@ -4,6 +4,7 @@ using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure.Data;
 using DeedAi.Infrastructure.Email;
+using DeedAi.Infrastructure.Health;
 using DeedAi.Infrastructure.Ocr;
 using DeedAi.Infrastructure.Queueing;
 using DeedAi.Infrastructure.Storage;
@@ -102,7 +103,7 @@ public sealed class OcrProcessorTests
         IBlobStorage blobs,
         IDocumentIntelligenceClient di,
         int poisonCount = 5) =>
-        new(db, blobs, di, Options.Create(new OcrOptions { PoisonDequeueCount = poisonCount }), NullLogger<OcrProcessor>.Instance, new NullOcrNotifier());
+        new(db, blobs, di, Options.Create(new OcrOptions { PoisonDequeueCount = poisonCount }), NullLogger<OcrProcessor>.Instance, new NullOcrNotifier(), new OcrHealthRecorder(db, new OcrHealthSignal()));
 
     private static async Task<DeedAiDbContext> CreateDb()
     {

@@ -14,7 +14,7 @@
   - Restart app
 - [ ] Confirm `AdminSeedPassword` in KV matches the hash you expect. Rotating the KV secret updates `admin@bisconsultants.com` on next startup (does not wipe data).
 - [ ] Optional App Setting: `Session__IdleTimeoutMinutes` (default **30**)
-- [ ] Smoke: home 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin `/api/health/detail` reports SQL / storage mode / queue mode only (no keys).
+- [ ] Smoke: home 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin `/api/health/detail` reports SQL / storage / queue plus Blob R/W, Document Intelligence, OCR pipeline, and queue visibility (no keys).
 
 ## Naming
 **Client** (never County) · **Software** (never CAMA). Roles: Admin / Editor / Uploader / Viewer.

@@ -14,6 +14,8 @@ public sealed class OcrQueueDelivery
     public int DequeueCount { get; init; }
 }
 
+public sealed record OcrQueueSnapshot(int Depth, DateTimeOffset? OldestWaitingAt, int PoisonCount);
+
 public sealed class DocumentIntelligenceResult
 {
     public required string RawJson { get; init; }

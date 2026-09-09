@@ -61,4 +61,37 @@ public sealed class AzureOcrJobQueue(QueueClient queue) : IOcrJobQueue
             return false;
         }
     }
+
+    public async Task<OcrQueueSnapshot> GetSnapshotAsync(int poisonDequeueCount, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var exists = await queue.ExistsAsync(cancellationToken);
+            if (exists.Value != true)
+            {
+                return new OcrQueueSnapshot(0, null, 0);
+            }
+
+            var properties = await queue.GetPropertiesAsync(cancellationToken);
+            var depth = Math.Max(0, properties.Value.ApproximateMessagesCount);
+            var peeked = await queue.PeekMessagesAsync(maxMessages: 32, cancellationToken);
+            var messages = peeked.Value ?? [];
+            DateTimeOffset? oldest = null;
+            foreach (var message in messages)
+            {
+                if (message.InsertedOn is { } inserted && (oldest is null || inserted < oldest))
+                {
+                    oldest = inserted;
+                }
+            }
+
+            var poisonThreshold = Math.Max(1, poisonDequeueCount);
+            var poison = messages.Count(x => x.DequeueCount >= poisonThreshold);
+            return new OcrQueueSnapshot(depth, oldest, poison);
+        }
+        catch
+        {
+            return new OcrQueueSnapshot(0, null, 0);
+        }
+    }
 }

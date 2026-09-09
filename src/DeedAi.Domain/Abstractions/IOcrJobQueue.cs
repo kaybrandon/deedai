@@ -16,4 +16,10 @@ public interface IOcrJobQueue
 
     /// <summary>Reachability only — never return connection strings or keys.</summary>
     Task<bool> CanReachAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Azure queue is the bulk buffer — peek/properties only. Never return message bodies,
+    /// connection strings, or keys.
+    /// </summary>
+    Task<OcrQueueSnapshot> GetSnapshotAsync(int poisonDequeueCount, CancellationToken cancellationToken);
 }

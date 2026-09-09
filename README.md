@@ -39,6 +39,16 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Must-ship UX:** Sticky OCR ribbon (Upload → Queued → Processing → Review → Ready) on Documents / Upload / Review. Dashboard count cards + status-mix donut + volume-over-time with empty chart states. Soft status chips + Failed Retry. Never Ready chip + OCR-failed banner together. Review PDF pane is a real preview or a filled placeholder (not an empty dashed box). Failed deeds show incomplete fields + Retry extract.
 - **Hard gates:** No new EF migration. No secrets. No zipdeploy. Do not regress Swagger Authorize ≥44px.
 
+## Phase 4.9 acceptance
+
+- **Admin health probes** on `GET /api/health/detail` (Admin only) and Settings **System health**:
+  - Existing **SQL**, **Storage**, and **Queue** reachability remain. Overall is `ok` or `degraded`.
+  - **Blob** write / read / delete canary — Pass or Fail. No connection string or key.
+  - **Document Intelligence** — endpoint reachability and configured yes/no (`Mock` vs `Azure`). Fail is independent of Blob.
+  - **OCR pipeline** — queue reachability **and** worker heartbeat or dequeue signal. Separate from Document Intelligence (queue ≠ DI).
+  - **OCR queue visibility** (Azure queue is the bulk buffer — peek only, not a second buffer): depth, oldest waiting age, poison / Failed count, last DI success/fail timestamps.
+- Refresh control is ≥44px. Client / Software wording only. Payloads and UI never include secrets.
+
 ## Phase 4.3 acceptance
 
 - **SPA shell:** Dense SaaS layout (~200px sidebar, 48px top bar, 16/12 padding). Compact count cards and denser tables. Tap targets stay ≥44px. No horizontal page scroll around 768px. Not an AdminLTE clone.
@@ -49,7 +59,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 
 - **Ready PDF preview:** Seeded Ready demo deeds (`deeds/demo/…`) have a PDF in blob storage. Opening a Ready deed in review shows the iframe preview. `GET /api/documents/{id}/file` returns `application/pdf` when the blob exists or can be seeded for a demo path. The placeholder (“PDF is not available for this deed.”) shows only when there is truly no file.
 - **Status vs Needs review:** Pipeline status is OCR only (Queued / Processing / Ready / Failed). **Needs review** is a flag that implies review workflow and sets `ReviewStatus=NeedsReview`. List/review chips show Needs review — not Ready and Needs review together. Setting the flag, review-status dropdown, and `displayStatus` stay in sync. Approved clears the flag.
-- **System health (Admin):** Settings has a **System health** card (`#system-health`) for `GET /api/health/detail` — SQL / storage / queue status and mode only. No connection strings or keys.
+- **System health (Admin):** Settings has a **System health** card (`#system-health`) for `GET /api/health/detail` — SQL / storage / queue reachability, plus Phase 4.9 Blob R/W, Document Intelligence, OCR pipeline, and queue visibility. No connection strings or keys.
 - **Swagger Authorize:** Authorize (top bar and authorize-modal) hit target is ≥44px after Swagger paints (matches Copy Bearer). Phase 4.2.2 loads the pin **last** on a custom Swagger `index.html` and re-applies every 250ms so React `display:inline` cannot shrink the button again. Dev after zipdeploy, then QA2: `window.__deedAiMeasureAuthorize()` — every `getBoundingClientRect()` width/height ≥ 44; `html[data-deedai-authorize-hit=pass]`; `window.__deedAiAuthorizeRuntimeVersion === "4.2.2"`.
 - **Hard gates:** Client / Software naming, four roles, KV-only secrets, no new EF migration, no Azure zipdeploy.
 

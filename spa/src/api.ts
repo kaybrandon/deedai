@@ -37,6 +37,23 @@ export interface UserDetail {
   clientIds: string[];
 }
 
+export interface HealthCheck {
+  status: string;
+  reachable: boolean;
+  mode: string;
+  detail?: string | null;
+  configured?: boolean | null;
+}
+
+export interface OcrQueueVisibility {
+  depth: number;
+  oldestWaitingAgeSeconds: number | null;
+  poisonCount: number;
+  failedCount: number;
+  lastDiSuccessAt: string | null;
+  lastDiFailAt: string | null;
+}
+
 export interface FlagSummary {
   id: string;
   name: string;
@@ -417,10 +434,14 @@ export const endpoints = {
       status: string;
       product: string;
       checks: {
-        sql: { status: string; reachable: boolean; mode: string };
-        storage: { status: string; reachable: boolean; mode: string };
-        queue: { status: string; reachable: boolean; mode: string };
+        sql: HealthCheck;
+        storage: HealthCheck;
+        queue: HealthCheck;
+        blob: HealthCheck;
+        documentIntelligence: HealthCheck;
+        ocrPipeline: HealthCheck;
       };
+      ocrQueue: OcrQueueVisibility;
     }>("/api/health/detail"),
   remove: (id: string) => api<{ message: string }>(`/api/documents/${id}`, { method: "DELETE" }),
   restore: (id: string) => api<{ message: string }>(`/api/documents/${id}/restore`, { method: "POST" }),

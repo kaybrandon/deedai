@@ -18,7 +18,8 @@ public sealed class InMemoryOcrJobQueue : IOcrJobQueue
             MessageId = Guid.NewGuid().ToString("N"),
             PopReceipt = Guid.NewGuid().ToString("N"),
             Job = message,
-            DequeueCount = 0
+            DequeueCount = 0,
+            EnqueuedAt = DateTimeOffset.UtcNow
         });
         return Task.CompletedTask;
     }
@@ -58,6 +59,22 @@ public sealed class InMemoryOcrJobQueue : IOcrJobQueue
         return Task.FromResult(true);
     }
 
+    public Task<OcrQueueSnapshot> GetSnapshotAsync(int poisonDequeueCount, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ReleaseExpired();
+        var ready = _ready.ToArray();
+        var invisible = _invisible.Values.ToArray();
+        var depth = ready.Length + invisible.Length;
+        var oldest = ready.Length == 0
+            ? (DateTimeOffset?)null
+            : ready.Min(x => x.EnqueuedAt);
+        var poisonThreshold = Math.Max(1, poisonDequeueCount);
+        var poison = ready.Count(x => x.DequeueCount >= poisonThreshold)
+                     + invisible.Count(x => x.DequeueCount >= poisonThreshold);
+        return Task.FromResult(new OcrQueueSnapshot(depth, oldest, poison));
+    }
+
     public Task EnqueuePoisonForTestsAsync(OcrJobMessage message, int dequeueCount)
     {
         _ready.Enqueue(new HeldMessage
@@ -65,7 +82,8 @@ public sealed class InMemoryOcrJobQueue : IOcrJobQueue
             MessageId = Guid.NewGuid().ToString("N"),
             PopReceipt = Guid.NewGuid().ToString("N"),
             Job = message,
-            DequeueCount = dequeueCount
+            DequeueCount = dequeueCount,
+            EnqueuedAt = DateTimeOffset.UtcNow
         });
         return Task.CompletedTask;
     }
@@ -89,6 +107,7 @@ public sealed class InMemoryOcrJobQueue : IOcrJobQueue
         public required string PopReceipt { get; set; }
         public required OcrJobMessage Job { get; set; }
         public int DequeueCount { get; set; }
+        public DateTimeOffset EnqueuedAt { get; set; }
         public DateTimeOffset VisibleAt { get; set; }
     }
 }

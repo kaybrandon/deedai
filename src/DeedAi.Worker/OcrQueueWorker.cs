@@ -20,12 +20,14 @@ public sealed class OcrQueueWorker(
         {
             try
             {
+                await RecordWorkerSignalAsync(dequeue: false, stoppingToken);
                 var delivery = await queue.ReceiveAsync(visibility, stoppingToken);
                 if (delivery is null)
                 {
                     continue;
                 }
 
+                await RecordWorkerSignalAsync(dequeue: true, stoppingToken);
                 using var scope = scopes.CreateScope();
                 var processor = scope.ServiceProvider.GetRequiredService<OcrProcessor>();
                 try
@@ -47,6 +49,29 @@ public sealed class OcrQueueWorker(
                 logger.LogError(ex, "OCR worker loop error");
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
+        }
+    }
+
+    private async Task RecordWorkerSignalAsync(bool dequeue, CancellationToken stoppingToken)
+    {
+        try
+        {
+            using var scope = scopes.CreateScope();
+            var health = scope.ServiceProvider.GetRequiredService<DeedAi.Infrastructure.Health.OcrHealthRecorder>();
+            if (dequeue)
+            {
+                await health.RecordDequeueAsync(stoppingToken);
+                return;
+            }
+
+            await health.RecordWorkerHeartbeatAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "OCR worker health signal was skipped.");
         }
     }
 }
