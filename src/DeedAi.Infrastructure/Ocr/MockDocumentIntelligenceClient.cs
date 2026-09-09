@@ -45,4 +45,10 @@ public sealed class MockDocumentIntelligenceClient : IDocumentIntelligenceClient
             Fields = fields
         });
     }
+
+    public Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
 }

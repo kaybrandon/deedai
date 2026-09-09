@@ -5,6 +5,7 @@ using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Health;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,7 +25,8 @@ public sealed class OcrProcessor(
     IDocumentIntelligenceClient documentIntelligence,
     IOptions<OcrOptions> options,
     ILogger<OcrProcessor> logger,
-    IOcrNotifier notifier)
+    IOcrNotifier notifier,
+    OcrPipelineSignal pipeline)
 {
     public async Task ProcessAsync(OcrQueueDelivery delivery, CancellationToken cancellationToken)
     {
@@ -55,6 +57,7 @@ public sealed class OcrProcessor(
         document.ErrorMessage = null;
         document.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        pipeline.RecordAttempt();
 
         try
         {
@@ -99,6 +102,7 @@ public sealed class OcrProcessor(
             document.ErrorMessage = null;
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
+            pipeline.RecordSuccess();
             await notifier.NotifyStatusAsync(document.Id, document.Status, null, cancellationToken);
         }
         catch (Exception ex)

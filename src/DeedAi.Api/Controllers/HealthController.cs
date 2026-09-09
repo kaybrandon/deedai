@@ -24,10 +24,22 @@ public sealed class HealthController(RuntimeHealth health) : ControllerBase
             product = detail.Product,
             checks = new
             {
-                sql = new { status = detail.Sql.Status, reachable = detail.Sql.Reachable, mode = detail.Sql.Mode },
-                storage = new { status = detail.Storage.Status, reachable = detail.Storage.Reachable, mode = detail.Storage.Mode },
-                queue = new { status = detail.Queue.Status, reachable = detail.Queue.Reachable, mode = detail.Queue.Mode }
+                sql = Check(detail.Sql),
+                blob = Check(detail.Blob),
+                storage = Check(detail.Blob),
+                ocrQueue = Check(detail.OcrQueue),
+                queue = Check(detail.OcrQueue),
+                documentIntelligence = Check(detail.DocumentIntelligence),
+                ocrPipeline = Check(detail.OcrPipeline)
             }
         });
     }
+
+    private static object Check(HealthCheckStatus item) => new
+    {
+        status = item.Status,
+        reachable = item.Reachable,
+        mode = item.Mode,
+        detail = item.Detail
+    };
 }

@@ -55,6 +55,28 @@ public sealed class AzureDocumentIntelligenceClient(DocumentIntelligenceClient c
         };
     }
 
+    public async Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Invalid payload on purpose: 4xx means the endpoint answered. Never log endpoint or key.
+            await client.AnalyzeDocumentAsync(
+                WaitUntil.Started,
+                "prebuilt-layout",
+                BinaryData.FromBytes("x"u8.ToArray()),
+                cancellationToken: cancellationToken);
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status is >= 400 and < 500)
+        {
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static string? FirstContent(AnalyzeResult result, params string[] keys)
     {
         if (result.Documents is not { Count: > 0 })

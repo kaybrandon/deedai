@@ -10,6 +10,7 @@ using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
 using DeedAi.Infrastructure.Data.Migrations;
 using DeedAi.Infrastructure.Email;
+using DeedAi.Infrastructure.Health;
 using DeedAi.Infrastructure.Ocr;
 using DeedAi.Infrastructure.Security;
 using DeedAi.Infrastructure.Storage;
@@ -213,13 +214,15 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         var overall = detailed.RootElement.GetProperty("status").GetString();
         Assert.True(overall is "ok" or "degraded");
         var checks = detailed.RootElement.GetProperty("checks");
-        foreach (var name in new[] { "sql", "storage", "queue" })
+        foreach (var name in new[] { "sql", "storage", "queue", "blob", "ocrQueue", "documentIntelligence", "ocrPipeline" })
         {
             var check = checks.GetProperty(name);
             Assert.True(check.GetProperty("reachable").GetBoolean());
             Assert.False(string.IsNullOrWhiteSpace(check.GetProperty("status").GetString()));
             Assert.False(string.IsNullOrWhiteSpace(check.GetProperty("mode").GetString()));
         }
+        Assert.Equal("Read/write", checks.GetProperty("blob").GetProperty("detail").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(checks.GetProperty("ocrPipeline").GetProperty("detail").GetString()));
     }
 
     [Fact]
@@ -375,7 +378,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
             new DirtyFieldIntelligenceClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
-            new NullOcrNotifier());
+            new NullOcrNotifier(),
+            new OcrPipelineSignal());
         await processor.ProcessAsync(new OcrQueueDelivery
         {
             Job = new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath },
@@ -469,7 +473,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
             new BrokenJsonIntelligenceClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
-            new NullOcrNotifier());
+            new NullOcrNotifier(),
+            new OcrPipelineSignal());
         await Assert.ThrowsAsync<InvalidOperationException>(() => processor.ProcessAsync(new OcrQueueDelivery
         {
             Job = new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath },
@@ -531,6 +536,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("Server=", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("SqlConnection", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("StorageConnection", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DocumentIntelligenceKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("BISDocumentIntelligenceEndpoint", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ChangeMe", body, StringComparison.OrdinalIgnoreCase);
     }
 

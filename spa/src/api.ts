@@ -180,6 +180,13 @@ export interface NotifyPreview {
   events: string[];
 }
 
+export interface HealthCheck {
+  status: string;
+  reachable: boolean;
+  mode: string;
+  detail?: string | null;
+}
+
 export interface DashboardCounts {
   uploaded: number;
   queued: number;
@@ -417,9 +424,13 @@ export const endpoints = {
       status: string;
       product: string;
       checks: {
-        sql: { status: string; reachable: boolean; mode: string };
-        storage: { status: string; reachable: boolean; mode: string };
-        queue: { status: string; reachable: boolean; mode: string };
+        sql: HealthCheck;
+        blob?: HealthCheck;
+        storage: HealthCheck;
+        ocrQueue?: HealthCheck;
+        queue: HealthCheck;
+        documentIntelligence?: HealthCheck;
+        ocrPipeline?: HealthCheck;
       };
     }>("/api/health/detail"),
   remove: (id: string) => api<{ message: string }>(`/api/documents/${id}`, { method: "DELETE" }),

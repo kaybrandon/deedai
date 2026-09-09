@@ -731,7 +731,7 @@ h1 .field-help {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.health-chip-mode { color: var(--muted); font-weight: 600; }
+.health-chip-mode, .health-chip-detail { color: var(--muted); font-weight: 600; }
 .health-status {
   font-weight: 800;
   text-transform: uppercase;

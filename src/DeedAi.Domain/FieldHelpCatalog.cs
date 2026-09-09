@@ -79,7 +79,7 @@ public static class FieldHelpCatalog
         [RestoreConfirmRestore] = "Restore puts this soft-deleted deed back on Documents for its Client. Review history stays attached.",
         [RestoreConfirmHardDelete] = "Hard-delete permanently removes the deed and its PDF blob. This cannot be undone — use Restore if you only meant to bring it back.",
         [SettingsSwagger] = "When on, /swagger serves the API UI so Admins can authorize with a JWT. When off, /swagger returns 404. Enabling Swagger does not open anonymous API access.",
-        [SettingsSystemHealth] = "Admin-only SQL, Blob, and OCR queue checks. Modes and reachability only — never connection strings, keys, or other secrets.",
+        [SettingsSystemHealth] = "Admin-only SQL, Blob, OCR queue, Document Intelligence, and OCR pipeline checks. Modes and reachability only — never connection strings, keys, or other secrets.",
         [UsersRole] = "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
         [SettingsIdleTimeout] = "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
         [SettingsOcrTrim] = "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list."
