@@ -16,6 +16,11 @@
 5. Soft-delete uses a confirm sheet (ConfirmSheet)
 6. List actions are large enough for tablet (≥44px)
 
+## Swagger Authorize (Admin QA2)
+When **Enable Swagger UI** is on, open `/swagger`, wait for the UI to paint, then in DevTools:
+`window.__deedAiMeasureAuthorize()`
+Top-bar Authorize and the modal Authorize / Logout / Close must each report `width` and `height` ≥ 44. Pass marker: `document.documentElement.dataset.deedaiAuthorizeHit === "pass"`. Measuring the inner lock icon or label span is the wrong node — use the helper (it reads `getBoundingClientRect()` on the buttons).
+
 ## OCR
 - Upload → blob → queue → Document Intelligence → fields on the deed
 - Failures show as **Failed** with Retry — not a silent hang
