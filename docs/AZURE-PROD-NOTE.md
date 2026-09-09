@@ -1,7 +1,7 @@
 # Deed AI — Azure PROD note (Phase 3 + hotfix)
 
 **Date:** 2026-09-09 (America/Chicago)  
-**Status:** Phase 1–3 live on `appdeedai`. Hotfix PR #8 merged (UploadedBy FK `ON DELETE NO ACTION`). Phase 4 Hardening B adds health detail, seed reseed, idle timeout, OCR cleanup, failed requeue.
+**Status:** Phase 1–4 zipdeployed on `appdeedai`. Hotfix PR #8 merged (UploadedBy FK `ON DELETE NO ACTION`). Phase 4 Hardening B adds health detail, seed reseed, idle timeout, OCR cleanup, failed requeue. Phase 4A / 4AQa schema apply is repaired (discoverable + idempotent SQL); redeploy Layout A zip after that hotfix merges.
 
 ## Live URL
 - **HTTPS:** https://appdeedai-bdfvbng5ckhgfzcp.southcentralus-01.azurewebsites.net  
@@ -31,15 +31,16 @@ Ignore leftover `DocumentIntelligenceEndpoint` if present. Phase 2+ also uses `S
 ## Deploy (Layout A)
 1. Publish Windows Layout A zip from `main`: `./scripts/publish-layout-a.sh` → `artifacts/layout-a/deedai-win-x64.zip`.
 2. Zipdeploy to `appdeedai`. App stack **.NET 10**.
-3. Startup runs `MigrateAsync` (SQL Server). Phase 3+ migrations are written to survive a re-run after a **partial apply**.
+3. Startup runs `MigrateAsync` (SQL Server). Phase 3+ and Phase 4 SQL Server scripts are idempotent (`IF OBJECT_ID` / `IF COL_LENGTH`) so a **partial apply** can finish. Phase 4A / Phase 4AQa are registered EF migrations (they were previously invisible) plus a no-data-wipe `Phase4AzureRepair` catch-up.
 4. Smoke: `/` 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin may call `/api/health/detail` (SQL / storage mode / queue mode — no secrets).
 
 ## Known ops: 500.30
 1. Confirm KV refs on App Settings resolve (no secret values in chat).
 2. If SQL unavailable: Portal → **`dbdeedai`** → **Resume** (Serverless auto-pause), then restart App Service.
 3. Check App Service logs / Kudu if still failing.
-4. After a Phase 2+ zip: if EF tries `InitialCreate` on existing tables → baseline `__EFMigrationsHistory` (do not recreate schema).
+4. After a Phase 2+ zip: if EF tries `InitialCreate` on existing tables → baseline `__EFMigrationsHistory` (do not recreate schema). Historical `There is already an object named 'Clients'` is this case — do **not** drop Clients.
 5. **Cascade lesson (PR #8):** SQL Server rejects two cascade paths from `Documents` → `Users`. `AssigneeUserId` may `SET NULL`; **`UploadedByUserId` must be `ON DELETE NO ACTION`**. A Phase 3 deploy that created the FK as cascade/set-null failed startup; hotfix recreates the FK as NoAction and is idempotent on re-run.
+6. **Phase 4 schema 500:** Kudu `Invalid object name 'AppPolicies'` / `Invalid column name 'SalesTabCode'` means Phase 4A DDL never landed (handwritten migrations lacked `[Migration]` / `[DbContext]`, so EF skipped them). After the schema hotfix merge, **zipdeploy Layout A again**. Startup will create missing Phase 4 objects only; existing rows stay. Then `/api/health` should be 200.
 
 ## Admin seed sync
 `DatabaseSeeder` used to create users only when `Users` was empty. Rotating Key Vault `AdminSeedPassword` did **not** update the existing `admin@bisconsultants.com` hash (live 401). Startup now updates that seed admin hash when `AdminSeedPassword` (or aliases `Admin__SeedPassword` / `Admin:SeedPassword`) is present. Seeded demo users still on the default seed password are updated too. Data is not wiped. **Never log the password.**

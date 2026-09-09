@@ -11,9 +11,9 @@ namespace DeedAi.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            if (IsSqlServer(migrationBuilder))
+            if (Phase4SqlServerSchema.IsSqlServer(migrationBuilder))
             {
-                UpSqlServerIdempotent(migrationBuilder);
+                Phase4SqlServerSchema.EnsureHardening(migrationBuilder);
                 return;
             }
 
@@ -29,12 +29,6 @@ namespace DeedAi.Infrastructure.Data.Migrations
             migrationBuilder.DropTable(
                 name: "SessionSettings");
         }
-
-        private static bool IsSqlServer(MigrationBuilder migrationBuilder) =>
-            string.Equals(
-                migrationBuilder.ActiveProvider,
-                "Microsoft.EntityFrameworkCore.SqlServer",
-                StringComparison.Ordinal);
 
         private static void UpStandard(MigrationBuilder migrationBuilder)
         {
@@ -72,44 +66,6 @@ namespace DeedAi.Infrastructure.Data.Migrations
                 table: "OcrCleanupRules",
                 columns: new[] { "Kind", "Value" },
                 unique: true);
-        }
-
-        /// <summary>
-        /// Survive a re-run after a partial apply (same pattern as Phase 3 / PR #8).
-        /// </summary>
-        private static void UpSqlServerIdempotent(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql(
-                """
-                IF OBJECT_ID(N'dbo.OcrCleanupRules', N'U') IS NULL
-                BEGIN
-                    CREATE TABLE [OcrCleanupRules] (
-                        [Id] uniqueidentifier NOT NULL,
-                        [Kind] nvarchar(16) NOT NULL,
-                        [Value] nvarchar(64) NOT NULL,
-                        [IsActive] bit NOT NULL,
-                        [SortOrder] int NOT NULL,
-                        CONSTRAINT [PK_OcrCleanupRules] PRIMARY KEY ([Id]),
-                        CONSTRAINT [CK_OcrCleanupRules_Kind] CHECK (Kind IN (N'Trim', N'Discard'))
-                    );
-                END
-
-                IF OBJECT_ID(N'dbo.SessionSettings', N'U') IS NULL
-                BEGIN
-                    CREATE TABLE [SessionSettings] (
-                        [Id] uniqueidentifier NOT NULL,
-                        [IdleTimeoutMinutes] int NOT NULL,
-                        [UpdatedAt] datetimeoffset NOT NULL,
-                        CONSTRAINT [PK_SessionSettings] PRIMARY KEY ([Id])
-                    );
-                END
-
-                IF NOT EXISTS (
-                    SELECT 1 FROM sys.indexes
-                    WHERE name = N'IX_OcrCleanupRules_Kind_Value'
-                      AND object_id = OBJECT_ID(N'dbo.OcrCleanupRules'))
-                    CREATE UNIQUE INDEX [IX_OcrCleanupRules_Kind_Value] ON [OcrCleanupRules] ([Kind], [Value]);
-                """);
         }
     }
 }

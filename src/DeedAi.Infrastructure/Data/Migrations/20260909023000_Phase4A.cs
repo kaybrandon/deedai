@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -9,6 +10,25 @@ namespace DeedAi.Infrastructure.Data.Migrations
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            if (Phase4SqlServerSchema.IsSqlServer(migrationBuilder))
+            {
+                Phase4SqlServerSchema.EnsurePhase4A(migrationBuilder);
+                return;
+            }
+
+            UpStandard(migrationBuilder);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(name: "PropertyDefaults");
+            migrationBuilder.DropTable(name: "SoftwareFieldMaps");
+            migrationBuilder.DropTable(name: "AppPolicies");
+        }
+
+        private static void UpStandard(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
                 name: "AppPolicies",
@@ -91,14 +111,6 @@ namespace DeedAi.Infrastructure.Data.Migrations
                 name: "IX_PropertyDefaults_ClientId",
                 table: "PropertyDefaults",
                 column: "ClientId");
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(name: "PropertyDefaults");
-            migrationBuilder.DropTable(name: "SoftwareFieldMaps");
-            migrationBuilder.DropTable(name: "AppPolicies");
         }
     }
 }
