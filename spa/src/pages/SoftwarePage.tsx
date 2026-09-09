@@ -77,7 +77,7 @@ export default function SoftwarePage() {
   return (
     <section className="page">
       <h1>Software</h1>
-      <p className="muted">Lookup and push to the external Software system. Never called CAMA. Advanced deed-type maps stay in Settings.</p>
+      <p className="muted">Lookup and push to the external Software system. Advanced deed-type maps stay in Settings.</p>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
 

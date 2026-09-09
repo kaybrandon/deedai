@@ -368,7 +368,7 @@ export default function ReviewPage() {
 
         <section className="panel">
           <h2>Software</h2>
-          <p className="muted">Lookup by key fields (parcel, grantor, grantee, Client) or push this deed to Software. Never called CAMA.</p>
+          <p className="muted">Lookup by key fields (parcel, grantor, grantee, Client) or push this deed to Software.</p>
           {doc.lastSoftwareSyncAt ? (
             <p>
               Last {doc.lastSoftwareSyncDirection ?? "sync"}: <strong>{doc.lastSoftwareSyncStatus ?? "—"}</strong>

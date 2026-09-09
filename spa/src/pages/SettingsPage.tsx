@@ -379,7 +379,7 @@ export default function SettingsPage() {
         </section>
       )}
 
-      <SettingsBlock title="Clients" empty={clients.length === 0} emptyBody="Add a Client (never County). Inactive Clients stay off upload and report filters.">
+      <SettingsBlock title="Clients" empty={clients.length === 0} emptyBody="Add a Client. Inactive Clients stay off upload and report filters.">
         <ul className="setting-list">
           {clients.map((client) => (
             <li key={client.id}>

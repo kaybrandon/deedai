@@ -48,7 +48,7 @@ export default function SalesPage() {
   return (
     <section className="page">
       <h1>Sales</h1>
-      <p className="muted">Consideration, parties, and parcel for deeds your role can edit. This is the Software-era Sales tab — not a County export.</p>
+      <p className="muted">Consideration, parties, and parcel for deeds your role can edit. This is the Software Sales tab.</p>
       <form className="filter-row wrap" onSubmit={load}>
         <input className="grow" placeholder="Search name, grantor, parcel" value={search} onChange={(e) => setSearch(e.target.value)} />
         <label>
