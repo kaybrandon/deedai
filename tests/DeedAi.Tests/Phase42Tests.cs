@@ -209,6 +209,11 @@ public sealed class Phase42Tests : IClassFixture<TestAppFactory>
         Assert.Contains("healthDetail", panel);
         Assert.Contains("system-health", panel);
         Assert.Contains("redacted", panel);
+        Assert.Contains("Document Intelligence", panel);
+        Assert.Contains("OCR pipeline", panel);
+        Assert.Contains("Queue depth", panel);
+        Assert.Contains("health-refresh", panel);
+        Assert.Contains("min-height: 44px", File.ReadAllText(Path.Combine(root, "styles.css")));
         Assert.DoesNotContain("County", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", panel, StringComparison.Ordinal);
     }

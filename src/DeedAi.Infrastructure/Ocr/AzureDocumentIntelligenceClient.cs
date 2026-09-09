@@ -6,8 +6,27 @@ using DeedAi.Domain.Ocr;
 
 namespace DeedAi.Infrastructure.Ocr;
 
-public sealed class AzureDocumentIntelligenceClient(DocumentIntelligenceClient client) : IDocumentIntelligenceClient
+public sealed class AzureDocumentIntelligenceClient(DocumentIntelligenceClient client, Uri endpoint) : IDocumentIntelligenceClient
 {
+    public async Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            using var response = await http.GetAsync(endpoint, cancellationToken);
+            var code = (int)response.StatusCode;
+            return code is >= 200 and < 500;
+        }
+        catch (RequestFailedException ex) when (ex.Status is >= 400 and < 500)
+        {
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<DocumentIntelligenceResult> AnalyzeAsync(
         string documentName,
         Stream pdf,

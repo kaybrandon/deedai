@@ -116,6 +116,7 @@ public sealed class InProcessOcrWorker(
         var visibility = TimeSpan.FromSeconds(Math.Max(30, options.Value.VisibilityTimeoutSeconds));
         while (!stoppingToken.IsCancellationRequested)
         {
+            await RecordWorkerSignalAsync(dequeue: false, stoppingToken);
             var delivery = await queue.ReceiveAsync(visibility, stoppingToken);
             if (delivery is null)
             {
@@ -125,6 +126,7 @@ public sealed class InProcessOcrWorker(
 
             try
             {
+                await RecordWorkerSignalAsync(dequeue: true, stoppingToken);
                 using var scope = scopes.CreateScope();
                 var processor = scope.ServiceProvider.GetRequiredService<OcrProcessor>();
                 await processor.ProcessAsync(delivery, stoppingToken);
@@ -134,6 +136,29 @@ public sealed class InProcessOcrWorker(
             {
                 logger.LogError(ex, "In-process OCR failed for {DocumentId}", delivery.Job.DocumentId);
             }
+        }
+    }
+
+    private async Task RecordWorkerSignalAsync(bool dequeue, CancellationToken stoppingToken)
+    {
+        try
+        {
+            using var scope = scopes.CreateScope();
+            var health = scope.ServiceProvider.GetRequiredService<DeedAi.Infrastructure.Health.OcrHealthRecorder>();
+            if (dequeue)
+            {
+                await health.RecordDequeueAsync(stoppingToken);
+                return;
+            }
+
+            await health.RecordWorkerHeartbeatAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "OCR worker health signal was skipped.");
         }
     }
 }

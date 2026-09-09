@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddDbContext<DeedAiDbContext>(options => ConfigureDatabase(options, configuration));
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<OcrProcessor>();
+        services.AddSingleton<Health.OcrHealthSignal>();
+        services.AddScoped<Health.OcrHealthRecorder>();
         services.AddScoped<Health.RuntimeHealth>();
         services.AddScoped<IOcrNotifier, OcrNotifier>();
         services.AddHttpClient(nameof(SendGridEmailSender));
@@ -159,8 +161,10 @@ public static class DependencyInjection
             return;
         }
 
-        services.AddSingleton(_ => new DocumentIntelligenceClient(new Uri(endpoint), new AzureKeyCredential(key)));
-        services.AddSingleton<IDocumentIntelligenceClient, AzureDocumentIntelligenceClient>();
+        var endpointUri = new Uri(endpoint);
+        services.AddSingleton(_ => new DocumentIntelligenceClient(endpointUri, new AzureKeyCredential(key)));
+        services.AddSingleton<IDocumentIntelligenceClient>(sp =>
+            new AzureDocumentIntelligenceClient(sp.GetRequiredService<DocumentIntelligenceClient>(), endpointUri));
     }
 
     public static string? FirstValue(IConfiguration configuration, params string[] keys)

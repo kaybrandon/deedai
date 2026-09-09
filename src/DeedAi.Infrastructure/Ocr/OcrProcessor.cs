@@ -5,6 +5,7 @@ using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Health;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,7 +25,8 @@ public sealed class OcrProcessor(
     IDocumentIntelligenceClient documentIntelligence,
     IOptions<OcrOptions> options,
     ILogger<OcrProcessor> logger,
-    IOcrNotifier notifier)
+    IOcrNotifier notifier,
+    OcrHealthRecorder ocrHealth)
 {
     public async Task ProcessAsync(OcrQueueDelivery delivery, CancellationToken cancellationToken)
     {
@@ -61,6 +63,7 @@ public sealed class OcrProcessor(
             await using var pdf = await blobs.OpenReadAsync(document.BlobPath, cancellationToken);
             var result = await documentIntelligence.AnalyzeAsync(document.Name, pdf, cancellationToken);
             EnsureValidExtractJson(result.RawJson);
+            await ocrHealth.RecordDiOutcomeAsync(true, cancellationToken);
 
             var rawPath = $"di-raw/{document.Id:N}.json";
             await using var rawStream = new MemoryStream(Encoding.UTF8.GetBytes(result.RawJson));
@@ -104,6 +107,7 @@ public sealed class OcrProcessor(
         catch (Exception ex)
         {
             logger.LogError(ex, "OCR failed for document {DocumentId}", document.Id);
+            await ocrHealth.RecordDiOutcomeAsync(false, cancellationToken);
             document.Status = DocumentStatuses.Failed;
             document.ErrorMessage = FormatFailReason(ex);
             document.UpdatedAt = DateTimeOffset.UtcNow;

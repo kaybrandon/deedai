@@ -1,5 +1,8 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.9 system health probes + queue visibility
+- Admin `GET /api/health/detail` and Settings System health add Blob R/W (Pass/Fail), Document Intelligence reachability + configured, OCR pipeline (queue + worker heartbeat/dequeue), and queue visibility (depth, oldest waiting age, poison / Failed, last DI success/fail). Existing SQL / Storage / Queue remain. No secrets. No Azure deploy.
+
 ## 2026-09-09 — Phase 4.2.2 Authorize hit-target persist
 - Live Azure after `#18` still measured ~34px (top bar) / ~30px (modal). Root cause: Swashbuckle 9 puts `HeadContent` / `InjectJavascript` in `<head>` before `swagger-ui-bundle.js`, and Swagger React re-applies `display:inline` after the 4s pin (height is ignored on inline). Custom `index.html` now loads `/swagger/deedai-swagger-authorize.js` **last**; a 250ms poll + attribute observer re-pins `height/min-height:44px; max-height:none; display:inline-flex !important`.
 - Dev must self-verify after zipdeploy before pinging QA2: on `/swagger`, `window.__deedAiMeasureAuthorize()` — every `getBoundingClientRect()` width/height ≥ 44; `html[data-deedai-authorize-hit=pass]`; `window.__deedAiAuthorizeRuntimeVersion === "4.2.2"`.
