@@ -234,18 +234,20 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
-    public void Nested_settings_nav_is_systems_mid_level_with_existing_route_and_admin_gate()
+    public void Nested_settings_nav_is_system_mid_level_with_existing_route_and_admin_gate()
     {
         var shell = Read("spa/src/components/AppShell.tsx");
         Assert.Contains("aria-controls=\"settings-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("              Settings\n              <span className=\"nav-group-caret\"", shell, StringComparison.Ordinal);
-        Assert.Contains("data-nav=\"systems-mid\"", shell, StringComparison.Ordinal);
-        Assert.Contains("aria-controls=\"systems-nav\"", shell, StringComparison.Ordinal);
-        Assert.Contains("id=\"systems-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("data-nav=\"system-mid\"", shell, StringComparison.Ordinal);
+        Assert.Contains("aria-controls=\"system-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("id=\"system-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/settings\"", shell, StringComparison.Ordinal);
         Assert.Contains("System", shell, StringComparison.Ordinal);
         Assert.Contains("navigate(\"/denied\", { state: { action: \"change settings\" } })", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("systems-nav", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("systems-mid", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -254,7 +256,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("Software", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/users\"", shell, StringComparison.Ordinal);
         Assert.True(
-            shell.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal)
+            shell.IndexOf("id=\"system-nav\"", StringComparison.Ordinal)
             < shell.IndexOf("to=\"/software\"", StringComparison.Ordinal),
             "Software must nest under System.");
 

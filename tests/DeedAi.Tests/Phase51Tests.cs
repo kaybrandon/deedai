@@ -51,14 +51,16 @@ public sealed class Phase51Tests
     }
 
     [Fact]
-    public void Settings_nest_has_systems_mid_level_then_software_users_api()
+    public void Settings_nest_has_system_mid_level_then_software_users_api()
     {
         var shell = Read("spa/src/components/AppShell.tsx");
-        Assert.Contains("data-nav=\"systems-mid\"", shell, StringComparison.Ordinal);
-        Assert.Contains("aria-controls=\"systems-nav\"", shell, StringComparison.Ordinal);
-        Assert.Contains("id=\"systems-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("data-nav=\"system-mid\"", shell, StringComparison.Ordinal);
+        Assert.Contains("aria-controls=\"system-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("id=\"system-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("System", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("systems-nav", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("systems-mid", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -66,8 +68,8 @@ public sealed class Phase51Tests
         Assert.DoesNotContain("is-active", shell, StringComparison.Ordinal);
 
         var settingsNav = SliceBetween(shell, "id=\"settings-nav\"", "sidebar-identity");
-        Assert.Contains("data-nav=\"systems-mid\"", settingsNav, StringComparison.Ordinal);
-        var systemIdx = settingsNav.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal);
+        Assert.Contains("data-nav=\"system-mid\"", settingsNav, StringComparison.Ordinal);
+        var systemIdx = settingsNav.IndexOf("id=\"system-nav\"", StringComparison.Ordinal);
         var softwareIdx = settingsNav.IndexOf("to=\"/software\"", StringComparison.Ordinal);
         var usersIdx = settingsNav.IndexOf("to=\"/users\"", StringComparison.Ordinal);
         var apiIdx = settingsNav.IndexOf("to=\"/settings#swagger\"", StringComparison.Ordinal);

@@ -107,13 +107,13 @@ export default function AppShell() {
             </button>
             {settingsOpen && (
               <div className="nav-sub" id="settings-nav">
-                <div className="nav-group" data-nav="systems-mid">
+                <div className="nav-group" data-nav="system-mid">
                   <div className="nav-mid-row">
                     <button
                       className="nav-group-caret-only"
                       type="button"
                       aria-expanded={systemOpen}
-                      aria-controls="systems-nav"
+                      aria-controls="system-nav"
                       aria-label={systemOpen ? "Collapse System" : "Expand System"}
                       onClick={() => setSystemOpen((open) => !open)}
                     >
@@ -134,7 +134,7 @@ export default function AppShell() {
                     )}
                   </div>
                   {systemOpen && (
-                    <div className="nav-sub" id="systems-nav">
+                    <div className="nav-sub" id="system-nav">
                       <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
                         Software
                       </NavLink>
