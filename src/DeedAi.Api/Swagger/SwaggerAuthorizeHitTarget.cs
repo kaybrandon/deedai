@@ -3,20 +3,22 @@ using System.Text;
 namespace DeedAi.Api.Swagger;
 
 /// <summary>
-/// Phase 4.2.2 Authorize tap-target. #17 CSS and #18 HeadContent runtime still
-/// lost on live Azure: Swashbuckle 9 puts <c>HeadContent</c> / InjectJavascript
-/// in <c>&lt;head&gt;</c> before <c>swagger-ui-bundle.js</c>, and Swagger React
-/// re-applies <c>display:inline</c> after paint (height ignored → ~34px top bar,
-/// ~30px modal). Custom <c>index.html</c> loads our JS last; assets are served
-/// at <c>/swagger/deedai-swagger-authorize.{js,css}</c> before Swashbuckle;
-/// the script polls every 250ms and re-pins inline <c>!important</c>.
+/// Phase 4.2.3 Authorize tap-target. 4.2.2 triple-loaded the runtime (inline
+/// <c>HeadContent</c> dump + <c>InjectJavascript</c> before bundles + pin-last)
+/// so <c>window.__deedAiMeasureAuthorize</c> stayed undefined on live Azure
+/// and rects stayed ~34 / ~30. Custom <c>index.html</c> loads the JS
+/// <strong>once</strong>, after <c>index.js</c>. HeadContent is CSS only.
+/// Assets are served at <c>/swagger/deedai-swagger-authorize.{js,css}</c>
+/// before Swashbuckle; the script polls every 250ms and re-pins inline
+/// <c>!important</c>.
 /// </summary>
 public static class SwaggerAuthorizeHitTarget
 {
     public const int MinPx = 44;
-    public const string RuntimeVersion = "4.2.2";
+    public const string RuntimeVersion = "4.2.3";
     public const string StyleId = "deedai-swagger-authorize";
     public const string ScriptId = "deedai-swagger-authorize-runtime";
+    public const string ScriptSrcLastId = "deedai-swagger-authorize-src-last";
     public const string MeasureFunction = "__deedAiMeasureAuthorize";
     public const string JsFileName = "deedai-swagger-authorize.js";
     public const string CssFileName = "deedai-swagger-authorize.css";
@@ -29,6 +31,11 @@ public static class SwaggerAuthorizeHitTarget
     public static string StyleTag =>
         "<style id=\"" + StyleId + "\">" + CssRules + "</style>";
 
+    /// <summary>
+    /// Fixture-only inline script. Live <c>index.html</c> must not dump this
+    /// into <c>&lt;head&gt;</c> — that raced Swagger and left the measure
+    /// helper undefined.
+    /// </summary>
     public static string ScriptTag =>
         "<script id=\"" + ScriptId + "\">" + JavaScript + "</script>";
 
@@ -36,23 +43,23 @@ public static class SwaggerAuthorizeHitTarget
         "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + CssUrl + "\" id=\"deedai-swagger-authorize-href\" />";
 
     public static string ScriptSrcTag =>
-        "<script src=\"" + JsUrl + "\" charset=\"utf-8\" id=\"deedai-swagger-authorize-src\"></script>";
+        "<script src=\"" + JsUrl + "\" charset=\"utf-8\" id=\"" + ScriptSrcLastId + "\"></script>";
 
     /// <summary>
-    /// Inline fallback in <c>&lt;head&gt;</c> if the body-end file 404s.
-    /// The JS guard <c>__deedAiAuthorizeRuntime</c> prevents double init.
+    /// CSS only. Do not put the authorize JS here — Swashbuckle 9 emits
+    /// <c>HeadContent</c> before <c>swagger-ui-bundle.js</c>.
     /// </summary>
-    public static string HeadContent => StylesheetLink + StyleTag + ScriptTag;
+    public static string HeadContent => StylesheetLink;
 
     /// <summary>
-    /// Swashbuckle 9 default index with our CSS in head and JS after
+    /// Swashbuckle 9 default index with our CSS in head and JS once after
     /// <c>index.js</c> so <c>SwaggerUIBundle</c> already exists before we wrap it.
     /// Placeholders must match Swashbuckle.AspNetCore.SwaggerUI 9.0.6.
     /// </summary>
     public static string IndexHtml { get; } =
-        """
+        $"""
         <!-- HTML for static distribution bundle build -->
-        <!-- deedai authorize hit runtime v4.2.2 — JS last, after index.js -->
+        <!-- deedai authorize hit runtime v{RuntimeVersion} — JS last, after index.js -->
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -69,7 +76,7 @@ public static class SwaggerAuthorizeHitTarget
             <script src="%(ScriptBundlePath)" charset="utf-8"></script>
             <script src="%(ScriptPresetsPath)" charset="utf-8"></script>
             <script src="index.js" charset="utf-8"></script>
-            <script src="/swagger/deedai-swagger-authorize.js?v=4.2.2" charset="utf-8" id="deedai-swagger-authorize-src-last"></script>
+            <script src="{JsUrl}" charset="utf-8" id="{ScriptSrcLastId}"></script>
         </body>
         </html>
         """;

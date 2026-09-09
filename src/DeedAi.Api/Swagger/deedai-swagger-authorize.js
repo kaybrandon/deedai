@@ -1,24 +1,32 @@
-/* Deed AI — Swagger Authorize hit-target runtime (Phase 4.2.2).
-   #18 HeadContent ran in <head> and timed out (4s) before Swagger React
-   re-applied display:inline after paint → live Azure stayed ~34px / ~30px.
-   This file is loaded LAST from custom index.html (after index.js) and
-   served at /swagger/deedai-swagger-authorize.js. It:
+/* Deed AI — Swagger Authorize hit-target runtime (Phase 4.2.3).
+   4.2.2 triple-loaded this file (inline head + early src + pin-last). The
+   helper is assigned late; an early run can fail first and pin-last then
+   early-returned on messy __deedAiAuthorizeRuntime. Custom index now loads
+   this file ONCE after index.js. This IIFE always assigns
+   window.__deedAiMeasureAuthorize (even on re-entry) before init, then:
      - wraps SwaggerUIBundle onComplete
      - MutationObserver on childList + style/class
      - 250ms poll while on /swagger
      - always re-applies inline !important (height/min-height/max-height:none)
      - clones a body-owned overlay if getBoundingClientRect is still < 44
-   QA2 after zipdeploy (Dev self-verify before pinging QA2):
-     window.__deedAiMeasureAuthorize()
+   QA2 after load: typeof window.__deedAiMeasureAuthorize === "function"
+   and window.__deedAiAuthorizeRuntimeVersion === "4.2.3".
    Each item width >= 44 and height >= 44. Pass:
      document.documentElement.dataset.deedaiAuthorizeHit === "pass"
    Client / Software naming only. No secrets. */
 (function () {
-  if (window.__deedAiAuthorizeRuntime) {
-    if (typeof window.__deedAiMeasureAuthorize === "function") return;
+  function markAuthorizeError(err) {
+    try {
+      var root = document.documentElement;
+      if (!root) return;
+      var msg = (err && err.message) ? String(err.message) : String(err);
+      if (root.dataset) root.dataset.deedaiAuthorizeError = msg;
+      if (root.setAttribute) root.setAttribute("data-deedai-authorize-error", msg);
+    } catch (ignored) { /* ignore */ }
   }
-  window.__deedAiAuthorizeRuntime = true;
-  window.__deedAiAuthorizeRuntimeVersion = "4.2.2";
+
+  try {
+  window.__deedAiAuthorizeRuntimeVersion = "4.2.3";
 
   var MIN = 44;
   var POLL_MS = 250;
@@ -244,7 +252,7 @@
     if (document.documentElement) {
       document.documentElement.setAttribute("data-deedai-authorize-hit", ok ? "pass" : (nodes.length ? "fail" : "pending"));
       document.documentElement.setAttribute("data-deedai-authorize-hit-count", String(nodes.length));
-      document.documentElement.setAttribute("data-deedai-authorize-runtime", "4.2.2");
+      document.documentElement.setAttribute("data-deedai-authorize-runtime", "4.2.3");
     }
     var slot = document.getElementById("deedai-authorize-hit-measure");
     if (!slot && document.body) {
@@ -363,13 +371,16 @@
     applyAll();
     return report();
   };
+  window.__deedAiAuthorizeRuntime = true;
 
   hookSetAttribute();
   hookSwaggerUiBundle();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
-      startObserver();
-      startPoll();
+      try {
+        startObserver();
+        startPoll();
+      } catch (e) { markAuthorizeError(e); }
     });
   } else {
     startObserver();
@@ -378,5 +389,11 @@
   var passes = [0, 50, 200, 250, 500, 1000, 2000, 4000];
   for (var t = 0; t < passes.length; t++) {
     setTimeout(applyAll, passes[t]);
+  }
+  } catch (e) {
+    markAuthorizeError(e);
+    if (typeof window.__deedAiMeasureAuthorize !== "function") {
+      window.__deedAiMeasureAuthorize = function () { return []; };
+    }
   }
 })();

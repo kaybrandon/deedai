@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <!-- Vite emptyOutDir wipes wwwroot; copy Authorize assets after build/publish
-       so InjectJavascript / InjectStylesheet can hit /swagger/*.js|css. The
+       so the custom index pin-last script and CSS link resolve. The
        enablement middleware also serves the embedded copies (source of truth). -->
   <Target Name="CopyDeedAiSwaggerAuthorizeAssets" AfterTargets="CopyFilesToOutputDirectory">
     <MakeDir Directories="$(OutputPath)wwwroot\swagger" />

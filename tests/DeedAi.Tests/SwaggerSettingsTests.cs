@@ -62,7 +62,7 @@ public sealed class SwaggerSettingsTests
         Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
         var html = await ui.Content.ReadAsStringAsync();
         Assert.Contains("swagger", html, StringComparison.OrdinalIgnoreCase);
-        AssertAuthorizeHitTargetRuntime(html);
+        AssertAuthorizeHitTargetIndex(html);
 
         var spec = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatusCode.OK, spec.StatusCode);
@@ -160,8 +160,9 @@ public sealed class SwaggerSettingsTests
     [Fact]
     public void Authorize_hit_target_runtime_runs_after_swagger_paint()
     {
-        AssertAuthorizeHitTargetRuntime(SwaggerExtensions.AuthorizeHitTargetHead);
-        AssertAuthorizeHitTargetRuntime(SwaggerAuthorizeHitTarget.HeadContent);
+        AssertAuthorizeHitTargetHeadIsCssOnly(SwaggerExtensions.AuthorizeHitTargetHead);
+        AssertAuthorizeHitTargetHeadIsCssOnly(SwaggerAuthorizeHitTarget.HeadContent);
+        AssertAuthorizeHitTargetRuntime(SwaggerAuthorizeHitTarget.JavaScript);
         AssertAuthorizeHitTargetRuntime(SwaggerAuthorizeHitTarget.MeasureFixtureHtml());
         Assert.Contains("swagger-after-paint-win", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
         Assert.Contains("swagger-react-reset", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
@@ -170,10 +171,13 @@ public sealed class SwaggerSettingsTests
         Assert.Contains("__deedAiMeasureAuthorize", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.Contains("POLL_MS = 250", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.Contains("max-height", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
+        Assert.Contains("__deedAiAuthorizeRuntimeVersion = \"4.2.3\"", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
+        Assert.Contains("deedaiAuthorizeError", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("County", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("JwtSigningKey", SwaggerAuthorizeHitTarget.HeadContent, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("AdminSeedPassword", SwaggerAuthorizeHitTarget.HeadContent, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("4.2.3", SwaggerAuthorizeHitTarget.RuntimeVersion);
         AssertCustomIndexLoadsScriptLast(SwaggerAuthorizeHitTarget.IndexHtml);
     }
 
@@ -207,7 +211,8 @@ public sealed class SwaggerSettingsTests
         Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
         var html = await ui.Content.ReadAsStringAsync();
         AssertCustomIndexLoadsScriptLast(html);
-        AssertAuthorizeHitTargetRuntime(html);
+        AssertAuthorizeHitTargetIndex(html);
+        AssertAuthorizeHitTargetRuntime(jsBody);
     }
 
     [Fact]
@@ -234,7 +239,9 @@ public sealed class SwaggerSettingsTests
         Assert.Contains("\"height\": 44", stdout, StringComparison.Ordinal);
         Assert.Contains("\"marker\": \"pass\"", stdout, StringComparison.Ordinal);
         Assert.Contains("\"recoveredFromSwaggerInlineReset\": true", stdout, StringComparison.Ordinal);
-        Assert.Contains("\"version\": \"4.2.2\"", stdout, StringComparison.Ordinal);
+        Assert.Contains("\"version\": \"4.2.3\"", stdout, StringComparison.Ordinal);
+        Assert.Contains("\"helperDefinedAfterEval\": true", stdout, StringComparison.Ordinal);
+        Assert.Contains("\"helperDefinedAfterReentry\": true", stdout, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -325,43 +332,92 @@ public sealed class SwaggerSettingsTests
     }
 
     /// <summary>
-    /// Custom index must load our file after Swashbuckle <c>index.js</c>
-    /// (Swashbuckle 9 HeadContent / InjectJavascript stay in <c>&lt;head&gt;</c>).
+    /// Custom index must load our file once, after Swashbuckle <c>index.js</c>.
+    /// No inline full-runtime dump and no early src before the bundles.
     /// </summary>
     private static void AssertCustomIndexLoadsScriptLast(string html)
     {
-        Assert.Contains("deedai authorize hit runtime v4.2.2", html, StringComparison.Ordinal);
+        Assert.Contains("deedai authorize hit runtime v4.2.3", html, StringComparison.Ordinal);
+        var firstOurs = html.IndexOf("deedai-swagger-authorize.js", StringComparison.Ordinal);
+        var lastOurs = html.LastIndexOf("deedai-swagger-authorize.js", StringComparison.Ordinal);
+        Assert.True(firstOurs >= 0, "custom index missing authorize.js");
+        Assert.Equal(firstOurs, lastOurs);
         var indexJs = html.LastIndexOf("index.js", StringComparison.Ordinal);
-        var ours = html.LastIndexOf("deedai-swagger-authorize.js", StringComparison.Ordinal);
         Assert.True(indexJs >= 0, "custom index missing Swashbuckle index.js");
-        Assert.True(ours > indexJs, "Authorize runtime must load after index.js, not in head only");
+        Assert.True(lastOurs > indexJs, "Authorize runtime must load after index.js, not in head");
+        Assert.Contains("id=\"deedai-swagger-authorize-src-last\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("id=\"deedai-swagger-authorize-runtime\"", html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Live index: CSS link in head, JS once after bundles. HeadContent must
+    /// not dump the 12k runtime before <c>swagger-ui-bundle.js</c>.
+    /// </summary>
+    private static void AssertAuthorizeHitTargetIndex(string html)
+    {
+        AssertAuthorizeHitTargetHeadIsCssOnly(ExtractHead(html));
+        AssertCustomIndexLoadsScriptLast(html);
+        var bundle = html.IndexOf("swagger-ui-bundle", StringComparison.OrdinalIgnoreCase);
+        var ours = html.IndexOf("deedai-swagger-authorize.js", StringComparison.Ordinal);
+        if (bundle >= 0)
+        {
+            Assert.True(ours > bundle, "authorize.js must not load before swagger-ui-bundle");
+        }
+    }
+
+    private static void AssertAuthorizeHitTargetHeadIsCssOnly(string head)
+    {
+        Assert.Contains("deedai-swagger-authorize.css", head, StringComparison.Ordinal);
+        Assert.Contains("deedai-swagger-authorize-href", head, StringComparison.Ordinal);
+        Assert.DoesNotContain("deedai-swagger-authorize.js", head, StringComparison.Ordinal);
+        Assert.DoesNotContain("__deedAiMeasureAuthorize", head, StringComparison.Ordinal);
+        Assert.DoesNotContain("MutationObserver", head, StringComparison.Ordinal);
+        Assert.DoesNotContain("<script", head, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ExtractHead(string html)
+    {
+        var start = html.IndexOf("<head", StringComparison.OrdinalIgnoreCase);
+        var end = html.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+        if (start < 0 || end < 0 || end <= start)
+        {
+            return html;
+        }
+
+        return html[start..end];
     }
 
     /// <summary>
     /// Runtime contract: after Swagger paints (and after React resets
     /// <c>display:inline</c>), JS must pin 44×44 via inline <c>!important</c>,
     /// 250ms poll, MutationObserver, and SwaggerUIBundle onComplete.
-    /// Dev/QA2 after zipdeploy: <c>window.__deedAiMeasureAuthorize()</c> on
-    /// /swagger — every item width/height ≥ 44.
+    /// After script eval: <c>typeof window.__deedAiMeasureAuthorize === "function"</c>.
     /// <c>html[data-deedai-authorize-hit=pass]</c>.
     /// </summary>
-    private static void AssertAuthorizeHitTargetRuntime(string html)
+    private static void AssertAuthorizeHitTargetRuntime(string source)
     {
-        AssertAuthorizeHitTargetCss(html);
-        Assert.Contains("deedai-swagger-authorize-runtime", html, StringComparison.Ordinal);
-        Assert.Contains("MutationObserver", html, StringComparison.Ordinal);
-        Assert.Contains("SwaggerUIBundle", html, StringComparison.Ordinal);
-        Assert.Contains("onComplete", html, StringComparison.Ordinal);
-        Assert.Contains("setProperty", html, StringComparison.Ordinal);
-        Assert.Contains("important", html, StringComparison.Ordinal);
-        Assert.Contains("__deedAiMeasureAuthorize", html, StringComparison.Ordinal);
-        Assert.Contains("__deedAiApplyAuthorizeHit", html, StringComparison.Ordinal);
-        Assert.Contains("getBoundingClientRect", html, StringComparison.Ordinal);
-        Assert.Contains("data-deedai-hit", html, StringComparison.Ordinal);
-        Assert.Contains("data-deedai-authorize-hit", html, StringComparison.Ordinal);
-        Assert.Contains("auth-btn-wrapper", html, StringComparison.Ordinal);
-        Assert.Contains(".btn.authorize", html, StringComparison.Ordinal);
-        Assert.Contains("250", html, StringComparison.Ordinal);
-        Assert.Contains("max-height", html, StringComparison.Ordinal);
+        if (source.Contains("<style", StringComparison.Ordinal)
+            || source.Contains("deedai-swagger-authorize {", StringComparison.Ordinal)
+            || source.Contains(".swagger-ui .btn.authorize", StringComparison.Ordinal))
+        {
+            AssertAuthorizeHitTargetCss(source);
+        }
+
+        Assert.Contains("MutationObserver", source, StringComparison.Ordinal);
+        Assert.Contains("SwaggerUIBundle", source, StringComparison.Ordinal);
+        Assert.Contains("onComplete", source, StringComparison.Ordinal);
+        Assert.Contains("setProperty", source, StringComparison.Ordinal);
+        Assert.Contains("important", source, StringComparison.Ordinal);
+        Assert.Contains("__deedAiMeasureAuthorize", source, StringComparison.Ordinal);
+        Assert.Contains("__deedAiApplyAuthorizeHit", source, StringComparison.Ordinal);
+        Assert.Contains("getBoundingClientRect", source, StringComparison.Ordinal);
+        Assert.Contains("data-deedai-hit", source, StringComparison.Ordinal);
+        Assert.Contains("data-deedai-authorize-hit", source, StringComparison.Ordinal);
+        Assert.Contains("auth-btn-wrapper", source, StringComparison.Ordinal);
+        Assert.Contains(".btn.authorize", source, StringComparison.Ordinal);
+        Assert.Contains("250", source, StringComparison.Ordinal);
+        Assert.Contains("max-height", source, StringComparison.Ordinal);
+        Assert.Contains("__deedAiAuthorizeRuntimeVersion", source, StringComparison.Ordinal);
+        Assert.Contains("4.2.3", source, StringComparison.Ordinal);
     }
 }
