@@ -213,6 +213,34 @@ public sealed class SwaggerSettingsTests
         AssertCustomIndexLoadsScriptLast(html);
         AssertAuthorizeHitTargetIndex(html);
         AssertAuthorizeHitTargetRuntime(jsBody);
+        AssertNoStore(ui, "/swagger/index.html");
+    }
+
+    [Fact]
+    public async Task Swagger_index_html_and_index_js_are_no_store_when_enabled()
+    {
+        await using var factory = TestAppFactory.Create(null, new Dictionary<string, string?>
+        {
+            ["Swagger:Enabled"] = "true"
+        });
+        var client = factory.CreateJsonClient();
+
+        Assert.True(SwaggerExtensions.IsSwaggerShellAsset("/swagger/index.html"));
+        Assert.True(SwaggerExtensions.IsSwaggerShellAsset("/swagger/index.js"));
+        Assert.False(SwaggerExtensions.IsSwaggerShellAsset("/swagger/v1/swagger.json"));
+        Assert.False(SwaggerExtensions.IsSwaggerShellAsset("/swagger/deedai-swagger-authorize.js"));
+
+        var html = await client.GetAsync("/swagger/index.html");
+        Assert.Equal(HttpStatusCode.OK, html.StatusCode);
+        AssertNoStore(html, "/swagger/index.html");
+        var body = await html.Content.ReadAsStringAsync();
+        AssertCustomIndexLoadsScriptLast(body);
+        AssertAuthorizeHitTargetIndex(body);
+        Assert.DoesNotContain("InjectJavascript", SwaggerExtensions.AuthorizeHitTargetHead, StringComparison.Ordinal);
+
+        var indexJs = await client.GetAsync("/swagger/index.js");
+        Assert.Equal(HttpStatusCode.OK, indexJs.StatusCode);
+        AssertNoStore(indexJs, "/swagger/index.js");
     }
 
     [Fact]
@@ -254,6 +282,7 @@ public sealed class SwaggerSettingsTests
         var onClient = seeded.CreateJsonClient();
         var seededUi = await onClient.GetAsync("/swagger/index.html");
         Assert.Equal(HttpStatusCode.OK, seededUi.StatusCode);
+        AssertNoStore(seededUi, "/swagger/index.html");
 
         await using var prod = TestAppFactory.Create(null, new Dictionary<string, string?>
         {
@@ -308,6 +337,29 @@ public sealed class SwaggerSettingsTests
     {
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.GetProperty("enabled").GetBoolean();
+    }
+
+    private static void AssertNoStore(HttpResponseMessage response, string path)
+    {
+        var values = new List<string>();
+        if (response.Headers.TryGetValues("Cache-Control", out var header))
+        {
+            values.AddRange(header);
+        }
+
+        if (response.Content.Headers.TryGetValues("Cache-Control", out var content))
+        {
+            values.AddRange(content);
+        }
+
+        var joined = string.Join("; ", values);
+        Assert.True(
+            values.Any(v =>
+                v.Contains("no-store", StringComparison.OrdinalIgnoreCase)
+                || (v.Contains("max-age=0", StringComparison.OrdinalIgnoreCase)
+                    && v.Contains("must-revalidate", StringComparison.OrdinalIgnoreCase))),
+            $"{path} must be Cache-Control: no-store (or max-age=0, must-revalidate); got '{joined}'");
+        Assert.DoesNotContain("604800", joined, StringComparison.Ordinal);
     }
 
     /// <summary>

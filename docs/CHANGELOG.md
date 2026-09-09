@@ -1,5 +1,9 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.2.4 no-store on Swagger index.html
+- Swashbuckle served `/swagger/index.html` (and `index.js`) with `Cache-Control: max-age=604800, private`. QA2 could keep a 7-day stale shell while authorize.js was already no-store, so `__deedAiMeasureAuthorize` stayed undefined.
+- `/swagger` middleware now sets `Cache-Control: no-store` on those shell responses via `Response.OnStarting` (same contract as authorize.js/css). Pin-last-only 4.2.3 is unchanged: single JS after `index.js`, HeadContent CSS only, no `InjectJavascript`.
+
 ## 2026-09-09 — Phase 4.7 Dashboard print + export PDF
 - Dashboard **Print** uses print CSS (no sidebar / top bar / footer) and prints the filtered count cards plus visible Chart.js charts.
 - **Export PDF** uses the same date + Client filters as `GET /api/dashboard/counts` and `/api/dashboard/charts/*`. Filename includes the date range. Role / ClientAccess gated. Empty or failed export is a clear error, not a blank file. `{Client} Deed AI` title when a single Client is in scope; page numbers and generated timestamp. No secrets; Client / Software only.
