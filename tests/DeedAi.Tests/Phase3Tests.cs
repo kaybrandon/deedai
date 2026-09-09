@@ -8,9 +8,12 @@ using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Data.Migrations;
 using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Ocr;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +24,45 @@ public sealed class Phase3Tests : IClassFixture<TestAppFactory>
     private readonly TestAppFactory _factory;
 
     public Phase3Tests(TestAppFactory factory) => _factory = factory;
+
+    [Fact]
+    public void UploadedBy_fk_is_no_action_so_sql_server_allows_assignee_set_null()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DeedAiDbContext>();
+        var document = db.Model.FindEntityType(typeof(Document));
+        Assert.NotNull(document);
+
+        var uploadedBy = document.FindNavigation(nameof(Document.UploadedBy))?.ForeignKey;
+        var assignee = document.FindNavigation(nameof(Document.Assignee))?.ForeignKey;
+        Assert.NotNull(uploadedBy);
+        Assert.NotNull(assignee);
+        Assert.Equal(DeleteBehavior.NoAction, uploadedBy.DeleteBehavior);
+        Assert.Equal(DeleteBehavior.SetNull, assignee.DeleteBehavior);
+    }
+
+    [Fact]
+    public void Phase3_sql_server_creates_uploadedby_fk_with_no_action()
+    {
+        var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.SqlServer");
+        ApplyPhase3Up(builder);
+
+        var sql = string.Join('\n', builder.Operations.OfType<SqlOperation>().Select(x => x.Sql));
+        Assert.Contains("FK_Documents_Users_UploadedByUserId", sql, StringComparison.Ordinal);
+        Assert.Contains("ON DELETE NO ACTION", sql, StringComparison.Ordinal);
+        Assert.DoesNotContain("ON DELETE SET NULL", sql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Phase3_non_sql_server_uploadedby_fk_is_no_action()
+    {
+        var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.Sqlite");
+        ApplyPhase3Up(builder);
+
+        var fk = builder.Operations.OfType<AddForeignKeyOperation>()
+            .Single(x => x.Name == "FK_Documents_Users_UploadedByUserId");
+        Assert.Equal(ReferentialAction.NoAction, fk.OnDelete);
+    }
 
     [Theory]
     [InlineData("viewer@bisconsultants.com")]
@@ -313,6 +355,13 @@ public sealed class Phase3Tests : IClassFixture<TestAppFactory>
                 await db.SaveChangesAsync();
             }
         }
+    }
+
+    private static void ApplyPhase3Up(MigrationBuilder builder)
+    {
+        var up = typeof(Phase3).GetMethod("Up", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.NotNull(up);
+        up.Invoke(new Phase3(), [builder]);
     }
 
     private async Task<HttpClient> Authed(string email)

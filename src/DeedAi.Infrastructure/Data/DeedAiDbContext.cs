@@ -135,10 +135,11 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
                 .WithMany()
                 .HasForeignKey(x => x.AssigneeUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+            // SQL Server rejects a second cascade/set-null path from Users → Documents.
             entity.HasOne(x => x.UploadedBy)
                 .WithMany()
                 .HasForeignKey(x => x.UploadedByUserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(x => x.Fields)
                 .WithOne(x => x.Document)
                 .HasForeignKey<DocumentFields>(x => x.DocumentId)

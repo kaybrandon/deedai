@@ -541,7 +541,7 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.HasOne("DeedAi.Domain.Entities.UserAccount", "UploadedBy")
                         .WithMany()
                         .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Assignee");
 

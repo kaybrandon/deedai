@@ -11,6 +11,68 @@ namespace DeedAi.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            if (IsSqlServer(migrationBuilder))
+            {
+                UpSqlServerIdempotent(migrationBuilder);
+                return;
+            }
+
+            UpStandard(migrationBuilder);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Documents_Users_UploadedByUserId",
+                table: "Documents");
+
+            migrationBuilder.DropTable(
+                name: "NotificationSettings");
+
+            migrationBuilder.DropTable(
+                name: "TeamUsers");
+
+            migrationBuilder.DropTable(
+                name: "Teams");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Documents_UploadedByUserId",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "LastSoftwareSyncAt",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "LastSoftwareSyncDirection",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "LastSoftwareSyncFailReason",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "LastSoftwareSyncStatus",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "SoftwareRecordId",
+                table: "Documents");
+
+            migrationBuilder.DropColumn(
+                name: "IsActive",
+                table: "Clients");
+        }
+
+        private static bool IsSqlServer(MigrationBuilder migrationBuilder) =>
+            string.Equals(
+                migrationBuilder.ActiveProvider,
+                "Microsoft.EntityFrameworkCore.SqlServer",
+                StringComparison.Ordinal);
+
+        private static void UpStandard(MigrationBuilder migrationBuilder)
+        {
             migrationBuilder.AddColumn<DateTimeOffset>(
                 name: "LastSoftwareSyncAt",
                 table: "Documents",
@@ -125,52 +187,94 @@ namespace DeedAi.Infrastructure.Data.Migrations
                 column: "UploadedByUserId",
                 principalTable: "Users",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.NoAction);
         }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
+        /// <summary>
+        /// Azure Phase 3 failed on the UploadedBy FK after earlier DDL. Re-run must
+        /// skip objects that already exist and create the FK as ON DELETE NO ACTION.
+        /// </summary>
+        private static void UpSqlServerIdempotent(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Documents_Users_UploadedByUserId",
-                table: "Documents");
+            migrationBuilder.Sql(
+                """
+                IF COL_LENGTH(N'dbo.Documents', N'LastSoftwareSyncAt') IS NULL
+                    ALTER TABLE [Documents] ADD [LastSoftwareSyncAt] datetimeoffset NULL;
 
-            migrationBuilder.DropTable(
-                name: "NotificationSettings");
+                IF COL_LENGTH(N'dbo.Documents', N'LastSoftwareSyncDirection') IS NULL
+                    ALTER TABLE [Documents] ADD [LastSoftwareSyncDirection] nvarchar(16) NULL;
 
-            migrationBuilder.DropTable(
-                name: "TeamUsers");
+                IF COL_LENGTH(N'dbo.Documents', N'LastSoftwareSyncFailReason') IS NULL
+                    ALTER TABLE [Documents] ADD [LastSoftwareSyncFailReason] nvarchar(1024) NULL;
 
-            migrationBuilder.DropTable(
-                name: "Teams");
+                IF COL_LENGTH(N'dbo.Documents', N'LastSoftwareSyncStatus') IS NULL
+                    ALTER TABLE [Documents] ADD [LastSoftwareSyncStatus] nvarchar(16) NULL;
 
-            migrationBuilder.DropIndex(
-                name: "IX_Documents_UploadedByUserId",
-                table: "Documents");
+                IF COL_LENGTH(N'dbo.Documents', N'SoftwareRecordId') IS NULL
+                    ALTER TABLE [Documents] ADD [SoftwareRecordId] nvarchar(64) NULL;
 
-            migrationBuilder.DropColumn(
-                name: "LastSoftwareSyncAt",
-                table: "Documents");
+                IF COL_LENGTH(N'dbo.Clients', N'IsActive') IS NULL
+                    ALTER TABLE [Clients] ADD [IsActive] bit NOT NULL CONSTRAINT [DF_Clients_IsActive] DEFAULT CAST(1 AS bit);
 
-            migrationBuilder.DropColumn(
-                name: "LastSoftwareSyncDirection",
-                table: "Documents");
+                IF OBJECT_ID(N'dbo.NotificationSettings', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [NotificationSettings] (
+                        [Id] uniqueidentifier NOT NULL,
+                        [Enabled] bit NOT NULL,
+                        [NotifyUploader] bit NOT NULL,
+                        [UpdatedAt] datetimeoffset NOT NULL,
+                        CONSTRAINT [PK_NotificationSettings] PRIMARY KEY ([Id])
+                    );
+                END
 
-            migrationBuilder.DropColumn(
-                name: "LastSoftwareSyncFailReason",
-                table: "Documents");
+                IF OBJECT_ID(N'dbo.Teams', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [Teams] (
+                        [Id] uniqueidentifier NOT NULL,
+                        [Name] nvarchar(128) NOT NULL,
+                        [IsActive] bit NOT NULL DEFAULT CAST(1 AS bit),
+                        CONSTRAINT [PK_Teams] PRIMARY KEY ([Id])
+                    );
+                END
 
-            migrationBuilder.DropColumn(
-                name: "LastSoftwareSyncStatus",
-                table: "Documents");
+                IF OBJECT_ID(N'dbo.TeamUsers', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [TeamUsers] (
+                        [TeamId] uniqueidentifier NOT NULL,
+                        [UserId] uniqueidentifier NOT NULL,
+                        CONSTRAINT [PK_TeamUsers] PRIMARY KEY ([TeamId], [UserId]),
+                        CONSTRAINT [FK_TeamUsers_Teams_TeamId] FOREIGN KEY ([TeamId]) REFERENCES [Teams] ([Id]) ON DELETE CASCADE,
+                        CONSTRAINT [FK_TeamUsers_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+                    );
+                END
 
-            migrationBuilder.DropColumn(
-                name: "SoftwareRecordId",
-                table: "Documents");
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_Documents_UploadedByUserId'
+                      AND object_id = OBJECT_ID(N'dbo.Documents'))
+                    CREATE INDEX [IX_Documents_UploadedByUserId] ON [Documents] ([UploadedByUserId]);
 
-            migrationBuilder.DropColumn(
-                name: "IsActive",
-                table: "Clients");
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_Teams_Name'
+                      AND object_id = OBJECT_ID(N'dbo.Teams'))
+                    CREATE UNIQUE INDEX [IX_Teams_Name] ON [Teams] ([Name]);
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_TeamUsers_UserId'
+                      AND object_id = OBJECT_ID(N'dbo.TeamUsers'))
+                    CREATE INDEX [IX_TeamUsers_UserId] ON [TeamUsers] ([UserId]);
+
+                IF EXISTS (
+                    SELECT 1 FROM sys.foreign_keys
+                    WHERE name = N'FK_Documents_Users_UploadedByUserId'
+                      AND parent_object_id = OBJECT_ID(N'dbo.Documents'))
+                    ALTER TABLE [Documents] DROP CONSTRAINT [FK_Documents_Users_UploadedByUserId];
+
+                ALTER TABLE [Documents] WITH CHECK ADD CONSTRAINT [FK_Documents_Users_UploadedByUserId]
+                    FOREIGN KEY ([UploadedByUserId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION;
+                """);
         }
     }
 }
