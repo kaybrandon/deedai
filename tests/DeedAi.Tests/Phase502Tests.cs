@@ -88,15 +88,18 @@ public sealed class Phase502Tests
     }
 
     [Fact]
-    public void Phase502_adds_no_ef_migration_and_stays_off_mask_f()
+    public void Phase502_adds_no_ef_migration_and_does_not_regress_mask_f()
     {
         var migrations = Path.Combine(RepoRoot(), "src", "DeedAi.Infrastructure", "Data", "Migrations");
         Assert.False(Directory.EnumerateFiles(migrations, "*Phase502*").Any());
         Assert.False(Directory.EnumerateFiles(migrations, "*VolumeWeek*").Any());
         var theme = Read("spa/src/theme.ts");
         var css = Read("spa/src/styles.css");
-        Assert.Contains("#4F7C8A", theme, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("#1E2430", css, StringComparison.OrdinalIgnoreCase);
+        var shell = Read("spa/src/components/AppShell.tsx");
+        Assert.Contains("#0D8A7F", theme, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("#1E2430", css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("System", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", theme, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", theme, StringComparison.Ordinal);
     }

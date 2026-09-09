@@ -131,7 +131,8 @@ public sealed class Phase51Tests
     public void Volume_chart_is_single_teal_series_and_review_is_three_col()
     {
         var volume = SliceFunction(Read("spa/src/components/DashboardCharts.tsx"), "export function VolumeChart");
-        Assert.Contains("maskF.teal", volume, StringComparison.Ordinal);
+        Assert.Contains("VOLUME_TEAL", volume, StringComparison.Ordinal);
+        Assert.Contains("#0D8A7F", Read("spa/src/components/DashboardCharts.tsx"), StringComparison.Ordinal);
         Assert.Contains("#0D8A7F", Read("spa/src/theme.ts"), StringComparison.Ordinal);
         Assert.DoesNotContain("statuses.map", volume, StringComparison.Ordinal);
         Assert.Contains("review-grid", Read("spa/src/pages/ReviewPage.tsx"), StringComparison.Ordinal);
