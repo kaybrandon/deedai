@@ -18,6 +18,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
     public static readonly Guid NeedsReviewFlagId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
     public static readonly Guid MissingParcelFlagId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public static readonly Guid LegalHoldFlagId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid ReviewTeamId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
 
     public const string SeedPassword = "ChangeMe!1";
 
@@ -82,13 +83,15 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         if (!await db.Clients.AnyAsync(cancellationToken))
         {
             db.Clients.AddRange(
-                new Client { Id = AcmeId, Name = "Acme" },
-                new Client { Id = NorthsideId, Name = "Northside" });
+                new Client { Id = AcmeId, Name = "Acme", IsActive = true },
+                new Client { Id = NorthsideId, Name = "Northside", IsActive = true });
         }
 
         await db.SaveChangesAsync(cancellationToken);
         await SeedClientAccessAsync(cancellationToken);
         await SeedSettingsAsync(cancellationToken);
+        await SeedTeamsAsync(cancellationToken);
+        await SeedNotificationsAsync(cancellationToken);
 
         var seedDemo = string.Equals(configuration["Seed:DemoDocuments"], "true", StringComparison.OrdinalIgnoreCase)
                        || string.Equals(configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
@@ -168,6 +171,37 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 });
         }
 
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedTeamsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.Teams.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        db.Teams.Add(new Team { Id = ReviewTeamId, Name = "Review", IsActive = true });
+        db.TeamUsers.AddRange(
+            new TeamUser { TeamId = ReviewTeamId, UserId = EditorId },
+            new TeamUser { TeamId = ReviewTeamId, UserId = UploaderId });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedNotificationsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.NotificationSettings.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        db.NotificationSettings.Add(new NotificationSettings
+        {
+            Id = NotificationSettings.SingletonId,
+            Enabled = true,
+            NotifyUploader = false,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
         await db.SaveChangesAsync(cancellationToken);
     }
 

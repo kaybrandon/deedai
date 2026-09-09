@@ -8,4 +8,10 @@ public sealed record SoftwareLookupResponse(
     string? SoftwareRecordId,
     IReadOnlyDictionary<string, string> Extra);
 
-public sealed record SoftwarePushResponse(bool Succeeded, string? SoftwareRecordId, string Message);
+public sealed record SoftwarePushResponse(
+    bool Succeeded,
+    string? SoftwareRecordId,
+    string Message,
+    DateTimeOffset? LastSyncAt,
+    string? LastSyncStatus,
+    string? FailReason);

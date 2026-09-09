@@ -1,5 +1,13 @@
 namespace DeedAi.Domain.Abstractions;
 
+public sealed record SoftwareLookupQuery(
+    string? ParcelId,
+    string? Grantor,
+    string? Grantee,
+    string? Client,
+    string? InstrumentDate,
+    string? DeedType);
+
 public sealed record SoftwareLookupResult(
     string ParcelId,
     string? Owner,
@@ -25,6 +33,6 @@ public sealed record SoftwarePushResult(bool Succeeded, string? SoftwareRecordId
 
 public interface ISoftwareClient
 {
-    Task<SoftwareLookupResult?> LookupAsync(string parcelId, string? clientName, CancellationToken cancellationToken);
+    Task<SoftwareLookupResult?> LookupAsync(SoftwareLookupQuery query, CancellationToken cancellationToken);
     Task<SoftwarePushResult> PushAsync(SoftwarePushRequest request, CancellationToken cancellationToken);
 }

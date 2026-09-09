@@ -19,6 +19,9 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<DocumentLink> DocumentLinks => Set<DocumentLink>();
     public DbSet<DocumentTeamMember> DocumentTeamMembers => Set<DocumentTeamMember>();
     public DbSet<SoftwareSyncLog> SoftwareSyncLogs => Set<SoftwareSyncLog>();
+    public DbSet<Team> Teams => Set<Team>();
+    public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
+    public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +46,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(128).IsRequired();
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<UserClientAccess>(entity =>
@@ -113,6 +117,10 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.ErrorMessage).HasMaxLength(1024);
             entity.Property(x => x.DeedType).HasMaxLength(64);
             entity.Property(x => x.ReviewStatus).HasMaxLength(32);
+            entity.Property(x => x.LastSoftwareSyncStatus).HasMaxLength(16);
+            entity.Property(x => x.LastSoftwareSyncDirection).HasMaxLength(16);
+            entity.Property(x => x.LastSoftwareSyncFailReason).HasMaxLength(1024);
+            entity.Property(x => x.SoftwareRecordId).HasMaxLength(64);
             entity.HasIndex(x => x.BlobPath).IsUnique();
             entity.HasIndex(x => x.ClientId);
             entity.HasIndex(x => x.Status);
@@ -126,6 +134,10 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.HasOne(x => x.Assignee)
                 .WithMany()
                 .HasForeignKey(x => x.AssigneeUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.UploadedBy)
+                .WithMany()
+                .HasForeignKey(x => x.UploadedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(x => x.Fields)
                 .WithOne(x => x.Document)
@@ -205,6 +217,36 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
                 .WithMany()
                 .HasForeignKey(x => x.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Team>(entity =>
+        {
+            entity.ToTable("Teams");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(128).IsRequired();
+            entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<TeamUser>(entity =>
+        {
+            entity.ToTable("TeamUsers");
+            entity.HasKey(x => new { x.TeamId, x.UserId });
+            entity.HasOne(x => x.Team)
+                .WithMany(x => x.Members)
+                .HasForeignKey(x => x.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => x.UserId);
+        });
+
+        modelBuilder.Entity<NotificationSettings>(entity =>
+        {
+            entity.ToTable("NotificationSettings");
+            entity.HasKey(x => x.Id);
         });
     }
 }

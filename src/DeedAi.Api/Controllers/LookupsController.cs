@@ -16,8 +16,9 @@ public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
     {
         var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
         var items = await ClientAccess.VisibleClients(db.Clients.AsNoTracking(), allowed)
+            .Where(x => x.IsActive)
             .OrderBy(x => x.Name)
-            .Select(x => new ClientResponse(x.Id, x.Name))
+            .Select(x => new ClientResponse(x.Id, x.Name, x.IsActive))
             .ToListAsync(cancellationToken);
         return items;
     }

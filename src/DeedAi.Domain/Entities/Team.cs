@@ -1,9 +1,9 @@
 namespace DeedAi.Domain.Entities;
 
-public sealed class Client
+public sealed class Team
 {
     public Guid Id { get; set; }
     public required string Name { get; set; }
     public bool IsActive { get; set; } = true;
-    public ICollection<Document> Documents { get; set; } = new List<Document>();
+    public ICollection<TeamUser> Members { get; set; } = new List<TeamUser>();
 }

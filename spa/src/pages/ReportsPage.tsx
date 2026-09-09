@@ -21,7 +21,7 @@ export default function ReportsPage() {
   const [assignee, setAssignee] = useState("");
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
-  const [rows, setRows] = useState<ReportRow[]>([]);
+  const [rows, setRows] = useState<ReportRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function query() {
@@ -40,7 +40,17 @@ export default function ReportsPage() {
       setRows(data as unknown as ReportRow[]);
       setError(null);
     } catch (err) {
+      setRows([]);
       setError(err instanceof Error ? err.message : "Could not load report.");
+    }
+  }
+
+  async function exportFile(format: "csv" | "xlsx" | "pdf", name: string) {
+    try {
+      await endpoints.exportReport(query(), format, name);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed.");
     }
   }
 
@@ -56,11 +66,14 @@ export default function ReportsPage() {
       <div className="review-header">
         <h1>Reports</h1>
         <div className="row-actions">
-          <button className="ghost" type="button" onClick={() => endpoints.exportReport(query(), "csv", "deedai-report.csv")}>
+          <button className="ghost" type="button" onClick={() => void exportFile("csv", "deedai-report.csv")}>
             Export CSV
           </button>
-          <button className="primary" type="button" onClick={() => endpoints.exportReport(query(), "xlsx", "deedai-report.xlsx")}>
+          <button className="ghost" type="button" onClick={() => void exportFile("xlsx", "deedai-report.xlsx")}>
             Export Excel
+          </button>
+          <button className="primary" type="button" onClick={() => void exportFile("pdf", "deedai-report.pdf")}>
+            Export PDF
           </button>
         </div>
       </div>
@@ -94,8 +107,10 @@ export default function ReportsPage() {
         </button>
       </form>
       {error && <div className="denied-box">{error}</div>}
-      {rows.length === 0 ? (
-        <EmptyState title="No rows for this report" body="Adjust filters or upload deeds, then export CSV or Excel." />
+      {rows === null ? (
+        <p>Loading…</p>
+      ) : rows.length === 0 ? (
+        <EmptyState title="No rows for this report" body="Adjust filters or upload deeds. PDF, CSV, and Excel are not exported as a silent blank file." />
       ) : (
         <div className="table-wrap">
           <table>
@@ -107,6 +122,7 @@ export default function ReportsPage() {
                 <th>Deed type</th>
                 <th>Assignee</th>
                 <th>Flags</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -118,6 +134,19 @@ export default function ReportsPage() {
                   <td>{row.deedType ?? "—"}</td>
                   <td>{row.assignee ?? "—"}</td>
                   <td>{row.flags?.join(", ") || "—"}</td>
+                  <td>
+                    <button
+                      className="ghost"
+                      type="button"
+                      onClick={() =>
+                        endpoints.exportReviewedPdf(row.id, `${row.name}-reviewed.pdf`).catch((err) =>
+                          setError(err instanceof Error ? err.message : "PDF export failed.")
+                        )
+                      }
+                    >
+                      PDF
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

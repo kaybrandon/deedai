@@ -137,6 +137,7 @@ h1 { margin: 0 0 16px; font-size: 32px; }
 .setting-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .inline-form input, .inline-form select { min-width: 160px; }
+.inline-form select[multiple] { min-height: 88px; }
 .flag-pill {
   display: inline-flex;
   align-items: center;

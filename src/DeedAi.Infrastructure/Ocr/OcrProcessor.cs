@@ -22,7 +22,8 @@ public sealed class OcrProcessor(
     IBlobStorage blobs,
     IDocumentIntelligenceClient documentIntelligence,
     IOptions<OcrOptions> options,
-    ILogger<OcrProcessor> logger)
+    ILogger<OcrProcessor> logger,
+    IOcrNotifier notifier)
 {
     public async Task ProcessAsync(OcrQueueDelivery delivery, CancellationToken cancellationToken)
     {
@@ -45,6 +46,7 @@ public sealed class OcrProcessor(
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             logger.LogWarning("Marked document {DocumentId} Failed after poison dequeue count {Count}", document.Id, delivery.DequeueCount);
+            await notifier.NotifyStatusAsync(document.Id, document.Status, document.ErrorMessage, cancellationToken);
             return;
         }
 
@@ -88,6 +90,7 @@ public sealed class OcrProcessor(
             document.ErrorMessage = null;
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
+            await notifier.NotifyStatusAsync(document.Id, document.Status, null, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -96,6 +99,7 @@ public sealed class OcrProcessor(
             document.ErrorMessage = ex.Message.Length > 1000 ? ex.Message[..1000] : ex.Message;
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
+            await notifier.NotifyStatusAsync(document.Id, document.Status, document.ErrorMessage, cancellationToken);
             throw;
         }
     }
