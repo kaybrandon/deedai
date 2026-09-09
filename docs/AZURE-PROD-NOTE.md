@@ -1,7 +1,7 @@
-# Deed AI — Azure PROD note (Phase 1)
+# Deed AI — Azure PROD note (Phase 1–2)
 
 **Date:** 2026-09-08 (America/Chicago)  
-**Status:** QA **Azure Pass** on Phase 1 login/smoke. Phase 2 #4 merged (redeploy in flight). Phase 3 building.
+**Status:** Phase 1 Azure Pass · Phase 2 Azure Pass with notes · Phase 3 building.
 
 ## Live URL
 - **HTTPS:** https://appdeedai-bdfvbng5ckhgfzcp.southcentralus-01.azurewebsites.net  
@@ -34,9 +34,24 @@ Ignore leftover `DocumentIntelligenceEndpoint` if present.
 3. Check App Service logs / Kudu if still failing.
 4. After a Phase 2+ zip: if EF tries `InitialCreate` on existing tables → baseline `__EFMigrationsHistory` (do not recreate schema).
 
-## Phase 1 smoke (QA closed)
-- `/` 200 · `/api/health` 200 · Admin login · `/api/auth/me` · `/api/documents` · `/api/dashboard`
+## API note (Phase 2)
+- Dashboard counts: **`/api/dashboard/counts`** (200). Bare `/api/dashboard` may fall through to SPA HTML — SPA must use `/counts` (locked).
+
+## Demo deeds (testing)
+Live seed for UI walks (no secrets):
+| File | Status |
+|---|---|
+| `Deed_2024_0812.pdf` | Ready (mapped fields) |
+| `Scan_bad.pdf` | Failed (+ Retry) |
+| `Batch_44.pdf` | Processing |
+| `Queued_north.pdf` | Queued |
+
+Expected counts: uploaded 4 · queued 1 · processing 1 · ready 1 · failed 1
+
+## Phase smoke (QA closed)
+- **P1:** `/` 200 · `/api/health` 200 · Admin login · documents · dashboard
+- **P2:** Users (Admin 200 / Viewer 403) · Settings CRUD + CSV export · Forgot unknown → generic success · Reports · SPA `/users` `/settings` `/reports` `/forgot-password`
 
 ## Docs gates
-- Phase 2/3 how-tos after those Azure Passes.
+- Phase 3 how-tos after that Azure Pass.
 - Client-facing wording / external handout → Brandon via Chief of Staff.
