@@ -16,8 +16,10 @@ import {
 import { markDraftDirty, useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import OcrRibbon from "../components/OcrRibbon";
 import StatusChip from "../components/StatusChip";
 import { displayStatus } from "../reviewStatus";
+import { ribbonStepForDocument } from "../theme";
 
 const emptyFields: FieldDraft = {
   grantor: "",
@@ -159,21 +161,22 @@ export default function ReviewPage() {
 
   const selectedFlags = new Set(doc.flags.map((flag) => flag.id));
   const reviewStatuses = statuses.filter((status) => !status.isSystem);
+  const shownStatus = displayStatus({
+    status: doc.status,
+    displayStatus: doc.displayStatus,
+    reviewStatus: reviewStatus || doc.reviewStatus,
+    flags: doc.flags
+  });
+  const isFailed = doc.status === "Failed";
+  const showFailedBanner = isFailed && shownStatus !== "Ready" && shownStatus !== "Approved";
 
   return (
-    <section className="page">
+    <section className="page has-ocr-ribbon">
+      <OcrRibbon current={ribbonStepForDocument(doc.status, shownStatus)} />
       <div className="review-header">
         <div className="title-row">
           <h1>Deed review</h1>
-          <StatusChip
-            status={displayStatus({
-              status: doc.status,
-              displayStatus: doc.displayStatus,
-              reviewStatus: reviewStatus || doc.reviewStatus,
-              flags: doc.flags
-            })}
-            title={doc.errorMessage}
-          />
+          <StatusChip status={shownStatus} title={doc.errorMessage} />
         </div>
         <div className="row-actions">
           <button className="ghost" type="button" disabled={!doc.previousId} onClick={() => doc.previousId && navigate(`/documents/${doc.previousId}`)}>
@@ -210,9 +213,9 @@ export default function ReviewPage() {
         </div>
       </div>
 
-      {doc.status === "Failed" && (
-        <div className="alert-bar">
-          <span>{doc.errorMessage ?? "OCR failed — Retry extract"}</span>
+      {showFailedBanner && (
+        <div className="alert-bar" data-testid="ocr-failed-banner">
+          <span>{doc.errorMessage ?? "OCR failed — incomplete fields. Retry extract."}</span>
           <button
             className="primary"
             type="button"
@@ -278,17 +281,22 @@ export default function ReviewPage() {
             <iframe title="PDF preview" src={pdfUrl} />
           ) : (
             <div className="pdf-placeholder">
-              {pdfState === "missing" ? "PDF is not available for this deed." : "Loading PDF…"}
+              <span className="pdf-placeholder-mark" aria-hidden="true" />
+              <strong>{pdfState === "missing" ? "PDF is not available for this deed." : "Loading PDF…"}</strong>
+              <span>Preview appears here when a file is stored.</span>
             </div>
           )}
         </div>
         <form id="field-form" className="field-form" onSubmit={(e) => save(e, false)}>
-          <Field label="Grantor" value={fields.grantor ?? ""} onChange={(v) => update("grantor", v)} readOnly={!canEdit} />
-          <Field label="Grantee" value={fields.grantee ?? ""} onChange={(v) => update("grantee", v)} readOnly={!canEdit} />
-          <Field label="Instrument date" value={fields.instrumentDate ?? ""} onChange={(v) => update("instrumentDate", v)} readOnly={!canEdit} />
-          <Field label="Consideration" value={fields.consideration ?? ""} onChange={(v) => update("consideration", v)} readOnly={!canEdit} />
-          <Field label="Parcel ID" value={fields.parcelId ?? ""} onChange={(v) => update("parcelId", v)} readOnly={!canEdit} />
-          <Field label="Client" value={fields.client ?? ""} onChange={(v) => update("client", v)} readOnly={!canEdit} />
+          {isFailed && (
+            <p className="muted">Incomplete fields — Retry extract to fill from OCR.</p>
+          )}
+          <Field label="Grantor" value={fields.grantor ?? ""} onChange={(v) => update("grantor", v)} readOnly={!canEdit} incomplete={isFailed && !fields.grantor} />
+          <Field label="Grantee" value={fields.grantee ?? ""} onChange={(v) => update("grantee", v)} readOnly={!canEdit} incomplete={isFailed && !fields.grantee} />
+          <Field label="Instrument date" value={fields.instrumentDate ?? ""} onChange={(v) => update("instrumentDate", v)} readOnly={!canEdit} incomplete={isFailed && !fields.instrumentDate} />
+          <Field label="Consideration" value={fields.consideration ?? ""} onChange={(v) => update("consideration", v)} readOnly={!canEdit} incomplete={isFailed && !fields.consideration} />
+          <Field label="Parcel ID" value={fields.parcelId ?? ""} onChange={(v) => update("parcelId", v)} readOnly={!canEdit} incomplete={isFailed && !fields.parcelId} />
+          <Field label="Client" value={fields.client ?? ""} onChange={(v) => update("client", v)} readOnly={!canEdit} incomplete={isFailed && !fields.client} />
           <label>
             Notes
             <textarea
@@ -513,7 +521,7 @@ export default function ReviewPage() {
           )}
         </section>
       )}
-      {saved && <span className="chip chip-ready saved-pill">Saved</span>}
+      {saved && !isFailed && <span className="chip chip-saved saved-pill">Saved</span>}
       {pendingPush && doc && (
         <ConfirmSheet
           title="Push will reset Software properties"
@@ -535,17 +543,28 @@ function Field({
   label,
   value,
   onChange,
-  readOnly
+  readOnly,
+  incomplete
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   readOnly: boolean;
+  incomplete?: boolean;
 }) {
   return (
     <label>
-      {label}
-      <input value={value} onChange={(e) => onChange(e.target.value)} readOnly={readOnly} />
+      <span className="field-label-text">
+        {label}
+        {incomplete && <span className="field-incomplete-tag">Incomplete</span>}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        readOnly={readOnly}
+        className={incomplete ? "is-incomplete" : undefined}
+        aria-invalid={incomplete || undefined}
+      />
     </label>
   );
 }

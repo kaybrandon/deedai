@@ -99,7 +99,7 @@ export function VolumeChart({ data }: { data: DashboardVolume | null }) {
                     label: total.label,
                     data: total.data,
                     borderColor: seriesColor(total.key, total.color),
-                    backgroundColor: "rgba(37, 99, 235, 0.12)",
+                    backgroundColor: "rgba(79, 124, 138, 0.14)",
                     fill: true,
                     tension: 0.3,
                     pointRadius: 3,

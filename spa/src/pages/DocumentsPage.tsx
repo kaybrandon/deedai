@@ -4,8 +4,10 @@ import { endpoints, type ClientItem, type DocumentListItem, type UserSummary } f
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import OcrRibbon from "../components/OcrRibbon";
 import StatusChip from "../components/StatusChip";
 import { displayStatus } from "../reviewStatus";
+import { ribbonStepForDocument } from "../theme";
 
 function filtersFromParams(params: URLSearchParams) {
   return {
@@ -78,7 +80,8 @@ export default function DocumentsPage() {
   }
 
   return (
-    <section className="page">
+    <section className="page has-ocr-ribbon">
+      <OcrRibbon current={ribbonStepForDocument(status || undefined, status === "NeedsReview" ? "NeedsReview" : status || undefined)} />
       <header className="page-head">
         <div>
           <h1>Documents</h1>

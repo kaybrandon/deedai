@@ -31,6 +31,14 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.0 acceptance
+
+- **Mask A theme:** Mist Slate + Teal tokens — bg `#F4F6F8`, sidebar `#E8EEF2`, accent `#4F7C8A`, text `#2C3A45`, Ready `#A8D5C0`, Failed `#E8B4B0`. Processing gold · Queued slate · Review teal-tint. Failed/Queued chips use darker text and a soft border.
+- **Density:** Sidebar ~200px, top bar 48px, page pad 16px, card gap 12px. Filters 220–280px. Forms 28–36rem. Primary actions ≥44px. ConfirmSheet soft-delete. Soft-dense shell on Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software.
+- **IA:** Software + Users nest under Settings. No top-level Review (open from Documents). No Editor mode header toggle. Client / Software only · 4 roles · never County / CAMA.
+- **Must-ship UX:** Sticky OCR ribbon (Upload → Queued → Processing → Review → Ready) on Documents / Upload / Review. Dashboard count cards + status-mix donut + volume-over-time with empty chart states. Soft status chips + Failed Retry. Never Ready chip + OCR-failed banner together. Review PDF pane is a real preview or a filled placeholder (not an empty dashed box). Failed deeds show incomplete fields + Retry extract.
+- **Hard gates:** No new EF migration. No secrets. No zipdeploy. Do not regress Swagger Authorize ≥44px.
+
 ## Phase 4.3 acceptance
 
 - **SPA shell:** Dense SaaS layout (~200px sidebar, 48px top bar, 16/12 padding). Compact count cards and denser tables. Tap targets stay ≥44px. No horizontal page scroll around 768px. Not an AdminLTE clone.
