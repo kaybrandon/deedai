@@ -33,7 +33,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 
 ## Phase 5.1.1 acceptance
 
-- **Users table:** Admin Users is a real data table (not a card stack). Rows hug content, sticky header, min 44px (`--table-row-h` / Mask F density when those tokens exist; otherwise chrome `--action-h`).
+- **Users table:** Admin Users is a real data table (not a card stack). Mask F SoT density (`05-settings-users`): hug rows, sticky gray header, zebra stripes, role chips, single-line sort+filter headings, min 44px (`--table-row-h: 44px`).
 - **Search:** One filter-row search ≤360px across display name, full name, and email. No second search in the top bar.
 - **Sort / filter:** Column headings sort asc/desc with a visible affordance for Display Name, Email, Role, Client(s), and Status. Per-column filters on Role, Client, and Status (enabled/disabled).
 - **Phase 4.5 carry:** Multi-Client users list every assignment in the Client(s) column. ConfirmSheet disable, add/edit panel, photo, and password stay. Admin-only. Client / Software only — never County / CAMA.

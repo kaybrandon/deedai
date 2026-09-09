@@ -49,6 +49,11 @@
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --table-row-h: 44px;
+  --table-cell-pad-y: 8px;
+  --table-cell-pad-x: 12px;
+  --table-header-bg: #E8EEF2;
+  --table-stripe: #F4F6F8;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
   color: var(--text);
 }
@@ -421,19 +426,22 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .user-avatar-md { width: 56px; height: 56px; font-size: 18px; }
 .user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .user-name-cell { display: inline-flex; align-items: center; gap: 8px; }
+.users-filter-row { align-items: end; }
+.filter-row > .users-search-field,
 .filter-row > input.users-search {
   flex: 0 1 360px;
   width: 360px;
   min-width: 220px;
   max-width: 360px;
 }
+.users-search-field input.users-search { width: 100%; max-width: 360px; }
 .users-table-wrap {
   overflow: auto;
   max-height: calc(100vh - var(--topbar-h) - 140px);
 }
 .users-table {
   --row-h: var(--table-row-h, var(--action-h));
-  --cell-pad-y: var(--table-cell-pad-y, 6px);
+  --cell-pad-y: var(--table-cell-pad-y, 8px);
   --cell-pad-x: var(--table-cell-pad-x, 12px);
 }
 .users-table th,
@@ -442,16 +450,24 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   height: var(--row-h);
   min-height: var(--row-h);
   vertical-align: middle;
+  white-space: nowrap;
 }
 .users-table thead th {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #fff;
+  background: var(--table-header-bg, var(--sidebar));
   box-shadow: 0 1px 0 var(--border);
 }
-.users-th {
-  vertical-align: top;
+.users-table tbody tr:nth-child(even) { background: var(--table-stripe, var(--bg)); }
+.users-table tbody tr.is-editing { background: var(--review-bg); }
+.users-table .user-avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+.users-th { padding: 0 var(--cell-pad-x); }
+.users-th-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--row-h);
 }
 .th-sort {
   display: inline-flex;
@@ -459,7 +475,7 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   gap: 6px;
   min-height: var(--action-h);
   min-width: 44px;
-  padding: 0 8px;
+  padding: 0 4px;
   margin: 0;
   border: none;
   background: transparent;
@@ -477,22 +493,44 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 }
 .th-sort.is-active .th-sort-affordance { color: var(--accent); }
 .th-filter {
-  display: block;
-  width: min(100%, 160px);
+  width: auto;
+  max-width: 132px;
+  min-width: 44px;
   min-height: var(--action-h);
-  margin-top: 4px;
+  margin: 0;
+  padding: 0 8px;
   font-size: 12px;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0;
 }
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--navy-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.users-clients-cell {
+  max-width: 168px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.users-table-meta,
 .users-pager {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
 }
-.users-pager span { font-size: 13px; font-weight: 600; color: var(--muted); }
+.users-pager { margin-top: 4px; }
 .photo-editor {
   display: flex;
   align-items: center;
@@ -527,11 +565,16 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   min-width: 44px;
   max-width: none;
 }
+.filter-row > label.users-search-field {
+  flex: 0 1 360px;
+  width: 360px;
+  min-width: 220px;
+  max-width: 360px;
+}
 .grow { flex: 1 1 var(--filter-w); min-width: 220px; max-width: 280px; }
 .narrow, .compact-field { width: min(280px, 100%); max-width: 280px; margin-bottom: 12px; }
 .compact-form { max-width: var(--form-w); }
-.compact-form-sm { max-width: var(--form-w); }
-.profile-clients h2 { margin: 0 0 10px; font-size: 16px; }
+.compact-form-sm { max-width: var(--form-w); }.profile-clients h2 { margin: 0 0 10px; font-size: 16px; }
 .profile-client-list {
   list-style: none;
   margin: 0;

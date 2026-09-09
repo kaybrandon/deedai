@@ -13,6 +13,8 @@ public sealed class Phase511Tests
         Assert.Contains("<table", page, StringComparison.Ordinal);
         Assert.Contains("<thead>", page, StringComparison.Ordinal);
         Assert.Contains("users-table-wrap", page, StringComparison.Ordinal);
+        Assert.Contains("<h1>Settings · Users</h1>", page, StringComparison.Ordinal);
+        Assert.Contains("role-chip", page, StringComparison.Ordinal);
         Assert.DoesNotContain("user-groups", page, StringComparison.Ordinal);
         Assert.DoesNotContain("user-group-toggle", page, StringComparison.Ordinal);
         Assert.DoesNotContain("user-card", page, StringComparison.Ordinal);
@@ -20,9 +22,15 @@ public sealed class Phase511Tests
 
         Assert.Contains(".users-table-wrap", css, StringComparison.Ordinal);
         Assert.Contains("position: sticky", css, StringComparison.Ordinal);
+        Assert.Contains("--table-row-h: 44px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-cell-pad-y: 8px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-header-bg: #E8EEF2", css, StringComparison.Ordinal);
         Assert.Contains("--row-h: var(--table-row-h, var(--action-h))", css, StringComparison.Ordinal);
         Assert.Contains("min-height: var(--row-h)", css, StringComparison.Ordinal);
         Assert.Contains("min-height: var(--action-h)", css, StringComparison.Ordinal);
+        Assert.Contains("tbody tr:nth-child(even)", css, StringComparison.Ordinal);
+        Assert.Contains("users-th-line", css, StringComparison.Ordinal);
+        Assert.Contains(".role-chip", css, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -36,10 +44,11 @@ public sealed class Phase511Tests
         Assert.Contains("filter-row users-filter-row", page, StringComparison.Ordinal);
         Assert.Contains("className=\"users-search\"", page, StringComparison.Ordinal);
         Assert.Contains("aria-label=\"Search users\"", page, StringComparison.Ordinal);
-        Assert.Contains("placeholder=\"Search name or email\"", page, StringComparison.Ordinal);
+        Assert.Contains("placeholder=\"Filter by name or email...\"", page, StringComparison.Ordinal);
+        Assert.Contains("users-search-field", page, StringComparison.Ordinal);
         Assert.Contains("searchDraft", page, StringComparison.Ordinal);
         Assert.Contains("value={searchDraft}", page, StringComparison.Ordinal);
-        Assert.Equal(1, Count(page, "users-search"));
+        Assert.Equal(1, Count(page, "className=\"users-search\""));
         Assert.DoesNotContain("placeholder=\"Search", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("type=\"search\"", shell, StringComparison.Ordinal);
 
@@ -126,6 +135,8 @@ public sealed class Phase511Tests
         Assert.Contains("No Users Yet", page, StringComparison.Ordinal);
         Assert.Contains("No Users Match", page, StringComparison.Ordinal);
         Assert.Contains("USERS_PAGE_SIZE = 50", helper, StringComparison.Ordinal);
+        Assert.Contains("users-table-meta", page, StringComparison.Ordinal);
+        Assert.Contains("Showing {table.rows.length} of {table.total}", page, StringComparison.Ordinal);
         Assert.Contains("users-pager", page, StringComparison.Ordinal);
         Assert.Contains("table.totalPages > 1", page, StringComparison.Ordinal);
     }

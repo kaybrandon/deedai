@@ -198,7 +198,7 @@ export default function UsersPage() {
     <section className="page">
       <div className="page-head">
         <div>
-          <h1>Users</h1>
+          <h1>Settings · Users</h1>
           <p className="page-kicker">Roles and Client access. Search, sort, and filter the Users table. Multi-Client users list every assignment in Client(s).</p>
         </div>
         <button className="primary" type="button" onClick={startCreate}>
@@ -208,17 +208,20 @@ export default function UsersPage() {
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
       <div className="filter-row users-filter-row">
-        <input
-          className="users-search"
-          type="search"
-          aria-label="Search users"
-          placeholder="Search name or email"
-          value={searchDraft}
-          onChange={(e) => {
-            searchTyping.current = true;
-            setSearchDraft(e.target.value);
-          }}
-        />
+        <label className="users-search-field">
+          Search
+          <input
+            className="users-search"
+            type="search"
+            aria-label="Search users"
+            placeholder="Filter by name or email..."
+            value={searchDraft}
+            onChange={(e) => {
+              searchTyping.current = true;
+              setSearchDraft(e.target.value);
+            }}
+          />
+        </label>
       </div>
       {users.length === 0 ? (
         <EmptyState title="No Users Yet" body="Admins can create accounts and map Client access." />
@@ -299,7 +302,12 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {table.rows.map((user) => (
-                  <tr key={user.id} className={user.isActive ? undefined : "deleted-row"}>
+                  <tr
+                    key={user.id}
+                    className={[!user.isActive ? "deleted-row" : "", editing === user.id ? "is-editing" : ""]
+                      .filter(Boolean)
+                      .join(" ") || undefined}
+                  >
                     <td>
                       <span className="user-name-cell">
                         <UserAvatar
@@ -315,8 +323,12 @@ export default function UsersPage() {
                     </td>
                     <td>{user.fullName || "—"}</td>
                     <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>{clientColumnLabel(user, clients)}</td>
+                    <td>
+                      <span className="role-chip">{user.role}</span>
+                    </td>
+                    <td className="users-clients-cell" title={clientColumnLabel(user, clients)}>
+                      {clientColumnLabel(user, clients)}
+                    </td>
                     <td>{user.isActive ? "Enabled" : "Disabled"}</td>
                     <td>{user.emailVerified ? "Verified" : "Unverified"}</td>
                     <td className="actions-cell">
@@ -338,6 +350,9 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="users-table-meta">
+            Showing {table.rows.length} of {table.total} · Roles: Admin · Editor · Uploader · Viewer
           </div>
           {table.totalPages > 1 && (
             <div className="users-pager">
@@ -534,13 +549,15 @@ function SortFilterTh({
   const ariaSort = active ? (query.dir === "asc" ? "ascending" : "descending") : "none";
   return (
     <th className="users-th" aria-sort={ariaSort}>
-      <button type="button" className={`th-sort${active ? " is-active" : ""}`} onClick={() => onSort(sortKey)}>
-        {label}
-        <span className="th-sort-affordance" aria-hidden="true">
-          {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
-        </span>
-      </button>
-      {filter}
+      <div className="users-th-line">
+        <button type="button" className={`th-sort${active ? " is-active" : ""}`} onClick={() => onSort(sortKey)}>
+          {label}
+          <span className="th-sort-affordance" aria-hidden="true">
+            {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
+          </span>
+        </button>
+        {filter}
+      </div>
     </th>
   );
 }
