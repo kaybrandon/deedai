@@ -81,6 +81,7 @@ export interface DocumentListItem {
   reviewStatus: string | null;
   flags: FlagSummary[];
   errorMessage: string | null;
+  displayStatus: string;
 }
 
 export interface FieldDraft {
@@ -130,6 +131,7 @@ export interface DocumentDetail {
   lastSoftwareSyncDirection: string | null;
   lastSoftwareSyncFailReason: string | null;
   softwareRecordId: string | null;
+  displayStatus: string;
 }
 
 export interface TeamMemberItem {

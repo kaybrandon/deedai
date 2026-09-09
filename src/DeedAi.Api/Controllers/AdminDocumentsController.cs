@@ -108,5 +108,9 @@ public sealed class AdminDocumentsController(DeedAiDbContext db, IBlobStorage bl
             x.DeedType,
             x.ReviewStatus,
             x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
-            x.ErrorMessage);
+            x.ErrorMessage,
+            ReviewWorkflow.DisplayStatus(
+                x.Status,
+                x.ReviewStatus,
+                ReviewWorkflow.HasNeedsReviewFlag(x.Flags.Select(f => (f.FlagDefinitionId, f.Flag?.Name)))));
 }

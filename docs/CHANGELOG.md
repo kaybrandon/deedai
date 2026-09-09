@@ -3,7 +3,14 @@
 ## 2026-09-09 — Phase 4.3 SPA shell + Chart.js
 - Dense SaaS shell (~200px sidebar, 48px top bar, 16/12 padding). Compact status cards and denser tables; actions stay ≥44px. No horizontal page scroll at ~768px.
 - Dashboard Chart.js wired to existing `GET /api/dashboard/charts/status-mix`, `by-user`, and `volume` plus `GET /api/dashboard/counts`. Same date-range / Client filter and role/ClientAccess as the APIs. Empty chart states when no data.
-- First-surface visual refresh only (Login, Dashboard, Documents, Review, Users / Settings / Reports). No Phase 4.2 PDF / Needs-review / health-link / Authorize-size work. Client / Software naming only.
+- First-surface visual refresh only (Login, Dashboard, Documents, Review, Users / Settings / Reports). Client / Software naming only.
+
+## 2026-09-09 — Phase 4.2 smoke fixes
+- Ready demo deeds seed a real PDF at `deeds/demo/…` so review preview (`GET /api/documents/{id}/file`) works. Placeholder only when a file truly does not exist.
+- Needs review is a flag that drives review workflow / `ReviewStatus`. Pipeline status stays Queued/Processing/Ready/Failed. List and review chips show **Needs review** (not Ready + Needs review). Approving or clearing the flag keeps them in sync.
+- Admin Settings **System health** card embeds `/api/health/detail` (SQL / storage / queue mode only — no secrets).
+- Swagger UI Authorize hit target is ≥44px.
+- Rebased onto `main` after PR #15 (dense shell + Chart.js).
 
 ## 2026-09-09 — Phase 4.1 Swagger + field Help
 - Admin Settings **Enable Swagger UI** (DB-persisted, off by default). `/swagger` is 404 when off; JWT Authorize + Copy Bearer when on. API auth unchanged.

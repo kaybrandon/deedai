@@ -9,10 +9,10 @@
 3. Role-denied screens show a clear empty/disabled state (not a silent failure)
 
 ## Documents (Phase 1)
-1. Open **Documents** — status chips: Queued / Processing / Ready / Failed
+1. Open **Documents** — status chips: Queued / Processing / Ready / Failed. A Ready deed with the **Needs review** flag shows **Needs review** (not both).
 2. **Retry** on Failed when available
 3. **Upload** deed PDF (type/size limits apply)
-4. Open a deed — review/edit mapped fields; save keeps draft; **Retry** on save fail
+4. Open a deed — Ready demo deeds show a PDF preview while editing. Review/edit mapped fields; save keeps draft; **Retry** on save fail. Placeholder only if no PDF exists.
 5. Soft-delete uses a confirm sheet (ConfirmSheet)
 6. List actions are large enough for tablet (≥44px)
 

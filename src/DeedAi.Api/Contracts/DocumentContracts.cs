@@ -24,7 +24,8 @@ public sealed record DocumentListItem(
     string? DeedType,
     string? ReviewStatus,
     IReadOnlyList<FlagSummary> Flags,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    string DisplayStatus);
 
 public sealed record DocumentDetail(
     Guid Id,
@@ -49,7 +50,8 @@ public sealed record DocumentDetail(
     string? LastSoftwareSyncStatus,
     string? LastSoftwareSyncDirection,
     string? LastSoftwareSyncFailReason,
-    string? SoftwareRecordId);
+    string? SoftwareRecordId,
+    string DisplayStatus);
 
 public sealed record FieldDraft(
     string? Grantor,

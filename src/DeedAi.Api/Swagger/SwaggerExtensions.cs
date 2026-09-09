@@ -10,6 +10,31 @@ public static class SwaggerExtensions
     public const string ConfigKey = "Swagger:Enabled";
 
     /// <summary>
+    /// Swagger UI's default Authorize control is ~34px. Keep the hit target at
+    /// least 44px to match Copy Bearer and the rest of the Admin Settings UI.
+    /// </summary>
+    public const string AuthorizeHitTargetCss =
+        """
+        <style id="deedai-swagger-authorize">
+        .swagger-ui .btn.authorize,
+        .swagger-ui .btn.authorize span,
+        .swagger-ui .auth-wrapper .authorize,
+        .swagger-ui .authorization__btn,
+        .swagger-ui .authorization__btn .locked,
+        .swagger-ui .authorization__btn .unlocked,
+        .swagger-ui .modal-btn.authorize,
+        .swagger-ui .btn.modal-btn.authorize,
+        .swagger-ui .auth-btn-wrapper .btn.modal-btn {
+          min-height: 44px !important;
+          min-width: 44px !important;
+        }
+        .swagger-ui .btn.authorize {
+          padding: 10px 16px !important;
+        }
+        </style>
+        """;
+
+    /// <summary>
     /// Default when the database has no Swagger row. Always off unless
     /// <c>Swagger:Enabled</c> / <c>Swagger__Enabled</c> is true <em>and</em>
     /// the host is not Production. Runtime enablement is the admin DB setting.
@@ -98,6 +123,7 @@ public static class SwaggerExtensions
             options.SwaggerEndpoint($"/{RoutePrefix}/{DocumentName}/swagger.json", "Deed AI API v1");
             options.RoutePrefix = RoutePrefix;
             options.EnablePersistAuthorization();
+            options.HeadContent = AuthorizeHitTargetCss;
         });
         return app;
     }

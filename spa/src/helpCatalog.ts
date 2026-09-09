@@ -23,7 +23,7 @@ export const HELP = {
     "Limit the report to deeds updated in this date range. Leave both dates blank to include every date you can see.",
   "reports.assignee": "Show only deeds assigned to this person. Clear the filter to include unassigned deeds and all assignees.",
   "reports.status":
-    "Filter by pipeline status (Queued, Processing, Ready, Failed). Combine with Client, flag, or assignee as needed.",
+    "Filter by pipeline status (Queued, Processing, Ready, Failed) or Needs review. Combine with Client, flag, or assignee as needed.",
   "reports.flag": "Show deeds that have this review flag. Flags are defined by an Admin in Settings.",
   "reports.client": "Limit the report to one Client. You only see Clients your account can access.",
   "settings.flags": "Review flags the team can apply on a deed. Name and color appear on Documents and Reports.",
@@ -35,6 +35,8 @@ export const HELP = {
     "Hard-delete permanently removes the deed and its PDF blob. This cannot be undone — use Restore if you only meant to bring it back.",
   "settings.swagger":
     "When on, /swagger serves the API UI so Admins can authorize with a JWT. When off, /swagger returns 404. Enabling Swagger does not open anonymous API access.",
+  "settings.systemHealth":
+    "Admin-only SQL, storage, and queue checks. Modes only — never connection strings, keys, or other secrets.",
   "users.role": "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
   "settings.idleTimeout":
     "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",

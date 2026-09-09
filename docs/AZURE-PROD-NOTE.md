@@ -32,7 +32,7 @@ Ignore leftover `DocumentIntelligenceEndpoint` if present. Phase 2+ also uses `S
 1. Publish Windows Layout A zip from `main`: `./scripts/publish-layout-a.sh` → `artifacts/layout-a/deedai-win-x64.zip`.
 2. Zipdeploy to `appdeedai`. App stack **.NET 10**.
 3. Startup runs `MigrateAsync` (SQL Server). Phase 3+ and Phase 4 SQL Server scripts are idempotent (`IF OBJECT_ID` / `IF COL_LENGTH`) so a **partial apply** can finish. Phase 4A / Phase 4AQa are registered EF migrations (they were previously invisible) plus a no-data-wipe `Phase4AzureRepair` catch-up.
-4. Smoke: `/` 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin may call `/api/health/detail` (SQL / storage mode / queue mode — no secrets).
+4. Smoke: `/` 200 · `/api/health` 200 · Admin login · documents · dashboard. Admin Settings **System health** (or `/api/health/detail`) reports SQL / storage / queue mode only (no secrets). Ready demo deeds should preview a PDF.
 
 ## Known ops: 500.30
 1. Confirm KV refs on App Settings resolve (no secret values in chat).

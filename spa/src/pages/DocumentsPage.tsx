@@ -5,6 +5,7 @@ import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
+import { displayStatus } from "../reviewStatus";
 
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
@@ -68,6 +69,7 @@ export default function DocumentsPage() {
           <option>Processing</option>
           <option>Ready</option>
           <option>Failed</option>
+          <option value="NeedsReview">Needs review</option>
         </select>
         <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
           <option value="">Client</option>
@@ -168,7 +170,7 @@ export default function DocumentsPage() {
                   <td>{row.name}</td>
                   <td>{row.client}</td>
                   <td>
-                    <StatusChip status={row.status} title={row.errorMessage} />
+                    <StatusChip status={displayStatus(row)} title={row.errorMessage} />
                   </td>
                   <td>
                     {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
