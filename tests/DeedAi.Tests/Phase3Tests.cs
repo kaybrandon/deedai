@@ -45,7 +45,7 @@ public sealed class Phase3Tests : IClassFixture<TestAppFactory>
     public void Phase3_sql_server_creates_uploadedby_fk_with_no_action()
     {
         var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.SqlServer");
-        new Phase3().Up(builder);
+        ApplyPhase3Up(builder);
 
         var sql = string.Join('\n', builder.Operations.OfType<SqlOperation>().Select(x => x.Sql));
         Assert.Contains("FK_Documents_Users_UploadedByUserId", sql, StringComparison.Ordinal);
@@ -57,7 +57,7 @@ public sealed class Phase3Tests : IClassFixture<TestAppFactory>
     public void Phase3_non_sql_server_uploadedby_fk_is_no_action()
     {
         var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.Sqlite");
-        new Phase3().Up(builder);
+        ApplyPhase3Up(builder);
 
         var fk = builder.Operations.OfType<AddForeignKeyOperation>()
             .Single(x => x.Name == "FK_Documents_Users_UploadedByUserId");
@@ -355,6 +355,13 @@ public sealed class Phase3Tests : IClassFixture<TestAppFactory>
                 await db.SaveChangesAsync();
             }
         }
+    }
+
+    private static void ApplyPhase3Up(MigrationBuilder builder)
+    {
+        var up = typeof(Phase3).GetMethod("Up", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.NotNull(up);
+        up.Invoke(new Phase3(), [builder]);
     }
 
     private async Task<HttpClient> Authed(string email)
