@@ -99,17 +99,23 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains(Phase4SqlServerSchema.Phase4AId, discovered);
         Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, discovered);
         Assert.Contains(Phase4SqlServerSchema.Phase4AzureRepairId, discovered);
+        Assert.Contains("20260909140000_Phase41SwaggerHelp", discovered);
+        Assert.DoesNotContain("20260909120000_Phase41SwaggerHelp", discovered);
         Assert.Equal(typeof(Phase4A), assembly.Migrations[Phase4SqlServerSchema.Phase4AId].AsType());
         Assert.Equal(typeof(Phase4AQa), assembly.Migrations[Phase4SqlServerSchema.Phase4AQaId].AsType());
         Assert.Equal(typeof(Phase4AzureRepair), assembly.Migrations[Phase4SqlServerSchema.Phase4AzureRepairId].AsType());
+        Assert.Equal(typeof(Phase41SwaggerHelp), assembly.Migrations["20260909140000_Phase41SwaggerHelp"].AsType());
 
         var ids = db.Database.GetMigrations().ToList();
         Assert.Contains(Phase4SqlServerSchema.Phase4AId, ids);
         Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, ids);
+        Assert.Contains("20260909140000_Phase41SwaggerHelp", ids);
         Assert.True(
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AId, Phase4SqlServerSchema.Phase4AQaId) < 0);
         Assert.True(
             string.CompareOrdinal(Phase4SqlServerSchema.Phase4AQaId, Phase4SqlServerSchema.Phase4AzureRepairId) < 0);
+        Assert.True(
+            string.CompareOrdinal(Phase4SqlServerSchema.Phase4AzureRepairId, "20260909140000_Phase41SwaggerHelp") < 0);
     }
 
     [Fact]

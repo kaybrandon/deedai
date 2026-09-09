@@ -3,6 +3,7 @@
 ## 2026-09-09 — Phase 4.1 Swagger + field Help
 - Admin Settings **Enable Swagger UI** (DB-persisted, off by default). `/swagger` is 404 when off; JWT Authorize + Copy Bearer when on. API auth unchanged.
 - Static field Help tooltips on Must fields (Client / Software wording only). No Azure deploy / App Service changes.
+- Rebased onto PR #11. Migration id is `20260909140000_Phase41SwaggerHelp` (after `Phase4AzureRepair`, no timestamp collision) with a `*.Designer.cs` (`[Migration]` + `[DbContext]` + `BuildTargetModel`).
 
 ## 2026-09-09 — Phase 4 Azure schema hotfix
 - Phase 4A / Phase 4AQa now have `*.Designer.cs` files (`[Migration]` + `[DbContext]` + `BuildTargetModel`) so Azure `MigrateAsync` actually applies AppPolicies, field maps, PropertyDefaults, SoftwareClientConfigs, SalesTabCodes, and `Documents.SalesTabCode`.
