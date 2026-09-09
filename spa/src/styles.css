@@ -421,35 +421,78 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .user-avatar-md { width: 56px; height: 56px; font-size: 18px; }
 .user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .user-name-cell { display: inline-flex; align-items: center; gap: 8px; }
-.user-groups { display: grid; gap: 12px; }
-.user-group {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+.filter-row > input.users-search {
+  flex: 0 1 360px;
+  width: 360px;
+  min-width: 220px;
+  max-width: 360px;
 }
-.user-group-toggle {
-  width: 100%;
-  min-height: var(--action-h);
-  display: flex;
+.users-table-wrap {
+  overflow: auto;
+  max-height: calc(100vh - var(--topbar-h) - 140px);
+}
+.users-table {
+  --row-h: var(--table-row-h, var(--action-h));
+  --cell-pad-y: var(--table-cell-pad-y, 6px);
+  --cell-pad-x: var(--table-cell-pad-x, 12px);
+}
+.users-table th,
+.users-table td {
+  padding: var(--cell-pad-y) var(--cell-pad-x);
+  height: var(--row-h);
+  min-height: var(--row-h);
+  vertical-align: middle;
+}
+.users-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fff;
+  box-shadow: 0 1px 0 var(--border);
+}
+.users-th {
+  vertical-align: top;
+}
+.th-sort {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  gap: 6px;
+  min-height: var(--action-h);
+  min-width: 44px;
+  padding: 0 8px;
+  margin: 0;
   border: none;
-  background: #E6EAEE;
-  color: var(--text);
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-weight: 800;
-  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-align: left;
 }
-.user-group-toggle:hover { background: var(--navy-soft); }
-.user-group-count {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 700;
+.th-sort.is-active { color: var(--text); }
+.th-sort-affordance {
+  font-size: 11px;
   color: var(--muted);
 }
-.user-group .table-wrap { border: none; border-radius: 0; }
+.th-sort.is-active .th-sort-affordance { color: var(--accent); }
+.th-filter {
+  display: block;
+  width: min(100%, 160px);
+  min-height: var(--action-h);
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.users-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.users-pager span { font-size: 13px; font-weight: 600; color: var(--muted); }
 .photo-editor {
   display: flex;
   align-items: center;

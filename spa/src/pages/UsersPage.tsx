@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
@@ -8,8 +8,21 @@ import { LabelWithHelp } from "../components/FieldHelp";
 import PasswordPair, { passwordPairErrors } from "../components/PasswordPair";
 import PhotoEditor from "../components/PhotoEditor";
 import UserAvatar from "../components/UserAvatar";
-
-const roles: Role[] = ["Admin", "Editor", "Uploader", "Viewer"];
+import {
+  applyUsersTable,
+  clientColumnLabel,
+  hasActiveUsersTableState,
+  hasUsersTableParams,
+  nextUsersSort,
+  parseUsersTableQuery,
+  patchUsersTableQuery,
+  readStoredUsersTableQuery,
+  serializeUsersTableQuery,
+  usersRoles,
+  writeStoredUsersTableQuery,
+  type UsersSortKey,
+  type UsersTableQuery
+} from "../usersTable";
 
 const blank = {
   email: "",
@@ -25,6 +38,8 @@ const blank = {
 export default function UsersPage() {
   const { canAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = useMemo(() => parseUsersTableQuery(searchParams), [searchParams]);
   const [users, setUsers] = useState<UserDetail[]>([]);
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [editing, setEditing] = useState<string | "new" | null>(null);
@@ -37,11 +52,19 @@ export default function UsersPage() {
   const [photoRevision, setPhotoRevision] = useState(0);
   const [pendingDisable, setPendingDisable] = useState<UserDetail | null>(null);
   const [pendingResend, setPendingResend] = useState<UserDetail | null>(null);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   async function load() {
     setUsers(await endpoints.adminUsers());
     setClients(await endpoints.settingsClients());
+  }
+
+  function applyQuery(next: UsersTableQuery) {
+    setSearchParams(serializeUsersTableQuery(next), { replace: true });
+    writeStoredUsersTableQuery(next);
+  }
+
+  function patchQuery(partial: Partial<UsersTableQuery>) {
+    applyQuery(patchUsersTableQuery(query, partial));
   }
 
   useEffect(() => {
@@ -52,16 +75,19 @@ export default function UsersPage() {
     load().catch((err) => setError(err instanceof Error ? err.message : "Could not load users."));
   }, [canAdmin, navigate]);
 
-  const groups = useMemo(() => {
-    const byClient = clients
-      .map((client) => ({
-        client,
-        users: users.filter((user) => user.clientIds.includes(client.id))
-      }))
-      .filter((group) => group.users.length > 0);
-    const unassigned = users.filter((user) => user.clientIds.length === 0);
-    return { byClient, unassigned };
-  }, [clients, users]);
+  useEffect(() => {
+    if (!canAdmin) return;
+    if (hasUsersTableParams(searchParams)) {
+      writeStoredUsersTableQuery(parseUsersTableQuery(searchParams));
+      return;
+    }
+    const stored = readStoredUsersTableQuery();
+    if (stored && hasActiveUsersTableState(stored)) {
+      setSearchParams(serializeUsersTableQuery(stored), { replace: true });
+    }
+  }, [canAdmin, searchParams, setSearchParams]);
+
+  const table = useMemo(() => applyUsersTable(users, clients, query), [users, clients, query]);
 
   function startCreate() {
     setEditing("new");
@@ -137,10 +163,6 @@ export default function UsersPage() {
     }));
   }
 
-  function toggleGroup(id: string) {
-    setCollapsed((current) => ({ ...current, [id]: !current[id] }));
-  }
-
   const editingUser = editing && editing !== "new" ? users.find((user) => user.id === editing) : null;
 
   return (
@@ -148,7 +170,7 @@ export default function UsersPage() {
       <div className="page-head">
         <div>
           <h1>Users</h1>
-          <p className="page-kicker">Roles and Client access, grouped by Client. Multi-Client users appear under each assigned Client.</p>
+          <p className="page-kicker">Roles and Client access. Search, sort, and filter the Users table. Multi-Client users list every assignment in Client(s).</p>
         </div>
         <button className="primary" type="button" onClick={startCreate}>
           Add User
@@ -156,38 +178,154 @@ export default function UsersPage() {
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
+      <div className="filter-row users-filter-row">
+        <input
+          className="users-search"
+          type="search"
+          aria-label="Search users"
+          placeholder="Search name or email"
+          value={query.q}
+          onChange={(e) => patchQuery({ q: e.target.value })}
+        />
+      </div>
       {users.length === 0 ? (
         <EmptyState title="No Users Yet" body="Admins can create accounts and map Client access." />
+      ) : table.total === 0 ? (
+        <EmptyState title="No Users Match" body="Try another name, email, Role, Client, or Status." />
       ) : (
-        <div className="user-groups">
-          {groups.byClient.map((group) => (
-            <UserGroup
-              key={group.client.id}
-              title={group.client.name}
-              users={group.users}
-              clients={clients}
-              collapsed={Boolean(collapsed[group.client.id])}
-              onToggle={() => toggleGroup(group.client.id)}
-              onEdit={startEdit}
-              onDisable={setPendingDisable}
-              onResend={setPendingResend}
-              revision={photoRevision}
-            />
-          ))}
-          {groups.unassigned.length > 0 && (
-            <UserGroup
-              title="No Client access"
-              users={groups.unassigned}
-              clients={clients}
-              collapsed={Boolean(collapsed.unassigned)}
-              onToggle={() => toggleGroup("unassigned")}
-              onEdit={startEdit}
-              onDisable={setPendingDisable}
-              onResend={setPendingResend}
-              revision={photoRevision}
-            />
+        <>
+          <div className="table-wrap users-table-wrap">
+            <table className="users-table" data-table="users" aria-label="Users">
+              <thead>
+                <tr>
+                  <SortFilterTh label="Display Name" sortKey="displayName" query={query} onSort={(key) => applyQuery(nextUsersSort(query, key))} />
+                  <th>Full Name</th>
+                  <SortFilterTh label="Email" sortKey="email" query={query} onSort={(key) => applyQuery(nextUsersSort(query, key))} />
+                  <SortFilterTh
+                    label="Role"
+                    sortKey="role"
+                    query={query}
+                    onSort={(key) => applyQuery(nextUsersSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Role"
+                        value={query.role}
+                        onChange={(e) => patchQuery({ role: e.target.value })}
+                      >
+                        <option value="">All Roles</option>
+                        {usersRoles.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SortFilterTh
+                    label="Client(s)"
+                    sortKey="clients"
+                    query={query}
+                    onSort={(key) => applyQuery(nextUsersSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Client"
+                        value={query.client}
+                        onChange={(e) => patchQuery({ client: e.target.value })}
+                      >
+                        <option value="">All Clients</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SortFilterTh
+                    label="Status"
+                    sortKey="status"
+                    query={query}
+                    onSort={(key) => applyQuery(nextUsersSort(query, key))}
+                    filter={
+                      <select
+                        className="th-filter"
+                        aria-label="Filter Status"
+                        value={query.status}
+                        onChange={(e) => patchQuery({ status: e.target.value as UsersTableQuery["status"] })}
+                      >
+                        <option value="">All Statuses</option>
+                        <option value="active">Enabled</option>
+                        <option value="disabled">Disabled</option>
+                      </select>
+                    }
+                  />
+                  <th>Verified</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {table.rows.map((user) => (
+                  <tr key={user.id} className={user.isActive ? undefined : "deleted-row"}>
+                    <td>
+                      <span className="user-name-cell">
+                        <UserAvatar
+                          userId={user.id}
+                          name={user.displayName}
+                          email={user.email}
+                          hasPhoto={user.hasPhoto}
+                          revision={photoRevision}
+                          size="sm"
+                        />
+                        {user.displayName}
+                      </span>
+                    </td>
+                    <td>{user.fullName || "—"}</td>
+                    <td>{user.email}</td>
+                    <td>{user.role}</td>
+                    <td>{clientColumnLabel(user, clients)}</td>
+                    <td>{user.isActive ? "Enabled" : "Disabled"}</td>
+                    <td>{user.emailVerified ? "Verified" : "Unverified"}</td>
+                    <td className="actions-cell">
+                      <button className="ghost" type="button" onClick={() => startEdit(user)}>
+                        Edit
+                      </button>
+                      {!user.emailVerified && (
+                        <button className="ghost" type="button" onClick={() => setPendingResend(user)}>
+                          Resend verify
+                        </button>
+                      )}
+                      {user.isActive && (
+                        <button className="ghost" type="button" onClick={() => setPendingDisable(user)}>
+                          Disable
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {table.totalPages > 1 && (
+            <div className="users-pager">
+              <button className="ghost" type="button" disabled={table.page <= 1} onClick={() => patchQuery({ page: table.page - 1 })}>
+                Previous
+              </button>
+              <span>
+                Page {table.page} of {table.totalPages}
+              </span>
+              <button
+                className="ghost"
+                type="button"
+                disabled={table.page >= table.totalPages}
+                onClick={() => patchQuery({ page: table.page + 1 })}
+              >
+                Next
+              </button>
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {editing && (
@@ -245,7 +383,7 @@ export default function UsersPage() {
             <label>
               <LabelWithHelp helpKey="users.role">Role</LabelWithHelp>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-                {roles.map((role) => (
+                {usersRoles.map((role) => (
                   <option key={role}>{role}</option>
                 ))}
               </select>
@@ -347,101 +485,30 @@ export default function UsersPage() {
   );
 }
 
-function UserGroup({
-  title,
-  users,
-  clients,
-  collapsed,
-  onToggle,
-  onEdit,
-  onDisable,
-  onResend,
-  revision
+function SortFilterTh({
+  label,
+  sortKey,
+  query,
+  onSort,
+  filter
 }: {
-  title: string;
-  users: UserDetail[];
-  clients: ClientItem[];
-  collapsed: boolean;
-  onToggle: () => void;
-  onEdit: (user: UserDetail) => void;
-  onDisable: (user: UserDetail) => void;
-  onResend: (user: UserDetail) => void;
-  revision: number;
+  label: string;
+  sortKey: UsersSortKey;
+  query: UsersTableQuery;
+  onSort: (key: UsersSortKey) => void;
+  filter?: ReactNode;
 }) {
+  const active = query.sort === sortKey;
+  const ariaSort = active ? (query.dir === "asc" ? "ascending" : "descending") : "none";
   return (
-    <section className="user-group">
-      <button
-        className="user-group-toggle"
-        type="button"
-        aria-expanded={!collapsed}
-        onClick={onToggle}
-      >
-        <span className="nav-group-caret" aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
-        {title}
-        <span className="user-group-count">{users.length}</span>
+    <th className="users-th" aria-sort={ariaSort}>
+      <button type="button" className={`th-sort${active ? " is-active" : ""}`} onClick={() => onSort(sortKey)}>
+        {label}
+        <span className="th-sort-affordance" aria-hidden="true">
+          {active ? (query.dir === "asc" ? "▲" : "▼") : "↕"}
+        </span>
       </button>
-      {!collapsed && (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Clients</th>
-                <th>Status</th>
-                <th>Verified</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className={user.isActive ? undefined : "deleted-row"}>
-                  <td>
-                    <span className="user-name-cell">
-                      <UserAvatar
-                        userId={user.id}
-                        name={user.displayName}
-                        email={user.email}
-                        hasPhoto={user.hasPhoto}
-                        revision={revision}
-                        size="sm"
-                      />
-                      {user.displayName}
-                    </span>
-                  </td>
-                  <td>{user.fullName || "—"}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>
-                    {user.clientIds
-                      .map((id) => clients.find((c) => c.id === id)?.name ?? id)
-                      .join(", ") || "—"}
-                  </td>
-                  <td>{user.isActive ? "Active" : "Disabled"}</td>
-                  <td>{user.emailVerified ? "Verified" : "Unverified"}</td>
-                  <td className="actions-cell">
-                    <button className="ghost" type="button" onClick={() => onEdit(user)}>
-                      Edit
-                    </button>
-                    {!user.emailVerified && (
-                      <button className="ghost" type="button" onClick={() => onResend(user)}>
-                        Resend verify
-                      </button>
-                    )}
-                    {user.isActive && (
-                      <button className="ghost" type="button" onClick={() => onDisable(user)}>
-                        Disable
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+      {filter}
+    </th>
   );
 }
