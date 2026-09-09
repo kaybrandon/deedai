@@ -153,11 +153,13 @@ export default function SettingsPage() {
         <section className="panel">
           <h2>Software defaults</h2>
           <p className="muted">
-            Enable push and set field/group defaults used on Software push. Staff field maps are on the{" "}
+            Enable push and the fallback Software group here. Vendor, API URL, group code, Sales Tab, date/label depth,
+            and property resets are typed per Client on the{" "}
             <button className="link" type="button" onClick={() => navigate("/software")}>
               Software
             </button>{" "}
-            page. Deed-type maps below stay as advanced Settings.
+            page. The API key stays in Key Vault and shows as Configured there — never as a secret. Deed-type maps below
+            stay as advanced Settings.
           </p>
           <label className="remember">
             <input
@@ -194,7 +196,7 @@ export default function SettingsPage() {
               onChange={(e) => setSoftware({ ...software, defaultGroup: e.target.value })}
             />
             <input
-              placeholder='Field defaults JSON e.g. {"consideration":"0"}'
+              placeholder='Advanced field defaults JSON e.g. {"consideration":"0"}'
               value={software.fieldDefaultsJson ?? ""}
               onChange={(e) => setSoftware({ ...software, fieldDefaultsJson: e.target.value })}
             />

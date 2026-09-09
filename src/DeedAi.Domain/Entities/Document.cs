@@ -24,6 +24,7 @@ public sealed class Document
     public string? LastSoftwareSyncDirection { get; set; }
     public string? LastSoftwareSyncFailReason { get; set; }
     public string? SoftwareRecordId { get; set; }
+    public string? SalesTabCode { get; set; }
     public DocumentFields? Fields { get; set; }
     public ICollection<DocumentFlag> Flags { get; set; } = new List<DocumentFlag>();
     public ICollection<DocumentTeamMember> Team { get; set; } = new List<DocumentTeamMember>();

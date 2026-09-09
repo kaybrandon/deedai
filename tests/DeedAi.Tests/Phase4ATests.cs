@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using DeedAi.Domain;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Software;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeedAi.Tests;
@@ -43,8 +45,11 @@ public sealed class Phase4ATests : IClassFixture<TestAppFactory>
         var response = await client.GetAsync("/api/sales");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.True(json.RootElement.GetArrayLength() > 0);
-        Assert.False(json.RootElement[0].TryGetProperty("county", out _));
+        Assert.True(json.RootElement.GetProperty("displaySalesTab").GetBoolean());
+        Assert.True(json.RootElement.GetProperty("codes").GetArrayLength() >= 2);
+        Assert.True(json.RootElement.GetProperty("rows").GetArrayLength() > 0);
+        Assert.Equal("QS", json.RootElement.GetProperty("rows")[0].GetProperty("salesTabCode").GetString());
+        Assert.False(json.RootElement.GetProperty("rows")[0].TryGetProperty("county", out _));
     }
 
     [Theory]
@@ -195,6 +200,122 @@ public sealed class Phase4ATests : IClassFixture<TestAppFactory>
         Assert.True(json.RootElement.GetProperty("succeeded").GetBoolean());
     }
 
+    [Fact]
+    public async Task Typed_software_client_settings_persist_without_secrets()
+    {
+        var viewer = await Authed("viewer@bisconsultants.com");
+        Assert.Equal(HttpStatusCode.Forbidden, (await viewer.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson()))).StatusCode);
+
+        var admin = await Authed("admin@bisconsultants.com");
+        var saved = await admin.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson(displaySalesTab: true, sendConsideration: false, depth: 3)));
+        Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        var body = await saved.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        Assert.Equal("LegacySoft", json.RootElement.GetProperty("vendor").GetString());
+        Assert.Equal("https://software.example.test/api", json.RootElement.GetProperty("apiUrl").GetString());
+        Assert.Equal("ACME", json.RootElement.GetProperty("groupCode").GetString());
+        Assert.True(json.RootElement.GetProperty("removeLeadingZeros").GetBoolean());
+        Assert.Equal(3, json.RootElement.GetProperty("dateLabelDepth").GetInt32());
+        Assert.True(json.RootElement.GetProperty("displaySalesTab").GetBoolean());
+        Assert.False(json.RootElement.GetProperty("sendConsideration").GetBoolean());
+        Assert.False(json.RootElement.TryGetProperty("apiKey", out _));
+        Assert.DoesNotContain("ApiKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PLACEHOLDER", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("County", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", body, StringComparison.Ordinal);
+
+        var settings = await admin.GetAsync("/api/software/settings");
+        Assert.Equal(HttpStatusCode.OK, settings.StatusCode);
+        var settingsBody = await settings.Content.ReadAsStringAsync();
+        using var settingsJson = JsonDocument.Parse(settingsBody);
+        Assert.True(settingsJson.RootElement.TryGetProperty("keyConfigured", out var configured));
+        Assert.False(configured.GetBoolean());
+        Assert.True(settingsJson.RootElement.GetProperty("clientConfigs").GetArrayLength() >= 2);
+        Assert.DoesNotContain("SoftwareApiKey", settingsBody, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson()))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Software_push_applies_resets_sales_tab_and_leading_zeros()
+    {
+        var admin = await Authed("admin@bisconsultants.com");
+        var enableResets = await admin.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson(
+                displaySalesTab: true,
+                sendConsideration: true,
+                depth: 2,
+                resets: true)));
+        Assert.Equal(HttpStatusCode.OK, enableResets.StatusCode);
+
+        var editor = await Authed("editor@bisconsultants.com");
+        var id = await FirstReadyId(editor);
+        var fields = await editor.PutAsync($"/api/documents/{id}/fields", TestAppFactory.Json(
+            """{"grantor":"Jane Example","grantee":"Acme Holdings LLC","instrumentDate":"2024-08-12","consideration":"250000","parcelId":"00099","client":"Acme","notes":"reset push","isDraft":false,"deedType":"Warranty Deed"}"""));
+        Assert.Equal(HttpStatusCode.OK, fields.StatusCode);
+
+        var push = await editor.PostAsync($"/api/documents/{id}/software/push", null);
+        Assert.Equal(HttpStatusCode.OK, push.StatusCode);
+
+        var mock = (MockSoftwareClient)_factory.Services.GetRequiredService<ISoftwareClient>();
+        Assert.NotNull(mock.LastPush);
+        Assert.Equal("99", mock.LastPush.ParcelId);
+        Assert.Equal("250000", mock.LastPush.Consideration);
+        Assert.Equal("LegacySoft", mock.LastPush.MappedFields["Vendor"]);
+        Assert.Equal("ACME", mock.LastPush.MappedFields["GroupCode"]);
+        Assert.True(mock.LastPush.MappedFields.ContainsKey("Date.Label1"));
+        Assert.True(mock.LastPush.MappedFields.ContainsKey("Date.Label2"));
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.Exemptions"]);
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.SupplementYear"]);
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.SalesLetter"]);
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.SalesTab"]);
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.Agents"]);
+        Assert.Equal("true", mock.LastPush.MappedFields["Reset.MortgageCodes"]);
+        Assert.False(mock.LastPush.MappedFields.ContainsKey("SalesTab.Code"));
+
+        var disableResets = await admin.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson(displaySalesTab: true, sendConsideration: true, depth: 2)));
+        Assert.Equal(HttpStatusCode.OK, disableResets.StatusCode);
+        var again = await editor.PostAsync($"/api/documents/{id}/software/push", null);
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+        Assert.Equal("QS", mock.LastPush.MappedFields["SalesTab.Code"]);
+        Assert.False(mock.LastPush.MappedFields.ContainsKey("Reset.Exemptions"));
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsync(
+            $"/api/software/client-config/{DatabaseSeeder.AcmeId}",
+            TestAppFactory.Json(ClientConfigJson()))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Editor_can_assign_sales_tab_code_and_viewer_cannot()
+    {
+        var editor = await Authed("editor@bisconsultants.com");
+        var sales = await editor.GetAsync("/api/sales");
+        Assert.Equal(HttpStatusCode.OK, sales.StatusCode);
+        using var list = JsonDocument.Parse(await sales.Content.ReadAsStringAsync());
+        var id = list.RootElement.GetProperty("rows")[0].GetProperty("id").GetGuid();
+
+        var assigned = await editor.PutAsync($"/api/sales/{id}/code", TestAppFactory.Json("""{"code":"NS"}"""));
+        Assert.Equal(HttpStatusCode.OK, assigned.StatusCode);
+        using var row = JsonDocument.Parse(await assigned.Content.ReadAsStringAsync());
+        Assert.Equal("NS", row.RootElement.GetProperty("salesTabCode").GetString());
+
+        var viewer = await Authed("viewer@bisconsultants.com");
+        Assert.Equal(HttpStatusCode.Forbidden, (await viewer.PutAsync(
+            $"/api/sales/{id}/code", TestAppFactory.Json("""{"code":"QS"}"""))).StatusCode);
+
+        var uploader = await Authed("uploader@bisconsultants.com");
+        Assert.Equal(HttpStatusCode.Forbidden, (await uploader.GetAsync("/api/software/client-configs")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await editor.PutAsync($"/api/sales/{id}/code", TestAppFactory.Json("""{"code":"QS"}"""))).StatusCode);
+    }
+
     private async Task<HttpClient> Authed(string email)
     {
         var client = _factory.CreateJsonClient();
@@ -221,4 +342,28 @@ public sealed class Phase4ATests : IClassFixture<TestAppFactory>
         Assert.NotEqual(default, ready.ValueKind);
         return ready.GetProperty("id").GetGuid();
     }
+
+    private static string ClientConfigJson(
+        bool displaySalesTab = true,
+        bool sendConsideration = true,
+        int depth = 2,
+        bool resets = false) =>
+        $$"""
+        {
+          "vendor":"LegacySoft",
+          "apiUrl":"https://software.example.test/api",
+          "groupCode":"ACME",
+          "removeLeadingZeros":true,
+          "dateLabelDepth":{{depth}},
+          "displaySalesTab":{{displaySalesTab.ToString().ToLowerInvariant()}},
+          "sendConsideration":{{sendConsideration.ToString().ToLowerInvariant()}},
+          "considerationThreshold":1,
+          "resetExemptions":{{resets.ToString().ToLowerInvariant()}},
+          "resetSupplementYear":{{resets.ToString().ToLowerInvariant()}},
+          "resetSalesLetter":{{resets.ToString().ToLowerInvariant()}},
+          "resetSalesTab":{{resets.ToString().ToLowerInvariant()}},
+          "resetAgents":{{resets.ToString().ToLowerInvariant()}},
+          "resetMortgageCodes":{{resets.ToString().ToLowerInvariant()}}
+        }
+        """;
 }

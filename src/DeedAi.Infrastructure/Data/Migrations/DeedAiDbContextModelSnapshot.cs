@@ -136,6 +136,10 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
+                    b.Property<string>("SalesTabCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
                     b.Property<string>("SoftwareRecordId")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -382,6 +386,112 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("PropertyDefaults", (string)null);
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<decimal?>("MaxConsideration")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MinConsideration")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("ClientId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("SalesTabCodes", (string)null);
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareClientConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ApiUrl")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ConsiderationThreshold")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("DateLabelDepth")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("DisplaySalesTab")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("GroupCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<bool>("RemoveLeadingZeros")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetAgents")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetExemptions")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetMortgageCodes")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetSalesLetter")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetSalesTab")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ResetSupplementYear")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("SendConsideration")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Vendor")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.ToTable("SoftwareClientConfigs", (string)null);
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareFieldMap", b =>
@@ -750,6 +860,27 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>
+                {
+                    b.HasOne("DeedAi.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareClientConfig", b =>
+                {
+                    b.HasOne("DeedAi.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Client");
                 });

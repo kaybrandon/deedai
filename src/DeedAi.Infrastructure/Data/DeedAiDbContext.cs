@@ -25,6 +25,8 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<AppPolicy> AppPolicies => Set<AppPolicy>();
     public DbSet<SoftwareFieldMap> SoftwareFieldMaps => Set<SoftwareFieldMap>();
     public DbSet<PropertyDefault> PropertyDefaults => Set<PropertyDefault>();
+    public DbSet<SoftwareClientConfig> SoftwareClientConfigs => Set<SoftwareClientConfig>();
+    public DbSet<SalesTabCode> SalesTabCodes => Set<SalesTabCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +126,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.LastSoftwareSyncDirection).HasMaxLength(16);
             entity.Property(x => x.LastSoftwareSyncFailReason).HasMaxLength(1024);
             entity.Property(x => x.SoftwareRecordId).HasMaxLength(64);
+            entity.Property(x => x.SalesTabCode).HasMaxLength(32);
             entity.HasIndex(x => x.BlobPath).IsUnique();
             entity.HasIndex(x => x.ClientId);
             entity.HasIndex(x => x.Status);
@@ -270,6 +273,37 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.SoftwareGroup).HasMaxLength(64);
             entity.Property(x => x.DeedType).HasMaxLength(64);
             entity.HasIndex(x => new { x.DeedField, x.ClientId, x.DeedType });
+            entity.HasOne(x => x.Client)
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SoftwareClientConfig>(entity =>
+        {
+            entity.ToTable("SoftwareClientConfigs");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.ClientId).IsUnique();
+            entity.Property(x => x.Vendor).HasMaxLength(64);
+            entity.Property(x => x.ApiUrl).HasMaxLength(256);
+            entity.Property(x => x.GroupCode).HasMaxLength(32);
+            entity.Property(x => x.ConsiderationThreshold).HasPrecision(18, 2);
+            entity.Ignore(x => x.HasAnyReset);
+            entity.HasOne(x => x.Client)
+                .WithMany()
+                .HasForeignKey(x => x.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SalesTabCode>(entity =>
+        {
+            entity.ToTable("SalesTabCodes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Label).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.MinConsideration).HasPrecision(18, 2);
+            entity.Property(x => x.MaxConsideration).HasPrecision(18, 2);
+            entity.HasIndex(x => new { x.ClientId, x.Code }).IsUnique();
             entity.HasOne(x => x.Client)
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)

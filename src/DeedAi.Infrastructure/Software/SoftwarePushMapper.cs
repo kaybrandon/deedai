@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using DeedAi.Domain;
 using DeedAi.Domain.Entities;
@@ -33,9 +34,11 @@ public static class SoftwarePushMapper
         Document document,
         DeedTypeMap? deedTypeMap,
         AppPolicy policy,
+        SoftwareClientConfig? clientConfig,
+        IReadOnlyList<SalesTabCode> salesCodes,
         CancellationToken cancellationToken)
     {
-        var values = ResolveFieldValues(document, policy);
+        var values = ResolveFieldValues(document, policy, clientConfig);
         var defaults = await db.PropertyDefaults.AsNoTracking().ToListAsync(cancellationToken);
         ApplyPropertyDefaults(values, defaults, document.ClientId, document.DeedType);
         var maps = await db.SoftwareFieldMaps.AsNoTracking()
@@ -53,13 +56,11 @@ public static class SoftwarePushMapper
 
             var match = ChooseMap(maps, field, document.ClientId, document.DeedType);
             var key = match?.SoftwareField ?? MapFromDeedTypeJson(deedTypeMap, field) ?? field;
-            if (match?.SoftwareGroup is { Length: > 0 } group)
+            var group = match?.SoftwareGroup
+                        ?? (clientConfig?.GroupCode is { Length: > 0 } gc ? gc : policy.SoftwareDefaultGroup);
+            if (!string.IsNullOrWhiteSpace(group))
             {
                 mapped[$"{group}.{key}"] = value;
-            }
-            else if (!string.IsNullOrWhiteSpace(policy.SoftwareDefaultGroup))
-            {
-                mapped[$"{policy.SoftwareDefaultGroup}.{key}"] = value;
             }
             else
             {
@@ -67,10 +68,14 @@ public static class SoftwarePushMapper
             }
         }
 
+        ApplyClientConfigToMapped(mapped, document, clientConfig, salesCodes, values);
         return mapped;
     }
 
-    public static Dictionary<string, string?> ResolveFieldValues(Document document, AppPolicy policy)
+    public static Dictionary<string, string?> ResolveFieldValues(
+        Document document,
+        AppPolicy policy,
+        SoftwareClientConfig? clientConfig = null)
     {
         var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
@@ -84,7 +89,85 @@ public static class SoftwarePushMapper
         };
 
         ApplyJsonDefaults(values, policy.SoftwareFieldDefaultsJson);
+        ApplyClientConfigToValues(values, clientConfig);
         return values;
+    }
+
+    public static void ApplyClientConfigToValues(Dictionary<string, string?> values, SoftwareClientConfig? config)
+    {
+        if (config is null)
+        {
+            return;
+        }
+
+        if (config.RemoveLeadingZeros && values.TryGetValue(DeedFields.ParcelId, out var parcel))
+        {
+            values[DeedFields.ParcelId] = SalesTabRules.StripLeadingZeros(parcel);
+        }
+
+        if (!config.SendConsideration)
+        {
+            values[DeedFields.Consideration] = null;
+        }
+    }
+
+    public static void ApplyClientConfigToMapped(
+        Dictionary<string, string> mapped,
+        Document document,
+        SoftwareClientConfig? config,
+        IReadOnlyList<SalesTabCode> salesCodes,
+        IReadOnlyDictionary<string, string?> values)
+    {
+        if (config is null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Vendor))
+        {
+            mapped["Vendor"] = config.Vendor.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.ApiUrl))
+        {
+            mapped["ApiUrl"] = config.ApiUrl.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.GroupCode))
+        {
+            mapped["GroupCode"] = config.GroupCode.Trim();
+        }
+
+        ApplyDateLabelDepth(mapped, document, config, values);
+
+        if (config.ResetExemptions) mapped["Reset.Exemptions"] = "true";
+        if (config.ResetSupplementYear) mapped["Reset.SupplementYear"] = "true";
+        if (config.ResetSalesLetter) mapped["Reset.SalesLetter"] = "true";
+        if (config.ResetSalesTab) mapped["Reset.SalesTab"] = "true";
+        if (config.ResetAgents) mapped["Reset.Agents"] = "true";
+        if (config.ResetMortgageCodes) mapped["Reset.MortgageCodes"] = "true";
+
+        if (config.ResetSalesTab)
+        {
+            document.SalesTabCode = null;
+            return;
+        }
+
+        var amount = SalesTabRules.ParseConsideration(document.Fields?.Consideration);
+        if (!SalesTabRules.MeetsThreshold(config, amount) || amount is null)
+        {
+            return;
+        }
+
+        var match = SalesTabRules.Match(salesCodes, document.ClientId, amount.Value);
+        if (match is null)
+        {
+            return;
+        }
+
+        document.SalesTabCode = match.Code;
+        mapped["SalesTab.Code"] = match.Code;
+        mapped["SalesTab.Label"] = match.Label;
     }
 
     public static void ApplyPropertyDefaults(
@@ -109,6 +192,33 @@ public static class SoftwarePushMapper
             {
                 values[item.FieldKey] = item.DefaultValue;
             }
+        }
+    }
+
+    private static void ApplyDateLabelDepth(
+        Dictionary<string, string> mapped,
+        Document document,
+        SoftwareClientConfig config,
+        IReadOnlyDictionary<string, string?> values)
+    {
+        var depth = Math.Clamp(config.DateLabelDepth <= 0 ? 1 : config.DateLabelDepth, 1, 3);
+        if (depth >= 1)
+        {
+            var instrument = values.GetValueOrDefault(DeedFields.InstrumentDate) ?? document.Fields?.InstrumentDate;
+            if (!string.IsNullOrWhiteSpace(instrument))
+            {
+                mapped["Date.Label1"] = instrument;
+            }
+        }
+
+        if (depth >= 2)
+        {
+            mapped["Date.Label2"] = document.UpdatedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        if (depth >= 3)
+        {
+            mapped["Date.Label3"] = document.CreatedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         }
     }
 

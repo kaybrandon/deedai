@@ -3,7 +3,10 @@ namespace DeedAi.Api.Contracts;
 public sealed record SoftwareSettingsResponse(
     bool PushEnabled,
     string? DefaultGroup,
-    string? FieldDefaultsJson);
+    string? FieldDefaultsJson,
+    bool KeyConfigured,
+    IReadOnlyList<SoftwareClientConfigItem> ClientConfigs,
+    IReadOnlyList<SalesTabCodeItem> SalesTabCodes);
 
 public sealed record UpdateSoftwareSettingsRequest(
     bool PushEnabled,
@@ -19,7 +22,72 @@ public sealed record SoftwareStatusResponse(
     string? LastSyncStatus,
     string? LastFailReason,
     Guid? LastDocumentId,
-    string? LastDocumentName);
+    string? LastDocumentName,
+    bool KeyConfigured,
+    string? ConnectionUrl);
+
+public sealed record SoftwareClientConfigItem(
+    Guid ClientId,
+    string ClientName,
+    string? Vendor,
+    string? ApiUrl,
+    string? GroupCode,
+    bool RemoveLeadingZeros,
+    int DateLabelDepth,
+    bool DisplaySalesTab,
+    bool SendConsideration,
+    decimal ConsiderationThreshold,
+    bool ResetExemptions,
+    bool ResetSupplementYear,
+    bool ResetSalesLetter,
+    bool ResetSalesTab,
+    bool ResetAgents,
+    bool ResetMortgageCodes,
+    bool HasAnyReset);
+
+public sealed record UpdateSoftwareClientConfigRequest(
+    string? Vendor,
+    string? ApiUrl,
+    string? GroupCode,
+    bool RemoveLeadingZeros,
+    int DateLabelDepth,
+    bool DisplaySalesTab,
+    bool SendConsideration,
+    decimal ConsiderationThreshold,
+    bool ResetExemptions,
+    bool ResetSupplementYear,
+    bool ResetSalesLetter,
+    bool ResetSalesTab,
+    bool ResetAgents,
+    bool ResetMortgageCodes);
+
+public sealed record SalesTabCodeItem(
+    Guid Id,
+    Guid? ClientId,
+    string? ClientName,
+    string Code,
+    string Label,
+    decimal MinConsideration,
+    decimal? MaxConsideration,
+    bool IsActive,
+    int SortOrder);
+
+public sealed record UpsertSalesTabCodeRequest(
+    Guid? ClientId,
+    string Code,
+    string Label,
+    decimal MinConsideration,
+    decimal? MaxConsideration,
+    bool IsActive,
+    int SortOrder);
+
+public sealed record AssignSalesTabCodeRequest(string? Code);
+
+public sealed record SalesPageResponse(
+    bool DisplaySalesTab,
+    decimal? ConsiderationThreshold,
+    IReadOnlyList<SalesTabCodeItem> Codes,
+    IReadOnlyList<SaleRow> Rows);
 
 public sealed record SoftwareFieldMapItem(
     Guid Id,
@@ -69,6 +137,7 @@ public sealed record SaleRow(
     string? InstrumentDate,
     string? Consideration,
     string? ParcelId,
+    string? SalesTabCode,
     string Status,
     string? ReviewStatus,
     DateTimeOffset UpdatedAt);

@@ -213,6 +213,68 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
             });
         }
 
+        if (!await db.SoftwareClientConfigs.AnyAsync(cancellationToken))
+        {
+            db.SoftwareClientConfigs.AddRange(
+                new SoftwareClientConfig
+                {
+                    Id = Guid.Parse("51000000-0000-0000-0000-000000000001"),
+                    ClientId = AcmeId,
+                    Vendor = "LegacySoft",
+                    ApiUrl = "https://software.example.test/api",
+                    GroupCode = "ACME",
+                    RemoveLeadingZeros = true,
+                    DateLabelDepth = 2,
+                    DisplaySalesTab = true,
+                    SendConsideration = true,
+                    ConsiderationThreshold = 1,
+                    ResetExemptions = false,
+                    ResetSupplementYear = false,
+                    ResetSalesLetter = false,
+                    ResetSalesTab = false,
+                    ResetAgents = false,
+                    ResetMortgageCodes = false
+                },
+                new SoftwareClientConfig
+                {
+                    Id = Guid.Parse("51000000-0000-0000-0000-000000000002"),
+                    ClientId = NorthsideId,
+                    Vendor = "LegacySoft",
+                    ApiUrl = "https://software.example.test/api",
+                    GroupCode = "NORTH",
+                    RemoveLeadingZeros = false,
+                    DateLabelDepth = 1,
+                    DisplaySalesTab = false,
+                    SendConsideration = true,
+                    ConsiderationThreshold = 0
+                });
+        }
+
+        if (!await db.SalesTabCodes.AnyAsync(cancellationToken))
+        {
+            db.SalesTabCodes.AddRange(
+                new SalesTabCode
+                {
+                    Id = Guid.Parse("52000000-0000-0000-0000-000000000001"),
+                    Code = "QS",
+                    Label = "Qualified sale",
+                    MinConsideration = 1,
+                    MaxConsideration = null,
+                    IsActive = true,
+                    SortOrder = 1
+                },
+                new SalesTabCode
+                {
+                    Id = Guid.Parse("52000000-0000-0000-0000-000000000002"),
+                    Code = "NS",
+                    Label = "Nominal sale",
+                    MinConsideration = 0,
+                    MaxConsideration = 0.99m,
+                    IsActive = true,
+                    SortOrder = 2
+                });
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 
