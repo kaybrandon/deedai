@@ -31,6 +31,21 @@ public sealed class Phase502Tests
     }
 
     [Fact]
+    public void Volume_chart_plots_one_teal_uploaded_series_not_stacked_status()
+    {
+        var charts = Read("spa/src/components/DashboardCharts.tsx");
+        var volumeFn = SliceFunction(charts, "export function VolumeChart");
+        Assert.Contains("item.key === \"total\"", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("#0D8A7F", volumeFn, StringComparison.Ordinal);
+        Assert.Contains("backgroundColor: VOLUME_TEAL", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("stacked: true", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("key !== \"total\"", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("plotted.map", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("statuses.filter", volumeFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("seriesColor(", volumeFn, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Week_bar_links_are_keyboard_accessible_and_preserve_client()
     {
         var charts = Read("spa/src/components/DashboardCharts.tsx");
@@ -81,7 +96,6 @@ public sealed class Phase502Tests
         var theme = Read("spa/src/theme.ts");
         var css = Read("spa/src/styles.css");
         Assert.Contains("#4F7C8A", theme, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("#0D8A7F", theme, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("#1E2430", css, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("County", theme, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", theme, StringComparison.Ordinal);

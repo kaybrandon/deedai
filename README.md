@@ -54,7 +54,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 
 ## Phase 5.0.2 acceptance
 
-- **Volume Over Time** (exact Title Case) is a **bar** chart — not line or area.
+- **Volume Over Time** (exact Title Case) is a **bar** chart — not line or area. One teal (`#0D8A7F`) **Uploaded** series per week; no stacked status series.
 - X-axis buckets are **ISO weeks** (Monday–Sunday), not days. API `GET /api/dashboard/charts/volume` returns week-start labels plus `buckets[].from` / `buckets[].to`.
 - Click a week bar or a ≥44px keyboard week link → Documents with `from`/`to` covering that week range. Client filter is preserved when set. An empty week shows the Documents empty state.
 - Client / Software naming only. No secrets. No zipdeploy. No EF migration. Separate from Mask F.

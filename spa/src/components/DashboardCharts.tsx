@@ -179,6 +179,8 @@ export function ByUserChart({
   );
 }
 
+const VOLUME_TEAL = "#0D8A7F";
+
 function volumeBuckets(data: DashboardVolume): DashboardVolumeBucket[] {
   if (data.buckets?.length === data.labels.length) {
     return data.buckets;
@@ -205,9 +207,8 @@ export function VolumeChart({
   data: DashboardVolume | null;
 } & ChartNavFilters) {
   const navigate = useNavigate();
-  const statuses = data?.series.filter((item) => item.key !== "total") ?? [];
-  const plotted = statuses.length > 0 ? statuses : (data?.series ?? []);
-  if (!data || data.labels.length === 0 || !hasSeriesData(data.series)) {
+  const total = data?.series.find((item) => item.key === "total") ?? data?.series[0];
+  if (!data || !total || data.labels.length === 0 || !hasSeriesData([total])) {
     return <EmptyState title={emptyCopy.volume.title} body={emptyCopy.volume.body} />;
   }
 
@@ -227,14 +228,16 @@ export function VolumeChart({
         <Bar
           data={{
             labels: data.labels,
-            datasets: plotted.map((series, index) => ({
-              label: series.label,
-              data: series.data,
-              backgroundColor: seriesColor(series.key, series.color, index),
-              borderSkipped: false,
-              borderRadius: 3,
-              maxBarThickness: 44
-            }))
+            datasets: [
+              {
+                label: total.label,
+                data: total.data,
+                backgroundColor: VOLUME_TEAL,
+                borderSkipped: false,
+                borderRadius: 3,
+                maxBarThickness: 44
+              }
+            ]
           }}
           options={{
             interaction: { mode: "index", intersect: false },
@@ -242,19 +245,17 @@ export function VolumeChart({
             onClick: (event, elements, chart) => goWeek(weekIndex(event, elements, chart)),
             plugins: { legend: { display: false } },
             scales: {
-              x: { stacked: true, grid: { display: false } },
-              y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, border: { display: false } }
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 }, border: { display: false } }
             }
           }}
         />
       </div>
       <ul className="chart-key" aria-label="Volume series">
-        {plotted.map((series, index) => (
-          <li key={series.key}>
-            <span className="chart-legend-swatch" style={{ background: seriesColor(series.key, series.color, index) }} />
-            {series.label}
-          </li>
-        ))}
+        <li>
+          <span className="chart-legend-swatch" style={{ background: VOLUME_TEAL }} />
+          {total.label}
+        </li>
       </ul>
       <ul className="chart-legend">
         {buckets.map((bucket) => (
