@@ -186,7 +186,7 @@ public sealed class DashboardChartNavTests
         var migrations = Path.Combine(RepoRoot(), "src", "DeedAi.Infrastructure", "Data", "Migrations");
         Assert.False(Directory.EnumerateFiles(migrations, "*ChartNav*").Any());
         Assert.False(Directory.EnumerateFiles(migrations, "*ChartClick*").Any());
-        Assert.False(Directory.EnumerateFiles(migrations, "*Phase48*").Any());
+        Assert.False(Directory.EnumerateFiles(migrations, "*TitleCase*").Any());
     }
 
     private static string SliceFunction(string source, string marker)
