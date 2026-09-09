@@ -196,7 +196,7 @@ export default function SoftwarePage() {
           <p>Loading connection…</p>
         )}
         {canAdmin && settings && (
-          <div className="form-grid" style={{ marginTop: 16 }}>
+          <div className="form-grid compact-form" style={{ marginTop: 16 }}>
             <label className="remember">
               <input
                 type="checkbox"
@@ -224,7 +224,7 @@ export default function SoftwarePage() {
             Vendor, API URL, group code, Sales Tab, and the six property resets are stored per Client. The API key stays
             in Key Vault / App Settings and is never shown here.
           </p>
-          <label>
+          <label className="compact-field">
             Client
             <select
               value={configClientId}
@@ -239,7 +239,7 @@ export default function SoftwarePage() {
             </select>
           </label>
           <form
-            className="form-grid"
+            className="form-grid compact-form"
             style={{ marginTop: 12 }}
             onSubmit={(event: FormEvent) => {
               event.preventDefault();

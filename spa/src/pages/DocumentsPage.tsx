@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { endpoints, type ClientItem, type DocumentListItem, type UserSummary } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
@@ -7,9 +7,21 @@ import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
 import { displayStatus } from "../reviewStatus";
 
+function filtersFromParams(params: URLSearchParams) {
+  return {
+    search: params.get("search") ?? "",
+    status: params.get("status") ?? "",
+    clientId: params.get("clientId") ?? "",
+    assignee: params.get("assigneeUserId") ?? "",
+    includeDeleted: params.get("includeDeleted") === "true"
+  };
+}
+
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryKey = searchParams.toString();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [clientId, setClientId] = useState("");
@@ -25,23 +37,40 @@ export default function DocumentsPage() {
   const [pendingHard, setPendingHard] = useState<DocumentListItem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function load(event?: FormEvent) {
-    event?.preventDefault();
+  async function fetchRows(params: URLSearchParams) {
+    setRows(await endpoints.documents(`?${params}`));
+    setSelected([]);
+  }
+
+  async function reload() {
+    await fetchRows(searchParams);
+  }
+
+  function onSearch(event: FormEvent) {
+    event.preventDefault();
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (status) params.set("status", status);
     if (clientId) params.set("clientId", clientId);
     if (assignee) params.set("assigneeUserId", assignee);
     if (includeDeleted && canAdmin) params.set("includeDeleted", "true");
-    setRows(await endpoints.documents(`?${params}`));
-    setSelected([]);
+    setSearchParams(params, { replace: true });
   }
+
+  useEffect(() => {
+    const next = filtersFromParams(searchParams);
+    setSearch(next.search);
+    setStatus(next.status);
+    setClientId(next.clientId);
+    setAssignee(next.assignee);
+    setIncludeDeleted(next.includeDeleted);
+    void fetchRows(searchParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryKey]);
 
   useEffect(() => {
     endpoints.clients().then(setClients).catch(() => undefined);
     endpoints.users().then(setUsers).catch(() => undefined);
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function toggle(id: string) {
@@ -56,7 +85,7 @@ export default function DocumentsPage() {
           <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
         </div>
       </header>
-      <form className="filter-row wrap" onSubmit={load}>
+      <form className="filter-row wrap" onSubmit={onSearch}>
         <input
           className="grow"
           placeholder="Search deeds"
@@ -110,7 +139,7 @@ export default function DocumentsPage() {
             onClick={async () => {
               const result = await endpoints.requeueFailed();
               setNotice(result.message);
-              await load();
+              await reload();
             }}
           >
             Requeue failed
@@ -134,7 +163,7 @@ export default function DocumentsPage() {
             onClick={async () => {
               await endpoints.bulkAssign(selected, bulkAssignee || null);
               setNotice("Assigned selected deeds.");
-              await load();
+              await reload();
             }}
           >
             Bulk assign
@@ -182,7 +211,7 @@ export default function DocumentsPage() {
                         aria-label={`Assignee for ${row.name}`}
                         onChange={async (e) => {
                           await endpoints.assign(row.id, e.target.value || null);
-                          await load();
+                          await reload();
                         }}
                       >
                         <option value="">Unassigned</option>
@@ -215,7 +244,7 @@ export default function DocumentsPage() {
                         onClick={async () => {
                           await endpoints.retry(row.id);
                           setNotice("Queued for OCR");
-                          await load();
+                          await reload();
                         }}
                       >
                         Retry
@@ -253,7 +282,7 @@ export default function DocumentsPage() {
             await endpoints.remove(pendingDelete.id);
             setPendingDelete(null);
             setNotice("Soft-deleted.");
-            await load();
+            await reload();
           }}
         />
       )}
@@ -268,7 +297,7 @@ export default function DocumentsPage() {
             await endpoints.restore(pendingRestore.id);
             setPendingRestore(null);
             setNotice("Restored.");
-            await load();
+            await reload();
           }}
         />
       )}
@@ -282,7 +311,7 @@ export default function DocumentsPage() {
             await endpoints.hardDelete(pendingHard.id);
             setPendingHard(null);
             setNotice("Permanently deleted.");
-            await load();
+            await reload();
           }}
         />
       )}

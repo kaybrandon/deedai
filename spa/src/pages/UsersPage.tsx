@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail } from "../api";
 import { useAuth } from "../auth";
@@ -30,6 +30,7 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [pendingDisable, setPendingDisable] = useState<UserDetail | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function load() {
     setUsers(await endpoints.adminUsers());
@@ -43,6 +44,12 @@ export default function UsersPage() {
     }
     load().catch((err) => setError(err instanceof Error ? err.message : "Could not load users."));
   }, [canAdmin, navigate]);
+
+  useEffect(() => {
+    if (editing) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [editing]);
 
   function startCreate() {
     setEditing("new");
@@ -139,8 +146,16 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className={user.isActive ? undefined : "deleted-row"}>
-                  <td>{user.displayName}</td>
+                <tr
+                  key={user.id}
+                  className={`clickable-row${user.isActive ? "" : " deleted-row"}${editing === user.id ? " is-editing" : ""}`}
+                  onClick={() => startEdit(user)}
+                >
+                  <td>
+                    <button className="link name-button" type="button" onClick={() => startEdit(user)}>
+                      {user.displayName}
+                    </button>
+                  </td>
                   <td>{user.email}</td>
                   <td>{user.role}</td>
                   <td>
@@ -149,7 +164,7 @@ export default function UsersPage() {
                       .join(", ") || "—"}
                   </td>
                   <td>{user.isActive ? "Active" : "Disabled"}</td>
-                  <td className="actions-cell">
+                  <td className="actions-cell" onClick={(event) => event.stopPropagation()}>
                     <button className="ghost" type="button" onClick={() => startEdit(user)}>
                       Edit
                     </button>
@@ -167,7 +182,7 @@ export default function UsersPage() {
       )}
 
       {editing && (
-        <form className="panel" onSubmit={onSubmit}>
+        <form className="panel compact-form" ref={formRef} onSubmit={onSubmit}>
           <h2>{editing === "new" ? "New user" : "Edit user"}</h2>
           <div className="form-grid">
             <label>

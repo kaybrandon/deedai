@@ -269,6 +269,7 @@ export default function SettingsPage() {
               onChange={(e) => setSoftware({ ...software, defaultGroup: e.target.value })}
             />
             <input
+              className="form-wide"
               placeholder='Advanced field defaults JSON e.g. {"consideration":"0"}'
               value={software.fieldDefaultsJson ?? ""}
               onChange={(e) => setSoftware({ ...software, fieldDefaultsJson: e.target.value })}
@@ -286,19 +287,25 @@ export default function SettingsPage() {
         empty={ocrRules.length === 0}
         emptyBody="Seeded trim characters and discard words clean new extracts. Add more here — never put secrets in this list."
       >
-        <ul className="setting-list">
+        <div className="token-row">
           {ocrRules.map((rule) => (
-            <li key={rule.id}>
-              <span>
-                <strong>{rule.kind}</strong> · <code>{rule.value}</code>
-                {rule.isActive ? "" : " · inactive"}
-              </span>
-              <button className="link" type="button" onClick={() => setPending({ kind: "ocr", id: rule.id, name: `${rule.kind} ${rule.value}` })}>
-                Remove
+            <span
+              key={rule.id}
+              className={`token token-${rule.kind.toLowerCase()}${rule.isActive ? "" : " is-inactive"}`}
+            >
+              <span className="token-kind">{rule.kind}</span>
+              <code className="token-value">{rule.value}</code>
+              <button
+                className="token-remove"
+                type="button"
+                aria-label={`Remove ${rule.kind} ${rule.value}`}
+                onClick={() => setPending({ kind: "ocr", id: rule.id, name: `${rule.kind} ${rule.value}` })}
+              >
+                ×
               </button>
-            </li>
+            </span>
           ))}
-        </ul>
+        </div>
         <form
           className="inline-form"
           onSubmit={async (event: FormEvent) => {
