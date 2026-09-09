@@ -23,8 +23,9 @@ public sealed class Phase511Tests
         Assert.Contains(".users-table-wrap", css, StringComparison.Ordinal);
         Assert.Contains("position: sticky", css, StringComparison.Ordinal);
         Assert.Contains("--table-row-h: 44px", css, StringComparison.Ordinal);
-        Assert.Contains("--table-cell-pad-y: 8px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-cell-pad-y: 6px", css, StringComparison.Ordinal);
         Assert.Contains("--table-header-bg: #E8EEF2", css, StringComparison.Ordinal);
+        Assert.Contains("--table-stripe: #E8EEF2", css, StringComparison.Ordinal);
         Assert.Contains("--row-h: var(--table-row-h, var(--action-h))", css, StringComparison.Ordinal);
         Assert.Contains("min-height: var(--row-h)", css, StringComparison.Ordinal);
         Assert.Contains("min-height: var(--action-h)", css, StringComparison.Ordinal);
