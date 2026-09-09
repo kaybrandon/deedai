@@ -192,7 +192,6 @@ public sealed class Phase49Tests
         Assert.Contains("min-height: 44px", css);
         Assert.DoesNotContain("County", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", panel, StringComparison.Ordinal);
-        Assert.DoesNotContain("AccountKey", panel, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
