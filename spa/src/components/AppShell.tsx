@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
+import UserAvatar from "./UserAvatar";
 
 function isSettingsSection(pathname: string) {
   return pathname === "/settings" || pathname === "/software" || pathname === "/users"
     || pathname.startsWith("/settings/") || pathname.startsWith("/software/") || pathname.startsWith("/users/");
+}
+
+function productTitle(clients: { name: string }[] | undefined) {
+  if (clients?.length === 1) {
+    return `${clients[0].name} Deed AI`;
+  }
+  return "Deed AI";
 }
 
 export default function AppShell() {
@@ -14,6 +22,8 @@ export default function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const onSettingsSection = isSettingsSection(location.pathname);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const title = productTitle(me?.clients);
+  const identity = me?.displayName || me?.email || "signed-in user";
 
   function closeNav() {
     setNavOpen(false);
@@ -122,6 +132,12 @@ export default function AppShell() {
             )}
           </div>
         </nav>
+        <div className="sidebar-identity">
+          <p className="sidebar-logged-in">Logged in as {identity}</p>
+          <NavLink className="sidebar-profile" to="/profile" onClick={closeNav}>
+            My profile
+          </NavLink>
+        </div>
         <button
           className="ghost sidebar-logout"
           type="button"
@@ -145,7 +161,15 @@ export default function AppShell() {
           >
             Menu
           </button>
+          <h1 className="topbar-title">{title}</h1>
           <div className="topbar-meta">
+            <UserAvatar
+              userId={me?.id}
+              name={me?.displayName}
+              email={me?.email}
+              hasPhoto={me?.hasPhoto}
+              size="sm"
+            />
             <span className="topbar-name">{me?.displayName ?? me?.email}</span>
             <span className="role-pill">{me?.role}</span>
           </div>

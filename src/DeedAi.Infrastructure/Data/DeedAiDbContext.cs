@@ -41,6 +41,8 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.HasIndex(x => x.Email).IsUnique();
             entity.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();
             entity.Property(x => x.DisplayName).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.FullName).HasMaxLength(128);
+            entity.Property(x => x.PhotoBlobPath).HasMaxLength(512);
             entity.Property(x => x.Role).HasMaxLength(32).IsRequired();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
             entity.ToTable(t => t.HasCheckConstraint(

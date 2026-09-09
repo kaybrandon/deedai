@@ -16,6 +16,7 @@ import SalesPage from "./pages/SalesPage";
 import SettingsPage from "./pages/SettingsPage";
 import SoftwarePage from "./pages/SoftwarePage";
 import UploadPage from "./pages/UploadPage";
+import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/sales" element={<SalesPage />} />
               <Route path="/restore" element={<RestorePage />} />
               <Route path="/users" element={<UsersPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to={me ? "/dashboard" : "/login"} replace />} />

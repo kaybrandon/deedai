@@ -1,11 +1,19 @@
 export type Role = "Admin" | "Editor" | "Uploader" | "Viewer";
 
+export interface ClientScope {
+  id: string;
+  name: string;
+}
+
 export interface Me {
   id: string;
   email: string;
   displayName: string;
+  fullName?: string | null;
   role: Role;
   clientIds: string[];
+  clients: ClientScope[];
+  hasPhoto: boolean;
 }
 
 export interface LoginResponse {
@@ -31,10 +39,12 @@ export interface UserDetail {
   id: string;
   email: string;
   displayName: string;
+  fullName?: string | null;
   role: Role;
   isActive: boolean;
   createdAt: string;
   clientIds: string[];
+  hasPhoto: boolean;
 }
 
 export interface HealthCheck {
@@ -388,6 +398,21 @@ export const endpoints = {
       body: JSON.stringify({ token, password })
     }),
   me: () => api<Me>("/api/auth/me"),
+  updateProfile: (body: object) =>
+    api<Me>("/api/auth/me", { method: "PUT", body: JSON.stringify(body) }),
+  uploadMyPhoto: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api<Me>("/api/auth/me/photo", { method: "POST", body: form });
+  },
+  clearMyPhoto: () => api<Me>("/api/auth/me/photo", { method: "DELETE" }),
+  uploadUserPhoto: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api<UserDetail>(`/api/admin/users/${id}/photo`, { method: "POST", body: form });
+  },
+  clearUserPhoto: (id: string) => api<UserDetail>(`/api/admin/users/${id}/photo`, { method: "DELETE" }),
+  userPhotoUrl: (id: string) => `/api/users/${id}/photo`,
   clients: () => api<ClientItem[]>("/api/clients"),
   users: () => api<UserSummary[]>("/api/users"),
   adminUsers: () => api<UserDetail[]>("/api/admin/users"),

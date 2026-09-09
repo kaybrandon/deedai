@@ -1,4 +1,6 @@
+using DeedAi.Api.Auth;
 using DeedAi.Api.Contracts;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +11,7 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api")]
-public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
+public sealed class LookupsController(DeedAiDbContext db, IBlobStorage blobs) : ControllerBase
 {
     [HttpGet("clients")]
     public async Task<ActionResult<IReadOnlyList<ClientResponse>>> Clients(CancellationToken cancellationToken)
@@ -33,6 +35,19 @@ public sealed class LookupsController(DeedAiDbContext db) : ControllerBase
             .Select(x => new UserSummary(x.Id, x.DisplayName, x.Role))
             .ToListAsync(cancellationToken);
         return items;
+    }
+
+    [HttpGet("users/{id:guid}/photo")]
+    public async Task<IActionResult> Photo(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var file = await ProfilePhotos.OpenAsync(blobs, user, cancellationToken);
+        return file ?? NotFound();
     }
 
 }

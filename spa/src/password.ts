@@ -21,3 +21,10 @@ export function validatePassword(password: string, required: boolean): string | 
 
   return null;
 }
+
+export function confirmPasswordError(password: string, confirm: string): string | null {
+  if (password !== confirm) {
+    return "Passwords do not match.";
+  }
+  return null;
+}

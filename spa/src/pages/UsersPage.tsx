@@ -1,20 +1,23 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import { LabelWithHelp } from "../components/FieldHelp";
-import PasswordField from "../components/PasswordField";
-import { validatePassword } from "../password";
+import PasswordPair, { passwordPairErrors } from "../components/PasswordPair";
+import PhotoEditor from "../components/PhotoEditor";
+import UserAvatar from "../components/UserAvatar";
 
 const roles: Role[] = ["Admin", "Editor", "Uploader", "Viewer"];
 
 const blank = {
   email: "",
   displayName: "",
+  fullName: "",
   role: "Viewer" as Role,
   password: "",
+  confirm: "",
   isActive: true,
   clientIds: [] as string[]
 };
@@ -29,8 +32,11 @@ export default function UsersPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoRevision, setPhotoRevision] = useState(0);
   const [pendingDisable, setPendingDisable] = useState<UserDetail | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   async function load() {
     setUsers(await endpoints.adminUsers());
@@ -45,26 +51,37 @@ export default function UsersPage() {
     load().catch((err) => setError(err instanceof Error ? err.message : "Could not load users."));
   }, [canAdmin, navigate]);
 
-  useEffect(() => {
-    if (editing) {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [editing]);
+  const groups = useMemo(() => {
+    const byClient = clients
+      .map((client) => ({
+        client,
+        users: users.filter((user) => user.clientIds.includes(client.id))
+      }))
+      .filter((group) => group.users.length > 0);
+    const unassigned = users.filter((user) => user.clientIds.length === 0);
+    return { byClient, unassigned };
+  }, [clients, users]);
 
   function startCreate() {
     setEditing("new");
     setPasswordError(null);
+    setConfirmError(null);
+    setPhotoError(null);
     setForm({ ...blank, clientIds: clients.map((c) => c.id) });
   }
 
   function startEdit(user: UserDetail) {
     setEditing(user.id);
     setPasswordError(null);
+    setConfirmError(null);
+    setPhotoError(null);
     setForm({
       email: user.email,
       displayName: user.displayName,
+      fullName: user.fullName ?? "",
       role: user.role,
       password: "",
+      confirm: "",
       isActive: user.isActive,
       clientIds: user.clientIds
     });
@@ -73,15 +90,18 @@ export default function UsersPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    const nextPasswordError = validatePassword(form.password, editing === "new");
-    if (nextPasswordError) {
-      setPasswordError(nextPasswordError);
+    const next = passwordPairErrors(form.password, form.confirm, editing === "new");
+    if (next.password || next.confirm) {
+      setPasswordError(next.password);
+      setConfirmError(next.confirm);
       return;
     }
     setPasswordError(null);
+    setConfirmError(null);
     const body = {
       email: form.email,
       displayName: form.displayName,
+      fullName: form.fullName,
       role: form.role,
       password: form.password || null,
       isActive: form.isActive,
@@ -116,12 +136,18 @@ export default function UsersPage() {
     }));
   }
 
+  function toggleGroup(id: string) {
+    setCollapsed((current) => ({ ...current, [id]: !current[id] }));
+  }
+
+  const editingUser = editing && editing !== "new" ? users.find((user) => user.id === editing) : null;
+
   return (
     <section className="page">
       <div className="page-head">
         <div>
           <h1>Users</h1>
-          <p className="page-kicker">Roles and Client access for this workspace.</p>
+          <p className="page-kicker">Roles and Client access, grouped by Client. Multi-Client users appear under each assigned Client.</p>
         </div>
         <button className="primary" type="button" onClick={startCreate}>
           Add user
@@ -132,62 +158,82 @@ export default function UsersPage() {
       {users.length === 0 ? (
         <EmptyState title="No users yet" body="Admins can create accounts and map Client access." />
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Clients</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className={`clickable-row${user.isActive ? "" : " deleted-row"}${editing === user.id ? " is-editing" : ""}`}
-                  onClick={() => startEdit(user)}
-                >
-                  <td>
-                    <button className="link name-button" type="button" onClick={() => startEdit(user)}>
-                      {user.displayName}
-                    </button>
-                  </td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>
-                    {user.clientIds
-                      .map((id) => clients.find((c) => c.id === id)?.name ?? id)
-                      .join(", ") || "—"}
-                  </td>
-                  <td>{user.isActive ? "Active" : "Disabled"}</td>
-                  <td className="actions-cell" onClick={(event) => event.stopPropagation()}>
-                    <button className="ghost" type="button" onClick={() => startEdit(user)}>
-                      Edit
-                    </button>
-                    {user.isActive && (
-                      <button className="ghost" type="button" onClick={() => setPendingDisable(user)}>
-                        Disable
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="user-groups">
+          {groups.byClient.map((group) => (
+            <UserGroup
+              key={group.client.id}
+              title={group.client.name}
+              users={group.users}
+              clients={clients}
+              collapsed={Boolean(collapsed[group.client.id])}
+              onToggle={() => toggleGroup(group.client.id)}
+              onEdit={startEdit}
+              onDisable={setPendingDisable}
+              revision={photoRevision}
+            />
+          ))}
+          {groups.unassigned.length > 0 && (
+            <UserGroup
+              title="No Client access"
+              users={groups.unassigned}
+              clients={clients}
+              collapsed={Boolean(collapsed.unassigned)}
+              onToggle={() => toggleGroup("unassigned")}
+              onEdit={startEdit}
+              onDisable={setPendingDisable}
+              revision={photoRevision}
+            />
+          )}
         </div>
       )}
 
       {editing && (
-        <form className="panel compact-form" ref={formRef} onSubmit={onSubmit}>
+        <form className="panel" onSubmit={onSubmit}>
           <h2>{editing === "new" ? "New user" : "Edit user"}</h2>
+          {editingUser && (
+            <PhotoEditor
+              userId={editingUser.id}
+              name={form.displayName || editingUser.email}
+              email={editingUser.email}
+              hasPhoto={editingUser.hasPhoto}
+              revision={photoRevision}
+              error={photoError}
+              onUpload={async (file) => {
+                setPhotoError(null);
+                try {
+                  const saved = await endpoints.uploadUserPhoto(editingUser.id, file);
+                  setUsers((current) => current.map((user) => (user.id === saved.id ? saved : user)));
+                  setPhotoRevision((value) => value + 1);
+                  setNotice("Photo updated.");
+                } catch (err) {
+                  setPhotoError(err instanceof Error ? err.message : "Photo upload failed.");
+                }
+              }}
+              onClear={async () => {
+                setPhotoError(null);
+                try {
+                  const saved = await endpoints.clearUserPhoto(editingUser.id);
+                  setUsers((current) => current.map((user) => (user.id === saved.id ? saved : user)));
+                  setPhotoRevision((value) => value + 1);
+                  setNotice("Photo removed.");
+                } catch (err) {
+                  setPhotoError(err instanceof Error ? err.message : "Could not remove photo.");
+                }
+              }}
+            />
+          )}
           <div className="form-grid">
             <label>
               Display name
               <input value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} required />
+            </label>
+            <label>
+              Full name
+              <input
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                required={editing === "new"}
+              />
             </label>
             <label>
               Email
@@ -201,17 +247,21 @@ export default function UsersPage() {
                 ))}
               </select>
             </label>
-            <PasswordField
+            <PasswordPair
               id="user-password"
-              label={editing === "new" ? "Password" : "New password (optional)"}
-              value={form.password}
+              passwordLabel={editing === "new" ? "Password" : "New password (optional)"}
+              password={form.password}
+              confirm={form.confirm}
               required={editing === "new"}
-              error={passwordError}
-              onChange={(password) => {
+              passwordError={passwordError}
+              confirmError={confirmError}
+              onPassword={(password) => {
                 setForm({ ...form, password });
-                if (passwordError) {
-                  setPasswordError(null);
-                }
+                if (passwordError) setPasswordError(null);
+              }}
+              onConfirm={(confirm) => {
+                setForm({ ...form, confirm });
+                if (confirmError) setConfirmError(null);
               }}
             />
           </div>
@@ -266,6 +316,96 @@ export default function UsersPage() {
             }
           }}
         />
+      )}
+    </section>
+  );
+}
+
+function UserGroup({
+  title,
+  users,
+  clients,
+  collapsed,
+  onToggle,
+  onEdit,
+  onDisable,
+  revision
+}: {
+  title: string;
+  users: UserDetail[];
+  clients: ClientItem[];
+  collapsed: boolean;
+  onToggle: () => void;
+  onEdit: (user: UserDetail) => void;
+  onDisable: (user: UserDetail) => void;
+  revision: number;
+}) {
+  return (
+    <section className="user-group">
+      <button
+        className="user-group-toggle"
+        type="button"
+        aria-expanded={!collapsed}
+        onClick={onToggle}
+      >
+        <span className="nav-group-caret" aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
+        {title}
+        <span className="user-group-count">{users.length}</span>
+      </button>
+      {!collapsed && (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Full name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Clients</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className={user.isActive ? undefined : "deleted-row"}>
+                  <td>
+                    <span className="user-name-cell">
+                      <UserAvatar
+                        userId={user.id}
+                        name={user.displayName}
+                        email={user.email}
+                        hasPhoto={user.hasPhoto}
+                        revision={revision}
+                        size="sm"
+                      />
+                      {user.displayName}
+                    </span>
+                  </td>
+                  <td>{user.fullName || "—"}</td>
+                  <td>{user.email}</td>
+                  <td>{user.role}</td>
+                  <td>
+                    {user.clientIds
+                      .map((id) => clients.find((c) => c.id === id)?.name ?? id)
+                      .join(", ") || "—"}
+                  </td>
+                  <td>{user.isActive ? "Active" : "Disabled"}</td>
+                  <td className="actions-cell">
+                    <button className="ghost" type="button" onClick={() => onEdit(user)}>
+                      Edit
+                    </button>
+                    {user.isActive && (
+                      <button className="ghost" type="button" onClick={() => onDisable(user)}>
+                        Disable
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

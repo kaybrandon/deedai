@@ -8,8 +8,18 @@ public sealed record MeResponse(
     Guid Id,
     string Email,
     string DisplayName,
+    string? FullName,
     string Role,
-    IReadOnlyList<Guid> ClientIds);
+    IReadOnlyList<Guid> ClientIds,
+    IReadOnlyList<ClientScopeItem> Clients,
+    bool HasPhoto);
+
+public sealed record ClientScopeItem(Guid Id, string Name);
+
+public sealed record UpdateProfileRequest(
+    string DisplayName,
+    string? FullName,
+    string? Password);
 
 public sealed record ForgotPasswordRequest(string Email);
 
