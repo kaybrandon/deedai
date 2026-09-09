@@ -506,7 +506,7 @@ export default function SoftwarePage() {
       </section>
 
       <section className="panel">
-        <h2>Field map</h2>
+        <h2>Field Map</h2>
         <p className="muted">Map deed fields to Software fields and groups. These mappings are used on push.</p>
         {maps.length === 0 ? (
           <EmptyState title="No field maps yet" body="Add a deed field → Software field map so push uses the right group." />
@@ -543,7 +543,7 @@ export default function SoftwarePage() {
                 deedType: mapForm.deedType || null
               });
               setMapForm({ deedField: "grantor", softwareField: "", softwareGroup: "", clientId: "", deedType: "", isActive: true, sortOrder: 10 });
-              setNotice("Field map saved.");
+              setNotice("Field Map saved.");
               await load();
             }}
           >
@@ -595,7 +595,7 @@ export default function SoftwarePage() {
           onConfirm={async () => {
             await endpoints.deleteSoftwareFieldMap(pendingMap.id);
             setPendingMap(null);
-            setNotice("Field map removed.");
+            setNotice("Field Map removed.");
             await load();
           }}
         />
