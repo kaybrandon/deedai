@@ -160,6 +160,21 @@ export interface FieldDraft {
   isDraft: boolean;
 }
 
+export interface FieldSavePayload extends FieldDraft {
+  deedType?: string | null;
+  reviewStatus?: string | null;
+  documentNumber?: string | null;
+  volume?: string | null;
+  page?: string | null;
+  pid?: string | null;
+  mailingStreet?: string | null;
+  mailingCity?: string | null;
+  mailingState?: string | null;
+  mailingZip?: string | null;
+  grantors?: string[] | null;
+  grantees?: string[] | null;
+}
+
 export interface TeamMember {
   id: string;
   displayName: string;
@@ -520,7 +535,7 @@ export const endpoints = {
   exportDashboard: (query: string, name: string) => download(`/api/dashboard/export${query}`, name),
   documents: (query: string) => api<DocumentListItem[]>(`/api/documents${query}`),
   document: (id: string) => api<DocumentDetail>(`/api/documents/${id}`),
-  saveFields: (id: string, fields: FieldDraft & { deedType?: string | null; reviewStatus?: string | null }) =>
+  saveFields: (id: string, fields: FieldSavePayload) =>
     api<FieldDraft>(`/api/documents/${id}/fields`, {
       method: "PUT",
       body: JSON.stringify(fields)

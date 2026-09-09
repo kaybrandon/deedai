@@ -77,11 +77,11 @@ public static class SoftwarePushMapper
     {
         var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
-            [DeedFields.Grantor] = document.Fields?.Grantor,
-            [DeedFields.Grantee] = document.Fields?.Grantee,
+            [DeedFields.Grantor] = PartyNames.Primary(document.Grantors, document.Fields?.Grantor),
+            [DeedFields.Grantee] = PartyNames.Primary(document.Grantees, document.Fields?.Grantee),
             [DeedFields.InstrumentDate] = document.Fields?.InstrumentDate,
             [DeedFields.Consideration] = document.Fields?.Consideration,
-            [DeedFields.ParcelId] = document.Fields?.ParcelId,
+            [DeedFields.ParcelId] = document.EffectivePid,
             [DeedFields.LegalDescription] = document.Fields?.LegalDescription,
             [DeedFields.Client] = document.Fields?.Client ?? document.Client.Name,
             [DeedFields.Notes] = document.Fields?.Notes

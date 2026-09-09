@@ -137,7 +137,8 @@ public sealed class Phase51Tests
         Assert.DoesNotContain("statuses.map", volume, StringComparison.Ordinal);
         Assert.Contains("review-grid", Read("spa/src/pages/ReviewPage.tsx"), StringComparison.Ordinal);
         Assert.Contains("review-side", Read("spa/src/pages/ReviewPage.tsx"), StringComparison.Ordinal);
-        Assert.Contains("minmax(0, 1.2fr) minmax(280px, 0.85fr) minmax(240px, 0.7fr)", Read("spa/src/styles.css"), StringComparison.Ordinal);
+        Assert.Contains("minmax(200px, 0.55fr) minmax(0, 1.2fr) minmax(280px, 0.9fr)", Read("spa/src/styles.css"), StringComparison.Ordinal);
+        Assert.Contains("review-queue", Read("spa/src/pages/ReviewPage.tsx"), StringComparison.Ordinal);
         Assert.DoesNotContain("Search queue", Read("spa/src/pages/ReviewPage.tsx"), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Search queue", Read("spa/src/components/AppShell.tsx"), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("ConfirmSheet", Read("spa/src/pages/UsersPage.tsx"), StringComparison.Ordinal);

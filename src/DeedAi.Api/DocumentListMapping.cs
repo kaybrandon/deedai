@@ -29,7 +29,7 @@ public static class DocumentListMapping
             document.Volume,
             document.Page,
             document.DocumentNumber,
-            document.Pid ?? document.Fields?.ParcelId,
+            document.EffectivePid,
             document.MailingStreet,
             document.MailingCity,
             document.MailingState,
