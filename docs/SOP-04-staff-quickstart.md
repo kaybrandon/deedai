@@ -17,9 +17,14 @@
 6. List actions are large enough for tablet (≥44px)
 
 ## Swagger Authorize (Admin QA2)
-When **Enable Swagger UI** is on, open `/swagger`, wait for the UI to paint, then in DevTools:
-`window.__deedAiMeasureAuthorize()`
-Top-bar Authorize and the modal Authorize / Logout / Close must each report `width` and `height` ≥ 44. Pass marker: `document.documentElement.dataset.deedaiAuthorizeHit === "pass"`. Measuring the inner lock icon or label span is the wrong node — use the helper (it reads `getBoundingClientRect()` on the buttons).
+When **Enable Swagger UI** is on, open `/swagger`, wait for the UI to paint (and open Authorize so the modal buttons exist), then in DevTools:
+```
+window.__deedAiMeasureAuthorize()
+window.__deedAiAuthorizeRuntimeVersion
+```
+Top-bar Authorize and the modal Authorize / Logout / Close must each report `width` and `height` ≥ 44. Pass marker: `document.documentElement.dataset.deedaiAuthorizeHit === "pass"`. Runtime must be `4.2.2`. Measuring the inner lock icon or label span is the wrong node — use the helper (it reads `getBoundingClientRect()` on the buttons).
+
+**Dev after zipdeploy (before pinging QA2):** View-source `/swagger/index.html` and confirm `deedai-swagger-authorize.js` appears **after** `index.js`. Then run the helper above. If the function is missing, the pin is not on the published index.
 
 ## OCR
 - Upload → blob → queue → Document Intelligence → fields on the deed

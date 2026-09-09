@@ -14,7 +14,11 @@ public sealed class SwaggerSettingsTests
         await using var factory = TestAppFactory.Create();
         var client = factory.CreateJsonClient();
 
-        foreach (var path in new[] { "/swagger", "/swagger/", "/swagger/index.html", "/swagger/v1/swagger.json" })
+        foreach (var path in new[]
+                 {
+                     "/swagger", "/swagger/", "/swagger/index.html", "/swagger/v1/swagger.json",
+                     "/swagger/deedai-swagger-authorize.js", "/swagger/deedai-swagger-authorize.css"
+                 })
         {
             var response = await client.GetAsync(path);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -160,13 +164,50 @@ public sealed class SwaggerSettingsTests
         AssertAuthorizeHitTargetRuntime(SwaggerAuthorizeHitTarget.HeadContent);
         AssertAuthorizeHitTargetRuntime(SwaggerAuthorizeHitTarget.MeasureFixtureHtml());
         Assert.Contains("swagger-after-paint-win", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
+        Assert.Contains("swagger-react-reset", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
         Assert.Contains("id=\"top-authorize\"", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
         Assert.Contains("id=\"modal-authorize\"", SwaggerAuthorizeHitTarget.MeasureFixtureHtml(), StringComparison.Ordinal);
         Assert.Contains("__deedAiMeasureAuthorize", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
+        Assert.Contains("POLL_MS = 250", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
+        Assert.Contains("max-height", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("County", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", SwaggerAuthorizeHitTarget.JavaScript, StringComparison.Ordinal);
         Assert.DoesNotContain("JwtSigningKey", SwaggerAuthorizeHitTarget.HeadContent, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("AdminSeedPassword", SwaggerAuthorizeHitTarget.HeadContent, StringComparison.OrdinalIgnoreCase);
+        AssertCustomIndexLoadsScriptLast(SwaggerAuthorizeHitTarget.IndexHtml);
+    }
+
+    [Fact]
+    public async Task Authorize_assets_are_served_before_swashbuckle_when_swagger_on()
+    {
+        await using var factory = TestAppFactory.Create();
+        var client = factory.CreateJsonClient();
+        await Authed(factory, client, DatabaseSeeder.AdminEmail);
+        var on = await client.PutAsync("/api/settings/swagger", TestAppFactory.Json("""{"enabled":true}"""));
+        Assert.Equal(HttpStatusCode.OK, on.StatusCode);
+
+        client.DefaultRequestHeaders.Authorization = null;
+        var js = await client.GetAsync("/swagger/deedai-swagger-authorize.js");
+        Assert.Equal(HttpStatusCode.OK, js.StatusCode);
+        var jsBody = await js.Content.ReadAsStringAsync();
+        Assert.Contains("__deedAiMeasureAuthorize", jsBody, StringComparison.Ordinal);
+        Assert.Contains("POLL_MS = 250", jsBody, StringComparison.Ordinal);
+        Assert.True(
+            js.Headers.TryGetValues("Cache-Control", out var cache)
+            && cache.Any(v => v.Contains("no-store", StringComparison.OrdinalIgnoreCase)),
+            "Authorize JS must be Cache-Control: no-store so Azure/browser cannot keep a #18 pin");
+
+        var css = await client.GetAsync("/swagger/deedai-swagger-authorize.css");
+        Assert.Equal(HttpStatusCode.OK, css.StatusCode);
+        var cssBody = await css.Content.ReadAsStringAsync();
+        Assert.Contains("max-height: none !important", cssBody, StringComparison.Ordinal);
+        Assert.Contains("display: inline-flex !important", cssBody, StringComparison.Ordinal);
+
+        var ui = await client.GetAsync("/swagger/index.html");
+        Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
+        var html = await ui.Content.ReadAsStringAsync();
+        AssertCustomIndexLoadsScriptLast(html);
+        AssertAuthorizeHitTargetRuntime(html);
     }
 
     [Fact]
@@ -192,6 +233,8 @@ public sealed class SwaggerSettingsTests
         Assert.Contains("\"ok\": true", stdout, StringComparison.Ordinal);
         Assert.Contains("\"height\": 44", stdout, StringComparison.Ordinal);
         Assert.Contains("\"marker\": \"pass\"", stdout, StringComparison.Ordinal);
+        Assert.Contains("\"recoveredFromSwaggerInlineReset\": true", stdout, StringComparison.Ordinal);
+        Assert.Contains("\"version\": \"4.2.2\"", stdout, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -275,16 +318,32 @@ public sealed class SwaggerSettingsTests
         Assert.Contains("min-height: 44px !important", css, StringComparison.Ordinal);
         Assert.Contains("min-width: 44px !important", css, StringComparison.Ordinal);
         Assert.Contains("height: 44px !important", css, StringComparison.Ordinal);
+        Assert.Contains("max-height: none !important", css, StringComparison.Ordinal);
         Assert.Contains("padding: 10px 16px !important", css, StringComparison.Ordinal);
         Assert.Contains("box-sizing: border-box !important", css, StringComparison.Ordinal);
         Assert.Contains("float: none !important", css, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Runtime contract: after Swagger paints, JS must pin 44×44 via inline
-    /// <c>!important</c>, MutationObserver, and SwaggerUIBundle onComplete.
-    /// QA2: <c>window.__deedAiMeasureAuthorize()</c> on /swagger — every
-    /// item width/height ≥ 44. <c>html[data-deedai-authorize-hit=pass]</c>.
+    /// Custom index must load our file after Swashbuckle <c>index.js</c>
+    /// (Swashbuckle 9 HeadContent / InjectJavascript stay in <c>&lt;head&gt;</c>).
+    /// </summary>
+    private static void AssertCustomIndexLoadsScriptLast(string html)
+    {
+        Assert.Contains("deedai authorize hit runtime v4.2.2", html, StringComparison.Ordinal);
+        var indexJs = html.LastIndexOf("index.js", StringComparison.Ordinal);
+        var ours = html.LastIndexOf("deedai-swagger-authorize.js", StringComparison.Ordinal);
+        Assert.True(indexJs >= 0, "custom index missing Swashbuckle index.js");
+        Assert.True(ours > indexJs, "Authorize runtime must load after index.js, not in head only");
+    }
+
+    /// <summary>
+    /// Runtime contract: after Swagger paints (and after React resets
+    /// <c>display:inline</c>), JS must pin 44×44 via inline <c>!important</c>,
+    /// 250ms poll, MutationObserver, and SwaggerUIBundle onComplete.
+    /// Dev/QA2 after zipdeploy: <c>window.__deedAiMeasureAuthorize()</c> on
+    /// /swagger — every item width/height ≥ 44.
+    /// <c>html[data-deedai-authorize-hit=pass]</c>.
     /// </summary>
     private static void AssertAuthorizeHitTargetRuntime(string html)
     {
@@ -302,5 +361,7 @@ public sealed class SwaggerSettingsTests
         Assert.Contains("data-deedai-authorize-hit", html, StringComparison.Ordinal);
         Assert.Contains("auth-btn-wrapper", html, StringComparison.Ordinal);
         Assert.Contains(".btn.authorize", html, StringComparison.Ordinal);
+        Assert.Contains("250", html, StringComparison.Ordinal);
+        Assert.Contains("max-height", html, StringComparison.Ordinal);
     }
 }

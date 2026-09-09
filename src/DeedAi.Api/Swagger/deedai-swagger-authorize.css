@@ -1,13 +1,19 @@
-/* Phase 4.2.1 runtime companion: stronger selectors than Swagger's
-   `.btn.authorize { display: inline; line-height: 1 }`. Stylesheets still
-   lose after paint when Swagger injects a later equal-specificity rule —
-   the HeadContent script pins these again and sets inline !important. */
+/* Phase 4.2.2: beat Swagger's `.btn.authorize { display: inline; line-height: 1 }`
+   (~34px top bar, ~30px modal). More classes than swagger-ui.css so we win
+   even without !important; !important still present. height is ignored while
+   display is inline — display:inline-flex is mandatory. max-height:none stops
+   a later modal rule from clipping to ~30px. Stylesheets still lose after
+   React paint; the body-end script re-pins inline !important every 250ms. */
+html body .swagger-ui .scheme-container .auth-wrapper button.btn.authorize,
+html body .swagger-ui .scheme-container .auth-wrapper .btn.authorize,
+html body .swagger-ui .scheme-container button.authorize,
 html body .swagger-ui .btn.authorize,
 html body .swagger-ui button.authorize,
 html body .swagger-ui .auth-wrapper .authorize,
 html body .swagger-ui .auth-wrapper button.authorize,
 html body .swagger-ui .scheme-container .btn.authorize,
-html body .swagger-ui .scheme-container button.authorize,
+html body .swagger-ui .modal-ux .auth-btn-wrapper button.btn,
+html body .swagger-ui .modal-ux .auth-btn-wrapper button.btn.modal-btn,
 html body .swagger-ui .modal-ux .btn.modal-btn,
 html body .swagger-ui .modal-ux .btn.modal-btn.authorize,
 html body .swagger-ui .dialog-ux .btn.modal-btn,
@@ -25,6 +31,7 @@ html body .swagger-ui .btn-done {
   min-height: 44px !important;
   min-width: 44px !important;
   height: 44px !important;
+  max-height: none !important;
   padding: 10px 16px !important;
   line-height: 1.2 !important;
   float: none !important;
