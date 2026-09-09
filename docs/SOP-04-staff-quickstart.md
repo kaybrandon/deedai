@@ -29,7 +29,7 @@ window.__deedAiAuthorizeRuntimeVersion
 ```
 Top-bar Authorize and the modal Authorize / Logout / Close must each report `width` and `height` ≥ 44. Pass marker: `document.documentElement.dataset.deedaiAuthorizeHit === "pass"`. Runtime must be `4.2.3` and `typeof window.__deedAiMeasureAuthorize === "function"`. Measuring the inner lock icon or label span is the wrong node — use the helper (it reads `getBoundingClientRect()` on the buttons).
 
-**Dev after load (before pinging QA2):** View-source `/swagger/index.html` and confirm `deedai-swagger-authorize.js` appears **once**, **after** `index.js`, with no inline `deedai-swagger-authorize-runtime` dump in `<head>`. Then run the helper above. If the function is missing, the pin is not on the published index.
+**Dev after load (before pinging QA2):** View-source `/swagger/index.html` and confirm `deedai-swagger-authorize.js` appears **once**, **after** `index.js`, with no inline `deedai-swagger-authorize-runtime` dump in `<head>`. Response headers for `/swagger/index.html` (and `/swagger/index.js`) must be `Cache-Control: no-store` so a 7-day Swashbuckle shell cannot stay stale. Then run the helper above. If the function is missing, the pin is not on the published index.
 
 ## OCR
 - Upload → blob → queue → Document Intelligence → fields on the deed

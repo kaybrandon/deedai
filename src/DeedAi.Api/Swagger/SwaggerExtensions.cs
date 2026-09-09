@@ -105,6 +105,14 @@ public static class SwaggerExtensions
                 {
                     return;
                 }
+
+                // Phase 4.2.4: Swashbuckle serves index.html / index.js with
+                // max-age=604800. Override on start so a 7-day stale shell
+                // cannot keep an old pin while authorize.js is no-store.
+                if (IsSwaggerShellAsset(context.Request.Path))
+                {
+                    ApplyNoStoreOnStarting(context);
+                }
             }
 
             await next();
@@ -120,6 +128,33 @@ public static class SwaggerExtensions
             options.IndexStream = SwaggerAuthorizeHitTarget.OpenIndexHtml;
         });
         return app;
+    }
+
+    /// <summary>
+    /// Swashbuckle UI shell that browsers otherwise cache for 7 days.
+    /// Authorize JS/CSS are already no-store; the HTML/index.js must match.
+    /// </summary>
+    public static bool IsSwaggerShellAsset(PathString path)
+    {
+        var value = path.Value ?? string.Empty;
+        return value.EndsWith("/index.html", StringComparison.OrdinalIgnoreCase)
+            || value.EndsWith("/index.js", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Sets <c>Cache-Control: no-store</c> when the response starts so
+    /// Swashbuckle / static-file headers cannot win after <c>next()</c>.
+    /// Same no-store contract as authorize.js / authorize.css.
+    /// </summary>
+    public static void ApplyNoStoreOnStarting(HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        context.Response.OnStarting(static state =>
+        {
+            var response = (HttpResponse)state!;
+            response.Headers.CacheControl = "no-store";
+            return Task.CompletedTask;
+        }, context.Response);
     }
 
     /// <summary>
