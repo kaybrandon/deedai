@@ -23,7 +23,8 @@ public sealed record DocumentListItem(
     bool IsDeleted,
     string? DeedType,
     string? ReviewStatus,
-    IReadOnlyList<FlagSummary> Flags);
+    IReadOnlyList<FlagSummary> Flags,
+    string? ErrorMessage);
 
 public sealed record DocumentDetail(
     Guid Id,

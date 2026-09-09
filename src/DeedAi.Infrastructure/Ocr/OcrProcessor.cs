@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
@@ -59,11 +60,19 @@ public sealed class OcrProcessor(
         {
             await using var pdf = await blobs.OpenReadAsync(document.BlobPath, cancellationToken);
             var result = await documentIntelligence.AnalyzeAsync(document.Name, pdf, cancellationToken);
+            EnsureValidExtractJson(result.RawJson);
 
             var rawPath = $"di-raw/{document.Id:N}.json";
             await using var rawStream = new MemoryStream(Encoding.UTF8.GetBytes(result.RawJson));
             await blobs.UploadAsync(rawPath, rawStream, "application/json", cancellationToken);
             document.DiRawBlobPath = rawPath;
+
+            var rules = await db.OcrCleanupRules.AsNoTracking()
+                .Where(x => x.IsActive)
+                .OrderBy(x => x.SortOrder)
+                .ToListAsync(cancellationToken);
+            var trim = rules.Where(x => x.Kind == OcrCleanupKinds.Trim).Select(x => x.Value);
+            var discard = rules.Where(x => x.Kind == OcrCleanupKinds.Discard).Select(x => x.Value);
 
             var fields = document.Fields ?? new DocumentFields
             {
@@ -71,13 +80,13 @@ public sealed class OcrProcessor(
                 DocumentId = document.Id
             };
 
-            fields.Grantor = result.Fields.Grantor;
-            fields.Grantee = result.Fields.Grantee;
-            fields.InstrumentDate = result.Fields.InstrumentDate;
-            fields.Consideration = result.Fields.Consideration;
-            fields.ParcelId = result.Fields.ParcelId;
-            fields.Client = result.Fields.Client ?? document.Client.Name;
-            fields.Notes = result.Fields.Notes;
+            fields.Grantor = OcrFieldCleaner.Clean(result.Fields.Grantor, trim, discard);
+            fields.Grantee = OcrFieldCleaner.Clean(result.Fields.Grantee, trim, discard);
+            fields.InstrumentDate = OcrFieldCleaner.Clean(result.Fields.InstrumentDate, trim, discard);
+            fields.Consideration = OcrFieldCleaner.Clean(result.Fields.Consideration, trim, discard);
+            fields.ParcelId = OcrFieldCleaner.Clean(result.Fields.ParcelId, trim, discard);
+            fields.Client = OcrFieldCleaner.Clean(result.Fields.Client, trim, discard) ?? document.Client.Name;
+            fields.Notes = OcrFieldCleaner.Clean(result.Fields.Notes, trim, discard);
             fields.IsDraft = false;
             fields.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -96,11 +105,40 @@ public sealed class OcrProcessor(
         {
             logger.LogError(ex, "OCR failed for document {DocumentId}", document.Id);
             document.Status = DocumentStatuses.Failed;
-            document.ErrorMessage = ex.Message.Length > 1000 ? ex.Message[..1000] : ex.Message;
+            document.ErrorMessage = FormatFailReason(ex);
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             await notifier.NotifyStatusAsync(document.Id, document.Status, document.ErrorMessage, cancellationToken);
             throw;
         }
+    }
+
+    private static void EnsureValidExtractJson(string? rawJson)
+    {
+        if (string.IsNullOrWhiteSpace(rawJson))
+        {
+            throw new InvalidOperationException("OCR failed — empty JSON. Use Retry.");
+        }
+
+        try
+        {
+            using var _ = JsonDocument.Parse(rawJson);
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("OCR failed — invalid JSON. Use Retry.");
+        }
+    }
+
+    private static string FormatFailReason(Exception ex)
+    {
+        var message = ex.Message.Length > 1000 ? ex.Message[..1000] : ex.Message;
+        if (message.Contains("JSON", StringComparison.OrdinalIgnoreCase)
+            && !message.Contains("Retry", StringComparison.OrdinalIgnoreCase))
+        {
+            return message + " Use Retry.";
+        }
+
+        return message;
     }
 }

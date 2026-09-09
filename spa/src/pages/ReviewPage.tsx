@@ -13,7 +13,7 @@ import {
   type StatusItem,
   type UserSummary
 } from "../api";
-import { useAuth } from "../auth";
+import { markDraftDirty, useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
@@ -102,6 +102,11 @@ export default function ReviewPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    markDraftDirty(fields.isDraft);
+    return () => markDraftDirty(false);
+  }, [fields.isDraft]);
+
   function update<K extends keyof FieldDraft>(key: K, value: FieldDraft[K]) {
     setFields((current) => ({ ...current, [key]: value, isDraft: true }));
     setSaved(false);
@@ -150,7 +155,7 @@ export default function ReviewPage() {
       <div className="review-header">
         <div className="title-row">
           <h1>Deed review</h1>
-          <StatusChip status={doc.status} />
+          <StatusChip status={doc.status} title={doc.errorMessage} />
         </div>
         <div className="row-actions">
           <button className="ghost" type="button" disabled={!doc.previousId} onClick={() => doc.previousId && navigate(`/documents/${doc.previousId}`)}>

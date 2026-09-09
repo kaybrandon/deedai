@@ -1,6 +1,6 @@
 # Deed AI SOPs
 
-Index of Phase 1 operator and staff docs (no secrets). Full files live under [`docs/`](docs/).
+Index of operator and staff docs (no secrets). Full files live under [`docs/`](docs/). Phase 3+ deploy notes (Layout A, EF migrate, UploadedBy NoAction, admin seed sync) are in AZURE-PROD-NOTE and SOP-02.
 
 - [AZURE-PROD-NOTE.md](docs/AZURE-PROD-NOTE.md) — live Azure ops note
 - [SOP-01-overview.md](docs/SOP-01-overview.md) — local / ops overview

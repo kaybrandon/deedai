@@ -21,6 +21,26 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
     public static readonly Guid ReviewTeamId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
 
     public const string SeedPassword = "ChangeMe!1";
+    public const string AdminEmail = "admin@bisconsultants.com";
+    public const string EditorEmail = "editor@bisconsultants.com";
+    public const string UploaderEmail = "uploader@bisconsultants.com";
+    public const string ViewerEmail = "viewer@bisconsultants.com";
+
+    public static readonly IReadOnlyList<string> SeedEmails =
+    [
+        AdminEmail,
+        EditorEmail,
+        UploaderEmail,
+        ViewerEmail
+    ];
+
+    public static string? ReadAdminSeedPassword(IConfiguration configuration) =>
+        DependencyInjection.FirstValue(
+            configuration,
+            "AdminSeedPassword",
+            "Admin:SeedPassword",
+            "Admin__SeedPassword",
+            "Seed:AdminPassword");
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -30,18 +50,18 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         }
         else
         {
-            await db.Database.MigrateAsync(cancellationToken);
+            await MigrationRunner.MigrateAsync(db, logger, cancellationToken);
         }
 
+        var password = ReadAdminSeedPassword(configuration) ?? SeedPassword;
         if (!await db.Users.AnyAsync(cancellationToken))
         {
-            var password = DependencyInjection.FirstValue(configuration, "AdminSeedPassword") ?? SeedPassword;
             var now = DateTimeOffset.UtcNow;
             db.Users.AddRange(
                 new UserAccount
                 {
                     Id = AdminId,
-                    Email = "admin@bisconsultants.com",
+                    Email = AdminEmail,
                     DisplayName = "Admin",
                     Role = AppRoles.Admin,
                     PasswordHash = PasswordHasher.Hash(password),
@@ -51,7 +71,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 new UserAccount
                 {
                     Id = EditorId,
-                    Email = "editor@bisconsultants.com",
+                    Email = EditorEmail,
                     DisplayName = "Alex",
                     Role = AppRoles.Editor,
                     PasswordHash = PasswordHasher.Hash(password),
@@ -61,7 +81,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 new UserAccount
                 {
                     Id = UploaderId,
-                    Email = "uploader@bisconsultants.com",
+                    Email = UploaderEmail,
                     DisplayName = "Sam",
                     Role = AppRoles.Uploader,
                     PasswordHash = PasswordHasher.Hash(password),
@@ -71,13 +91,17 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 new UserAccount
                 {
                     Id = ViewerId,
-                    Email = "viewer@bisconsultants.com",
+                    Email = ViewerEmail,
                     DisplayName = "Riley",
                     Role = AppRoles.Viewer,
                     PasswordHash = PasswordHasher.Hash(password),
                     IsActive = true,
                     CreatedAt = now
                 });
+        }
+        else if (!string.IsNullOrWhiteSpace(ReadAdminSeedPassword(configuration)))
+        {
+            await SyncSeedPasswordsAsync(password, cancellationToken);
         }
 
         if (!await db.Clients.AnyAsync(cancellationToken))
@@ -93,6 +117,8 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         await SeedTeamsAsync(cancellationToken);
         await SeedNotificationsAsync(cancellationToken);
         await SeedSoftwareParityAsync(cancellationToken);
+        await SeedSessionAsync(cancellationToken);
+        await SeedOcrCleanupAsync(cancellationToken);
 
         var seedDemo = string.Equals(configuration["Seed:DemoDocuments"], "true", StringComparison.OrdinalIgnoreCase)
                        || string.Equals(configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
@@ -103,6 +129,38 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         }
 
         logger.LogInformation("Database seed complete.");
+    }
+
+    private async Task SyncSeedPasswordsAsync(string password, CancellationToken cancellationToken)
+    {
+        var users = await db.Users
+            .Where(x => SeedEmails.Contains(x.Email))
+            .ToListAsync(cancellationToken);
+        var updated = 0;
+        foreach (var user in users)
+        {
+            var isAdmin = string.Equals(user.Email, AdminEmail, StringComparison.OrdinalIgnoreCase);
+            var stillDefault = PasswordHasher.Verify(SeedPassword, user.PasswordHash);
+            if (!isAdmin && !stillDefault && !PasswordHasher.Verify(password, user.PasswordHash))
+            {
+                // Demo users whose password was changed in-app are left alone.
+                continue;
+            }
+
+            if (PasswordHasher.Verify(password, user.PasswordHash))
+            {
+                continue;
+            }
+
+            user.PasswordHash = PasswordHasher.Hash(password);
+            updated++;
+            logger.LogInformation("Updated seed password hash for {Email}.", user.Email);
+        }
+
+        if (updated > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     private async Task SeedClientAccessAsync(CancellationToken cancellationToken)
@@ -317,6 +375,69 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
             NotifyUploader = false,
             UpdatedAt = DateTimeOffset.UtcNow
         });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedSessionAsync(CancellationToken cancellationToken)
+    {
+        if (await db.SessionSettings.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var configured = DependencyInjection.FirstValue(
+            configuration,
+            "SessionIdleTimeoutMinutes",
+            "Session:IdleTimeoutMinutes");
+        var minutes = SessionSettings.DefaultIdleTimeoutMinutes;
+        if (int.TryParse(configured, out var parsed))
+        {
+            minutes = SessionSettings.Clamp(parsed);
+        }
+
+        db.SessionSettings.Add(new SessionSettings
+        {
+            Id = SessionSettings.SingletonId,
+            IdleTimeoutMinutes = minutes,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedOcrCleanupAsync(CancellationToken cancellationToken)
+    {
+        if (await db.OcrCleanupRules.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var trim = new[] { "\"", "'", ",", ".", ";", ":", "(", ")", "[", "]", "*", "#" };
+        var discard = new[] { "N/A", "NA", "NONE", "UNKNOWN", "NULL", "TBD", "--" };
+        var order = 1;
+        foreach (var value in trim)
+        {
+            db.OcrCleanupRules.Add(new OcrCleanupRule
+            {
+                Id = Guid.NewGuid(),
+                Kind = OcrCleanupKinds.Trim,
+                Value = value,
+                IsActive = true,
+                SortOrder = order++
+            });
+        }
+
+        foreach (var value in discard)
+        {
+            db.OcrCleanupRules.Add(new OcrCleanupRule
+            {
+                Id = Guid.NewGuid(),
+                Kind = OcrCleanupKinds.Discard,
+                Value = value,
+                IsActive = true,
+                SortOrder = order++
+            });
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 

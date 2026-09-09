@@ -13,4 +13,7 @@ public interface IOcrJobQueue
     Task<OcrQueueDelivery?> ReceiveAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken);
 
     Task DeleteAsync(OcrQueueDelivery delivery, CancellationToken cancellationToken);
+
+    /// <summary>Reachability only — never return connection strings or keys.</summary>
+    Task<bool> CanReachAsync(CancellationToken cancellationToken);
 }

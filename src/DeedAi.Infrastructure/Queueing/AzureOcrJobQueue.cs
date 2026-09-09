@@ -48,4 +48,17 @@ public sealed class AzureOcrJobQueue(QueueClient queue) : IOcrJobQueue
     {
         await queue.DeleteMessageAsync(delivery.MessageId, delivery.PopReceipt, cancellationToken);
     }
+
+    public async Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _ = await queue.ExistsAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

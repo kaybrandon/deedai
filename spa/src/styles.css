@@ -212,7 +212,17 @@ td { padding: 12px 14px; border-top: 1px solid #f3f4f6; }
 .actions-cell { display: flex; gap: 8px; flex-wrap: wrap; }
 .deleted-row { opacity: 0.6; }
 
-.chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.chip { display: inline-flex; align-items: center; min-height: var(--action-h); padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.session-banner {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
 .chip-ready { background: var(--ready-bg); color: var(--ready-fg); }
 .chip-failed { background: var(--failed-bg); color: var(--failed-fg); }
 .chip-processing { background: var(--processing-bg); color: var(--processing-fg); }

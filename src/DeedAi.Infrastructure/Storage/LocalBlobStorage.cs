@@ -38,6 +38,20 @@ public sealed class LocalBlobStorage(string rootPath) : IBlobStorage
         return Task.CompletedTask;
     }
 
+    public Task<bool> CanReachAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            Directory.CreateDirectory(rootPath);
+            return Task.FromResult(Directory.Exists(rootPath));
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
+    }
+
     private string FullPath(string path)
     {
         var sanitized = path.Replace('\\', '/').TrimStart('/');

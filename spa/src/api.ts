@@ -80,6 +80,7 @@ export interface DocumentListItem {
   deedType: string | null;
   reviewStatus: string | null;
   flags: FlagSummary[];
+  errorMessage: string | null;
 }
 
 export interface FieldDraft {
@@ -150,6 +151,20 @@ export interface NotificationSettings {
   notifyUploader: boolean;
   events: string[];
   recipientsSummary: string;
+}
+
+export interface SessionConfig {
+  idleTimeoutMinutes: number;
+  defaultMinutes: number;
+  source: "admin" | "appSetting" | "default";
+}
+
+export interface OcrCleanupItem {
+  id: string;
+  kind: "Trim" | "Discard" | string;
+  value: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface NotifyPreview {
@@ -327,7 +342,31 @@ export const endpoints = {
       method: "PUT",
       body: JSON.stringify(fields)
     }),
-  retry: (id: string) => api<{ message: string }>(`/api/documents/${id}/retry`, { method: "POST" }),
+  retry: (id: string) => api<{ message: string; status?: string }>(`/api/documents/${id}/retry`, { method: "POST" }),
+  requeueFailed: () => api<{ message: string; count: number }>("/api/documents/requeue-failed", { method: "POST" }),
+  session: () => api<SessionConfig>("/api/settings/session"),
+  updateSession: (idleTimeoutMinutes: number) =>
+    api<SessionConfig>("/api/settings/session", {
+      method: "PUT",
+      body: JSON.stringify({ idleTimeoutMinutes })
+    }),
+  ocrCleanup: () => api<OcrCleanupItem[]>("/api/settings/ocr-cleanup"),
+  createOcrCleanup: (body: object) =>
+    api<OcrCleanupItem>("/api/settings/ocr-cleanup", { method: "POST", body: JSON.stringify(body) }),
+  updateOcrCleanup: (id: string, body: object) =>
+    api<OcrCleanupItem>(`/api/settings/ocr-cleanup/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteOcrCleanup: (id: string) => api<{ message: string }>(`/api/settings/ocr-cleanup/${id}`, { method: "DELETE" }),
+  health: () => api<{ status: string; product: string }>("/api/health"),
+  healthDetail: () =>
+    api<{
+      status: string;
+      product: string;
+      checks: {
+        sql: { status: string; reachable: boolean; mode: string };
+        storage: { status: string; reachable: boolean; mode: string };
+        queue: { status: string; reachable: boolean; mode: string };
+      };
+    }>("/api/health/detail"),
   remove: (id: string) => api<{ message: string }>(`/api/documents/${id}`, { method: "DELETE" }),
   restore: (id: string) => api<{ message: string }>(`/api/documents/${id}/restore`, { method: "POST" }),
   assign: (id: string, assigneeUserId: string | null) =>

@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { endpoints, type ApiError } from "../api";
 import { useAuth } from "../auth";
 
@@ -8,6 +8,9 @@ const EMAIL_KEY = "deedai.rememberedEmail";
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const idleReason = params.get("reason") === "idle";
+  const idleHadDraft = sessionStorage.getItem("deedai.idleHadDraft") === "1";
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) ?? "");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(() => Boolean(localStorage.getItem(EMAIL_KEY)));
@@ -46,6 +49,14 @@ export default function LoginPage() {
       <form className="login-card" onSubmit={onSubmit}>
         <h1>Deed AI</h1>
         <p className="subtitle">Sign in to continue</p>
+        {idleReason && (
+          <div className="session-banner" role="status">
+            Your session expired due to inactivity. Sign in again.
+            {idleHadDraft
+              ? " Unsaved draft field edits were not saved."
+              : " In-progress work was not silently discarded — sign in to continue."}
+          </div>
+        )}
         <label>
           Email
           <input

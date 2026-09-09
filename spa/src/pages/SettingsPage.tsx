@@ -7,7 +7,9 @@ import {
   type DeedTypeItem,
   type FlagItem,
   type NotificationSettings,
+  type OcrCleanupItem,
   type PropertyDefaultItem,
+  type SessionConfig,
   type SoftwareSettings,
   type StatusItem,
   type TeamItem,
@@ -24,6 +26,7 @@ type PendingDelete =
   | { kind: "team"; id: string; name: string }
   | { kind: "client"; id: string; name: string }
   | { kind: "property"; id: string; name: string }
+  | { kind: "ocr"; id: string; name: string }
   | { kind: "reset"; scope: "Client" | "DeedType"; clientId?: string; deedType?: string; name: string }
   | { kind: "purge" };
 
@@ -37,6 +40,10 @@ export default function SettingsPage() {
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [notifications, setNotifications] = useState<NotificationSettings | null>(null);
+  const [session, setSession] = useState<SessionConfig | null>(null);
+  const [ocrRules, setOcrRules] = useState<OcrCleanupItem[]>([]);
+  const [idleMinutes, setIdleMinutes] = useState(30);
+  const [ocrForm, setOcrForm] = useState({ kind: "Discard", value: "", isActive: true, sortOrder: 50 });
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingDelete | null>(null);
@@ -59,18 +66,31 @@ export default function SettingsPage() {
   const [resetDeedType, setResetDeedType] = useState("");
 
   async function load() {
-    const [nextFlags, nextStatuses, nextMaps, nextTeams, nextClients, nextUsers, nextNotify, nextSoftware, nextDefaults] =
-      await Promise.all([
-        endpoints.flags(),
-        endpoints.statuses(),
-        endpoints.deedTypes(),
-        endpoints.teams(),
-        endpoints.settingsClients(),
-        endpoints.users(),
-        endpoints.notifications(),
-        endpoints.softwareSettings(),
-        endpoints.propertyDefaults()
-      ]);
+    const [
+      nextFlags,
+      nextStatuses,
+      nextMaps,
+      nextTeams,
+      nextClients,
+      nextUsers,
+      nextNotify,
+      nextSoftware,
+      nextDefaults,
+      nextSession,
+      nextOcr
+    ] = await Promise.all([
+      endpoints.flags(),
+      endpoints.statuses(),
+      endpoints.deedTypes(),
+      endpoints.teams(),
+      endpoints.settingsClients(),
+      endpoints.users(),
+      endpoints.notifications(),
+      endpoints.softwareSettings(),
+      endpoints.propertyDefaults(),
+      endpoints.session(),
+      endpoints.ocrCleanup()
+    ]);
     setFlags(nextFlags);
     setStatuses(nextStatuses);
     setDeedTypes(nextMaps);
@@ -80,6 +100,9 @@ export default function SettingsPage() {
     setNotifications(nextNotify);
     setSoftware(nextSoftware);
     setDefaults(nextDefaults);
+    setSession(nextSession);
+    setIdleMinutes(nextSession.idleTimeoutMinutes);
+    setOcrRules(nextOcr);
   }
 
   useEffect(() => {
@@ -98,6 +121,7 @@ export default function SettingsPage() {
       if (pending.kind === "deedType") await endpoints.deleteDeedType(pending.id);
       if (pending.kind === "team") await endpoints.deleteTeam(pending.id);
       if (pending.kind === "client") await endpoints.deleteClient(pending.id);
+      if (pending.kind === "ocr") await endpoints.deleteOcrCleanup(pending.id);
       if (pending.kind === "property") await endpoints.deletePropertyDefault(pending.id);
       if (pending.kind === "reset") {
         await endpoints.resetPropertyDefaults({
@@ -138,7 +162,7 @@ export default function SettingsPage() {
 
       <section className="panel">
         <h2>Manage Documents</h2>
-        <p className="muted">Restore and hard-delete live on the Restore page. Purge permanently removes every soft-deleted deed. Failed OCR requeue is Workstream B.</p>
+        <p className="muted">Restore and hard-delete live on the Restore page. Purge permanently removes every soft-deleted deed. Failed and JSON Retry requeue extract from Documents and Review.</p>
         <div className="row-actions">
           <button className="primary" type="button" onClick={() => navigate("/restore")}>
             Open Restore
@@ -148,6 +172,39 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
+
+      {session && (
+        <section className="panel">
+          <h2>Session idle timeout</h2>
+          <p className="muted">
+            Default is <strong>{session.defaultMinutes} minutes</strong> (App Setting{" "}
+            <code>Session__IdleTimeoutMinutes</code> / Admin Settings). After idle expiry the SPA signs you out and
+            sends you to login with a reason — unsaved draft field edits are not silently wiped.
+          </p>
+          <form
+            className="inline-form"
+            onSubmit={async (event: FormEvent) => {
+              event.preventDefault();
+              const next = await endpoints.updateSession(idleMinutes);
+              setSession(next);
+              setIdleMinutes(next.idleTimeoutMinutes);
+              setNotice(`Idle timeout saved: ${next.idleTimeoutMinutes} minutes.`);
+            }}
+          >
+            <input
+              type="number"
+              min={5}
+              max={1440}
+              value={idleMinutes}
+              aria-label="Idle timeout minutes"
+              onChange={(e) => setIdleMinutes(Number(e.target.value))}
+            />
+            <button className="primary" type="submit">
+              Save timeout
+            </button>
+          </form>
+        </section>
+      )}
 
       {software && (
         <section className="panel">
@@ -206,6 +263,50 @@ export default function SettingsPage() {
           </form>
         </section>
       )}
+
+      <SettingsBlock
+        title="OCR trim / discard"
+        empty={ocrRules.length === 0}
+        emptyBody="Seeded trim characters and discard words clean new extracts. Add more here — never put secrets in this list."
+      >
+        <ul className="setting-list">
+          {ocrRules.map((rule) => (
+            <li key={rule.id}>
+              <span>
+                <strong>{rule.kind}</strong> · <code>{rule.value}</code>
+                {rule.isActive ? "" : " · inactive"}
+              </span>
+              <button className="link" type="button" onClick={() => setPending({ kind: "ocr", id: rule.id, name: `${rule.kind} ${rule.value}` })}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form
+          className="inline-form"
+          onSubmit={async (event: FormEvent) => {
+            event.preventDefault();
+            await endpoints.createOcrCleanup(ocrForm);
+            setOcrForm({ kind: "Discard", value: "", isActive: true, sortOrder: 50 });
+            setNotice("OCR cleanup rule saved.");
+            await load();
+          }}
+        >
+          <select value={ocrForm.kind} onChange={(e) => setOcrForm({ ...ocrForm, kind: e.target.value })} aria-label="Cleanup kind">
+            <option value="Trim">Trim</option>
+            <option value="Discard">Discard</option>
+          </select>
+          <input
+            placeholder={ocrForm.kind === "Trim" ? "Character" : "Word"}
+            value={ocrForm.value}
+            onChange={(e) => setOcrForm({ ...ocrForm, value: e.target.value })}
+            required
+          />
+          <button className="primary" type="submit">
+            Add rule
+          </button>
+        </form>
+      </SettingsBlock>
 
       <SettingsBlock
         title="Property defaults"
