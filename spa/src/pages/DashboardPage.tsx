@@ -34,6 +34,13 @@ function buildQuery(from: string, to: string, clientId: string) {
   return `?${params}`;
 }
 
+function buildExportQuery(from: string, to: string, clientId: string) {
+  const params = new URLSearchParams(buildQuery(from, to, clientId));
+  if (from) params.set("fromDate", from);
+  if (to) params.set("toDate", to);
+  return `?${params}`;
+}
+
 function dashboardFileName(from: string, to: string) {
   const start = from || "all";
   const end = to || "all";
@@ -103,6 +110,7 @@ export default function DashboardPage() {
 
   async function handleExport() {
     const params = query();
+    const exportParams = buildExportQuery(from, to, clientId);
     const nextApplied = { from, to, clientId };
     setExporting(true);
     try {
@@ -110,7 +118,7 @@ export default function DashboardPage() {
       if (!ok) {
         return;
       }
-      await endpoints.exportDashboard(params, dashboardFileName(nextApplied.from, nextApplied.to));
+      await endpoints.exportDashboard(exportParams, dashboardFileName(nextApplied.from, nextApplied.to));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not export the dashboard PDF.");

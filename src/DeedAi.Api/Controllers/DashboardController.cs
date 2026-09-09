@@ -71,6 +71,8 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
         [FromQuery] DateTimeOffset? from,
         [FromQuery] DateTimeOffset? to,
         [FromQuery] Guid? clientId,
+        [FromQuery] string? fromDate,
+        [FromQuery] string? toDate,
         CancellationToken cancellationToken)
     {
         var rows = await LoadRows(from, to, clientId, includeAssignee: true, cancellationToken);
@@ -114,7 +116,7 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
                 return StatusCode(500, new { message = "PDF export produced no content. Try again or print the dashboard." });
             }
 
-            return File(bytes, "application/pdf", DeedPdfWriter.DashboardFileName(rangeFrom, rangeTo));
+            return File(bytes, "application/pdf", DeedPdfWriter.DashboardFileName(rangeFrom, rangeTo, fromDate, toDate));
         }
         catch (Exception)
         {

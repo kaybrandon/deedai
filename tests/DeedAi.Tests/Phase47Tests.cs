@@ -60,6 +60,33 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
+    public void Dashboard_filename_keeps_local_end_of_day_calendar_date()
+    {
+        var eastern = TimeSpan.FromHours(-4);
+        var from = new DateTimeOffset(2024, 8, 14, 0, 0, 0, eastern);
+        var to = new DateTimeOffset(2024, 8, 14, 23, 59, 59, eastern);
+
+        Assert.Equal(new DateTime(2024, 8, 15, 3, 59, 59), to.UtcDateTime);
+        Assert.Equal("2024-08-15", to.UtcDateTime.ToString("yyyy-MM-dd"));
+        Assert.Equal("deedai-dashboard-2024-08-14-to-2024-08-14.pdf", DeedPdfWriter.DashboardFileName(from, to));
+        Assert.Equal("2024-08-14", DeedPdfWriter.FilterCalendarDate(to));
+    }
+
+    [Fact]
+    public void Dashboard_filename_uses_picker_dates_when_query_instant_already_utc_shifted()
+    {
+        var from = new DateTimeOffset(2024, 8, 14, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2024, 8, 15, 3, 59, 59, TimeSpan.Zero);
+
+        Assert.Equal(
+            "deedai-dashboard-2024-08-15-to-2024-08-15.pdf",
+            DeedPdfWriter.DashboardFileName(from, to));
+        Assert.Equal(
+            "deedai-dashboard-2024-08-14-to-2024-08-14.pdf",
+            DeedPdfWriter.DashboardFileName(from, to, "2024-08-14", "2024-08-14"));
+    }
+
+    [Fact]
     public async Task Export_filename_includes_date_range()
     {
         var client = await Authed("viewer@bisconsultants.com");
@@ -75,6 +102,43 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
             ?? response.Content.Headers.ToString();
         Assert.Contains("2024-08-12", disposition, StringComparison.Ordinal);
         Assert.Contains("deedai-dashboard", disposition, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("2024-08-13", disposition, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Export_filename_does_not_shift_local_end_of_day_to_next_utc_day()
+    {
+        var client = await Authed("viewer@bisconsultants.com");
+        var from = new DateTimeOffset(2024, 8, 12, 0, 0, 0, TimeSpan.FromHours(-4));
+        var to = new DateTimeOffset(2024, 8, 12, 23, 59, 59, TimeSpan.FromHours(-4));
+        Assert.Equal(new DateTime(2024, 8, 13, 3, 59, 59), to.UtcDateTime);
+
+        var response = await client.GetAsync(
+            $"/api/dashboard/export?from={Uri.EscapeDataString(from.ToString("o"))}&to={Uri.EscapeDataString(to.ToString("o"))}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var expected = DeedPdfWriter.DashboardFileName(from, to);
+        Assert.Equal("deedai-dashboard-2024-08-12-to-2024-08-12.pdf", expected);
+        var disposition = response.Content.Headers.ContentDisposition?.FileName
+            ?? response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ToString();
+        Assert.Contains("deedai-dashboard-2024-08-12-to-2024-08-12.pdf", disposition, StringComparison.Ordinal);
+        Assert.DoesNotContain("2024-08-13", disposition, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Export_filename_uses_picker_calendar_dates_over_utc_shifted_to()
+    {
+        var client = await Authed("viewer@bisconsultants.com");
+        var from = new DateTimeOffset(2024, 8, 12, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2024, 8, 13, 3, 59, 59, TimeSpan.Zero);
+        var response = await client.GetAsync(
+            $"/api/dashboard/export?from={Uri.EscapeDataString(from.ToString("o"))}&to={Uri.EscapeDataString(to.ToString("o"))}&fromDate=2024-08-12&toDate=2024-08-12");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var disposition = response.Content.Headers.ContentDisposition?.FileName
+            ?? response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ToString();
+        Assert.Contains("deedai-dashboard-2024-08-12-to-2024-08-12.pdf", disposition, StringComparison.Ordinal);
+        Assert.DoesNotContain("2024-08-13", disposition, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -228,8 +292,11 @@ public sealed class Phase47Tests : IClassFixture<TestAppFactory>
         Assert.Contains("Export PDF", page);
         Assert.Contains(">Print<", page);
         Assert.Contains("dashboard-export-actions", page);
-        Assert.Contains("endpoints.exportDashboard(params", page);
+        Assert.Contains("endpoints.exportDashboard(exportParams", page);
         Assert.Contains("buildQuery", page);
+        Assert.Contains("buildExportQuery", page);
+        Assert.Contains("fromDate", page);
+        Assert.Contains("toDate", page);
         Assert.Contains("applied", page);
         Assert.Contains("Deed AI", page);
         Assert.DoesNotContain("County", page);
