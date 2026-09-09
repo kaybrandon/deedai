@@ -57,7 +57,8 @@ public sealed class Phase51Tests
         Assert.Contains("data-nav=\"systems-mid\"", shell, StringComparison.Ordinal);
         Assert.Contains("aria-controls=\"systems-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("id=\"systems-nav\"", shell, StringComparison.Ordinal);
-        Assert.Contains("Systems", shell, StringComparison.Ordinal);
+        Assert.Contains("System", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -66,19 +67,21 @@ public sealed class Phase51Tests
 
         var settingsNav = SliceBetween(shell, "id=\"settings-nav\"", "sidebar-identity");
         Assert.Contains("data-nav=\"systems-mid\"", settingsNav, StringComparison.Ordinal);
-        var systemsIdx = settingsNav.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal);
+        var systemIdx = settingsNav.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal);
         var softwareIdx = settingsNav.IndexOf("to=\"/software\"", StringComparison.Ordinal);
         var usersIdx = settingsNav.IndexOf("to=\"/users\"", StringComparison.Ordinal);
         var apiIdx = settingsNav.IndexOf("to=\"/settings#swagger\"", StringComparison.Ordinal);
-        Assert.True(systemsIdx >= 0, "Systems mid-level nest is missing.");
-        Assert.True(softwareIdx > systemsIdx, "Software must be indented under Systems, not a Settings first child.");
-        Assert.True(usersIdx > systemsIdx, "Users must sit under Systems.");
-        Assert.True(apiIdx > systemsIdx, "API must sit under Systems.");
+        Assert.True(systemIdx >= 0, "System mid-level nest is missing.");
+        Assert.True(softwareIdx > systemIdx, "Software must be indented under System, not a Settings first child.");
+        Assert.True(usersIdx > systemIdx, "Users must sit under System.");
+        Assert.True(apiIdx > systemIdx, "API must sit under System.");
         Assert.Contains("childClass(onSoftware)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onUsers)", shell, StringComparison.Ordinal);
         Assert.Contains("childClass(onApiDocs)", shell, StringComparison.Ordinal);
-        Assert.Contains("childClass(onSystemsPage)", shell, StringComparison.Ordinal);
-        Assert.Contains("<h1>Systems</h1>", Read("spa/src/pages/SettingsPage.tsx"), StringComparison.Ordinal);
+        Assert.Contains("childClass(onSystem)", shell, StringComparison.Ordinal);
+        var settings = Read("spa/src/pages/SettingsPage.tsx");
+        Assert.Contains("<h1>System</h1>", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", settings, StringComparison.Ordinal);
     }
 
     [Fact]

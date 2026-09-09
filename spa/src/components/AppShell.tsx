@@ -26,14 +26,14 @@ export default function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const onSettingsSection = isSettingsSection(location.pathname);
   const [settingsOpen, setSettingsOpen] = useState(true);
-  const [systemsOpen, setSystemsOpen] = useState(true);
+  const [systemOpen, setSystemOpen] = useState(true);
   const title = productTitle(me?.clients);
   const identity = me?.displayName || me?.email || "signed-in user";
-  const onSystemsPage = location.pathname === "/settings" && location.hash !== "#swagger";
+  const onSystem = location.pathname === "/settings" && location.hash !== "#swagger";
   const onApiDocs = location.pathname === "/settings" && location.hash === "#swagger";
   const onSoftware = location.pathname === "/software" || location.pathname.startsWith("/software/");
   const onUsers = location.pathname === "/users" || location.pathname.startsWith("/users/");
-  const onSystemsSection = onSystemsPage || onApiDocs || onSoftware || onUsers;
+  const onSystemSection = onSystem || onApiDocs || onSoftware || onUsers;
 
   function closeNav() {
     setNavOpen(false);
@@ -43,10 +43,10 @@ export default function AppShell() {
     if (onSettingsSection) {
       setSettingsOpen(true);
     }
-    if (onSystemsSection) {
-      setSystemsOpen(true);
+    if (onSystemSection) {
+      setSystemOpen(true);
     }
-  }, [onSettingsSection, onSystemsSection]);
+  }, [onSettingsSection, onSystemSection]);
 
   return (
     <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
@@ -112,16 +112,16 @@ export default function AppShell() {
                     <button
                       className="nav-group-caret-only"
                       type="button"
-                      aria-expanded={systemsOpen}
+                      aria-expanded={systemOpen}
                       aria-controls="systems-nav"
-                      aria-label={systemsOpen ? "Collapse Systems" : "Expand Systems"}
-                      onClick={() => setSystemsOpen((open) => !open)}
+                      aria-label={systemOpen ? "Collapse System" : "Expand System"}
+                      onClick={() => setSystemOpen((open) => !open)}
                     >
-                      <span className="nav-group-caret" aria-hidden="true">{systemsOpen ? "▾" : "▸"}</span>
+                      <span className="nav-group-caret" aria-hidden="true">{systemOpen ? "▾" : "▸"}</span>
                     </button>
                     {canAdmin ? (
-                      <NavLink to="/settings" end className={() => childClass(onSystemsPage)} onClick={closeNav}>
-                        Systems
+                      <NavLink to="/settings" end className={() => childClass(onSystem)} onClick={closeNav}>
+                        System
                       </NavLink>
                     ) : (
                       <button
@@ -129,11 +129,11 @@ export default function AppShell() {
                         type="button"
                         onClick={() => navigate("/denied", { state: { action: "change settings" } })}
                       >
-                        Systems
+                        System
                       </button>
                     )}
                   </div>
-                  {systemsOpen && (
+                  {systemOpen && (
                     <div className="nav-sub" id="systems-nav">
                       <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
                         Software

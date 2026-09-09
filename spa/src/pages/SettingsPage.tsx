@@ -124,8 +124,8 @@ export default function SettingsPage() {
     <section className="page page-detail">
       <div className="page-head">
         <div>
-          <h1>Systems</h1>
-          <p className="page-kicker">Systems lists, session, Software maps, and API docs.</p>
+          <h1>System</h1>
+          <p className="page-kicker">Lists, session, Software maps, and API docs.</p>
         </div>
         <div className="row-actions">
           <a className="ghost swagger-open" href="#system-health">

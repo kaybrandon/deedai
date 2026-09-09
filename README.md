@@ -37,7 +37,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Density:** Sidebar ~220px · top bar 48px · ribbon 42px · hit ≥44px · btn 32px · search max 360px · filters ~240px · forms ~32rem · Settings/Software detail ~680px · content max ~1440px. Software Instances table fills remaining width.
 - **Software layout:** Client software form stays ~680px. Existing Client configs render as a full-width **Software Instances** table (no invented Environment / County / CAMA fields).
 - **Documents:** exactly one search, in the filter row only (≤360px). No topbar search duplicate.
-- **Settings nest:** **Settings** → **Systems** (mid-level nest parent, plural Title Case) → indented **Software** · **Users** · **API**. Not Software as Settings’ first child. Not Systems as a sibling of Software/Users/API. Never County / CAMA. Parents are not double-highlighted with a leaf.
+- **Settings nest:** **Settings** → **System** (mid-level nest parent, singular Title Case) → indented **Software** · **Users** · **API**. Not Software as Settings’ first child. Not System as a sibling of Software/Users/API. Never Systems / Workspace / County / CAMA. Parents are not double-highlighted with a leaf.
 - **Help:** no FieldHelp `?` pills. Help is label `title` / `aria-describedby` only — not a second page Help widget.
 - **Carry:** Phase 5.0.1 chart-click + Title Case. Client / Software naming · 4 roles · no secrets · no EF migration · no zipdeploy. Mask A stays on production until this ships.
 
@@ -72,7 +72,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Profile photo:** upload, replace, and clear (ConfirmSheet on remove). Stored in blob storage. Shown in the header and on Users. JPEG/PNG/WebP/GIF, 2 MB max. Default avatar is initials when there is no photo.
 - **Header title:** `{Client} Deed AI` only when the signed-in user's effective scope is exactly one Client; otherwise the product name **Deed AI**.
 - **Left shell identity:** **Logged in as {name/email}** plus a **My profile** entry (≥44px) for display name, full name, photo, password change, and assigned Client(s) from existing identity / Client access (clear empty state when none).
-- **Settings nest:** Settings → Systems (mid-level) → Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Never County / CAMA.
+- **Settings nest:** Settings → System (mid-level, singular) → Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Never Systems / County / CAMA.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
 - **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909190000_Phase491RemovePropertyDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.

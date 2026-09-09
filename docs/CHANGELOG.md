@@ -2,7 +2,7 @@
 
 ## 2026-09-09 — Phase 5.1 Mask F Mockitt Admin theme
 - Mask F tokens and dark rail (`#1E2430`) on Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software.
-- Documents list has one filter-row search (max 360px). Settings nest is Settings → Systems (mid-level, plural) → Software / Users / API. `/settings` title is **Systems**. Never County / CAMA. Parents are not double-highlighted with a leaf.
+- Documents list has one filter-row search (max 360px). Settings nest is Settings → System (mid-level, singular) → Software / Users / API. `/settings` title is **System**. Never Systems / County / CAMA. Parents are not double-highlighted with a leaf.
 - FieldHelp `?` pills removed. Help is native `title` / `aria-describedby`. Settings and Software forms hug ~680px / ~32rem with 4/8/12 spacing. Software Instances table uses remaining page width (Client configs — no invented Environment / County / CAMA columns).
 - Volume Over Time is a single teal series `#0D8A7F`. Review uses a 3-column grid. Disable user still uses ConfirmSheet. No EF migration. No zipdeploy. Mask A remains on production until this ships.
 

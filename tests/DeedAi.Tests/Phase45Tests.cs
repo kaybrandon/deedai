@@ -243,8 +243,9 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("aria-controls=\"systems-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("id=\"systems-nav\"", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/settings\"", shell, StringComparison.Ordinal);
-        Assert.Contains("Systems", shell, StringComparison.Ordinal);
+        Assert.Contains("System", shell, StringComparison.Ordinal);
         Assert.Contains("navigate(\"/denied\", { state: { action: \"change settings\" } })", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("Workspace", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -255,10 +256,11 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.True(
             shell.IndexOf("id=\"systems-nav\"", StringComparison.Ordinal)
             < shell.IndexOf("to=\"/software\"", StringComparison.Ordinal),
-            "Software must nest under Systems.");
+            "Software must nest under System.");
 
         var settings = Read("spa/src/pages/SettingsPage.tsx");
-        Assert.Contains("<h1>Systems</h1>", settings, StringComparison.Ordinal);
+        Assert.Contains("<h1>System</h1>", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("Systems", settings, StringComparison.Ordinal);
         Assert.Contains("if (!canAdmin)", settings, StringComparison.Ordinal);
         Assert.Contains("navigate(\"/denied\", { state: { action: \"change settings\" } })", settings, StringComparison.Ordinal);
         Assert.DoesNotContain("County", settings, StringComparison.Ordinal);
