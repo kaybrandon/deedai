@@ -51,7 +51,8 @@ public sealed class DashboardChartNavTests
         Assert.Contains("Software Defaults", settings, StringComparison.Ordinal);
         Assert.Contains("Notify Emails", settings, StringComparison.Ordinal);
         Assert.Contains("Client Software Settings", software, StringComparison.Ordinal);
-        Assert.Contains("Needs Review", documents, StringComparison.Ordinal);
+        Assert.Contains("Needs Work", Read("spa/src/statusCatalog.ts"), StringComparison.Ordinal);
+        Assert.Contains("All Statuses", documents, StringComparison.Ordinal);
         Assert.Contains("New User", users, StringComparison.Ordinal);
         Assert.Contains("Edit User", users, StringComparison.Ordinal);
 

@@ -178,33 +178,53 @@ public sealed class SettingsController(
     }
 
     [HttpGet("statuses")]
-    public async Task<ActionResult<IReadOnlyList<StatusItem>>> Statuses(CancellationToken cancellationToken) =>
-        await db.StatusDefinitions.AsNoTracking().OrderBy(x => x.SortOrder).ThenBy(x => x.DisplayName)
-            .Select(x => new StatusItem(x.Id, x.Code, x.DisplayName, x.Color, x.IsSystem, x.SortOrder, x.IsActive))
+    public async Task<ActionResult<IReadOnlyList<StatusItem>>> Statuses(CancellationToken cancellationToken)
+    {
+        var rows = await db.StatusDefinitions.AsNoTracking().OrderBy(x => x.SortOrder).ThenBy(x => x.DisplayName)
             .ToListAsync(cancellationToken);
+        foreach (var row in rows)
+        {
+            row.CoalesceNullCatalogFields();
+        }
+
+        return rows.Select(ToStatusItem).ToList();
+    }
 
     [HttpPost("statuses")]
     [Authorize(Policy = RolePolicies.CanAdmin)]
     public async Task<ActionResult<StatusItem>> CreateStatus([FromBody] UpsertStatusRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Code) || string.IsNullOrWhiteSpace(request.DisplayName))
+        var displayName = StatusCatalog.ToTitleCase(request.DisplayName);
+        var code = string.IsNullOrWhiteSpace(request.Code)
+            ? StatusCatalog.CodeFromDisplayName(displayName)
+            : request.Code.Trim();
+        if (string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(code))
         {
-            return BadRequest(new { message = "Status code and display name are required." });
+            return BadRequest(new { message = "Status display name is required." });
+        }
+
+        if (await db.StatusDefinitions.AnyAsync(x => x.Code == code, cancellationToken))
+        {
+            return BadRequest(new { message = "A status with this code already exists." });
         }
 
         var item = new StatusDefinition
         {
             Id = Guid.NewGuid(),
-            Code = request.Code.Trim(),
-            DisplayName = request.DisplayName.Trim(),
+            Code = code,
+            DisplayName = displayName,
             Color = NormalizeColor(request.Color),
             IsSystem = false,
             SortOrder = request.SortOrder,
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            MapsTo = string.IsNullOrWhiteSpace(request.MapsTo) ? code : request.MapsTo.Trim(),
+            Kind = StatusCatalog.NormalizeKind(request.Kind),
+            IsSeed = false
         };
+        item.CoalesceNullCatalogFields();
         db.StatusDefinitions.Add(item);
         await db.SaveChangesAsync(cancellationToken);
-        return new StatusItem(item.Id, item.Code, item.DisplayName, item.Color, item.IsSystem, item.SortOrder, item.IsActive);
+        return ToStatusItem(item);
     }
 
     [HttpPut("statuses/{id:guid}")]
@@ -217,17 +237,34 @@ public sealed class SettingsController(
             return NotFound();
         }
 
-        item.DisplayName = request.DisplayName.Trim();
+        item.CoalesceNullCatalogFields();
+        var displayName = StatusCatalog.ToTitleCase(request.DisplayName);
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return BadRequest(new { message = "Status display name is required." });
+        }
+
+        item.DisplayName = displayName;
         item.Color = NormalizeColor(request.Color);
         item.SortOrder = request.SortOrder;
         item.IsActive = request.IsActive;
-        if (!item.IsSystem)
+        if (!item.IsSystem && item.IsSeed != true)
         {
-            item.Code = request.Code.Trim();
+            var code = string.IsNullOrWhiteSpace(request.Code)
+                ? item.Code
+                : request.Code.Trim();
+            item.Code = code;
+            item.MapsTo = string.IsNullOrWhiteSpace(request.MapsTo) ? item.MapsTo : request.MapsTo.Trim();
+            item.Kind = StatusCatalog.NormalizeKind(request.Kind);
+        }
+        else if (!item.IsSystem)
+        {
+            item.MapsTo = string.IsNullOrWhiteSpace(request.MapsTo) ? item.MapsTo : request.MapsTo.Trim();
         }
 
+        item.CoalesceNullCatalogFields();
         await db.SaveChangesAsync(cancellationToken);
-        return new StatusItem(item.Id, item.Code, item.DisplayName, item.Color, item.IsSystem, item.SortOrder, item.IsActive);
+        return ToStatusItem(item);
     }
 
     [HttpDelete("statuses/{id:guid}")]
@@ -240,9 +277,18 @@ public sealed class SettingsController(
             return NotFound();
         }
 
-        if (item.IsSystem)
+        item.CoalesceNullCatalogFields();
+        if (item.IsSystem || item.IsSeed == true || StatusCatalog.IsMustCode(item.Code) || StatusCatalog.IsMustCode(item.DisplayName))
         {
-            return BadRequest(new { message = "System pipeline statuses cannot be deleted." });
+            return BadRequest(new { message = "System and seed catalog statuses cannot be deleted. Disable them instead." });
+        }
+
+        var inUse = await db.Documents.IgnoreQueryFilters().AnyAsync(
+            x => x.ReviewStatus == item.Code || x.Status == item.Code,
+            cancellationToken);
+        if (inUse)
+        {
+            return BadRequest(new { message = "This status is in use. Disable it instead of deleting." });
         }
 
         db.StatusDefinitions.Remove(item);
@@ -663,7 +709,7 @@ public sealed class SettingsController(
 
         var payload = new SettingsExport(
             flags.Select(x => new FlagItem(x.Id, x.Name, x.Color, x.SortOrder, x.IsActive)).ToList(),
-            statuses.Select(x => new StatusItem(x.Id, x.Code, x.DisplayName, x.Color, x.IsSystem, x.SortOrder, x.IsActive)).ToList(),
+            statuses.Select(ToStatusItem).ToList(),
             maps.Select(x => new DeedTypeItem(x.Id, x.DeedType, x.SoftwareCode, x.FieldMapJson, x.IsActive)).ToList(),
             teams.Select(ToTeam).ToList(),
             clients.Select(x => new ClientItem(x.Id, x.Name, x.IsActive)).ToList(),
@@ -749,6 +795,22 @@ public sealed class SettingsController(
             DeletePolicy.Allows(role, who),
             settings.UpdatedByEmail,
             settings.UpdatedAt == default ? null : settings.UpdatedAt);
+    }
+
+    private static StatusItem ToStatusItem(StatusDefinition item)
+    {
+        item.CoalesceNullCatalogFields();
+        return new StatusItem(
+            item.Id,
+            item.Code,
+            item.DisplayName,
+            item.Color,
+            item.IsSystem,
+            item.SortOrder,
+            item.IsActive,
+            item.MapsTo,
+            item.Kind,
+            item.IsSeed == true);
     }
 
     private static string NormalizeColor(string? color) =>

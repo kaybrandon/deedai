@@ -35,7 +35,8 @@ export const HELP = {
   "reports.flag": "Show deeds that have this review flag. Flags are defined by an Admin in Settings.",
   "reports.client": "Limit the report to one Client. You only see Clients your account can access.",
   "settings.flags": "Review flags the team can apply on a deed. Name and color appear on Documents and Reports.",
-  "settings.statuses": "Pipeline and review statuses used in filters and reports. System statuses cannot be deleted.",
+  "settings.statuses":
+    "Client/Software catalog statuses used on Documents and Review. Seed statuses can be renamed or disabled. System OCR statuses stay on the ribbon.",
   "settings.deedTypeMaps": "Map each deed type to the Software code used on lookup and push.",
   "restore.confirmRestore":
     "Restore puts this soft-deleted deed back on Documents for its Client. Review history stays attached.",

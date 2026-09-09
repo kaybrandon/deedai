@@ -769,6 +769,37 @@ input.documents-search {
   max-width: var(--form-w);
 }
 .inline-form select[multiple] { min-height: 88px; }
+.statuses-catalog { display: grid; gap: 8px; }
+.statuses-catalog .status-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: var(--action-h);
+}
+.statuses-catalog .status-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.statuses-catalog .status-fields input,
+.statuses-catalog .status-fields select {
+  min-height: var(--action-h);
+}
+.statuses-catalog .status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.statuses-catalog .status-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.documents-status-cell { display: grid; gap: 6px; justify-items: start; }
+.documents-status-cell select { min-height: var(--action-h); max-width: 180px; }
 .token-row {
   display: flex;
   flex-wrap: wrap;
@@ -921,9 +952,15 @@ td { padding: 8px 12px; border-top: 1px solid #f1f5f9; font-size: 13px; vertical
 .chip-failed { background: var(--failed-bg); color: var(--failed-fg); border-color: var(--failed-border); }
 .chip-processing { background: var(--processing-bg); color: var(--processing-fg); }
 .chip-queued { background: var(--queued-bg); color: var(--queued-fg); border-color: var(--queued-border); }
-.chip-needsreview { background: var(--review-bg); color: var(--review-fg); }
-.chip-approved { background: var(--ready-bg); color: var(--ready-fg); }
+.chip-needsreview, .chip-needswork { background: var(--review-bg); color: var(--review-fg); }
+.chip-approved, .chip-complete { background: var(--ready-bg); color: var(--ready-fg); }
 .chip-saved { background: var(--review-bg); color: var(--review-fg); }
+.chip-inqueue { background: var(--queued-bg); color: var(--queued-fg); }
+.chip-pending { background: var(--processing-bg); color: var(--processing-fg); }
+.chip-uploaderror { background: var(--failed-bg); color: var(--failed-fg); }
+.chip-new { background: #C5D4F0; color: var(--text); }
+.chip-research { background: #B7D9D4; color: var(--review-fg); }
+.chip-notneeded { background: var(--queued-bg); color: var(--muted); }
 
 .dropzone {
   border: 2px dashed #A8B4BE;

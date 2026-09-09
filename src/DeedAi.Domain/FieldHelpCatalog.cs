@@ -106,7 +106,7 @@ public static class FieldHelpCatalog
         [ReportsFlag] = "Show deeds that have this review flag. Flags are defined by an Admin in Settings.",
         [ReportsClient] = "Limit the report to one Client. You only see Clients your account can access.",
         [SettingsFlags] = "Review flags the team can apply on a deed. Name and color appear on Documents and Reports.",
-        [SettingsStatuses] = "Pipeline and review statuses used in filters and reports. System statuses cannot be deleted.",
+        [SettingsStatuses] = "Client/Software catalog statuses used on Documents and Review. Seed statuses can be renamed or disabled. System OCR statuses stay on the ribbon.",
         [SettingsDeedTypeMaps] = "Map each deed type to the Software code used on lookup and push.",
         [RestoreConfirmRestore] = "Restore puts this soft-deleted deed back on Documents for its Client. Review history stays attached.",
         [RestoreConfirmHardDelete] = "Hard-delete permanently removes the deed and its PDF blob. This cannot be undone — use Restore if you only meant to bring it back.",

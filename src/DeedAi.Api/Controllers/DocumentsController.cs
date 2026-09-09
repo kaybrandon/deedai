@@ -356,6 +356,38 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         return Ok(new { message = "Assigned." });
     }
 
+    [HttpPut("{id:guid}/catalog-status")]
+    [Authorize(Policy = RolePolicies.CanEdit)]
+    public async Task<IActionResult> SetCatalogStatus(
+        Guid id,
+        [FromBody] CatalogStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var document = await LoadVisible(id, includeDeleted: false, cancellationToken);
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        var pipeline = document.Status;
+        var applied = await ApplyReviewStatusAsync(document, request.CatalogStatus, cancellationToken);
+        if (applied is not null)
+        {
+            return applied;
+        }
+
+        document.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new
+        {
+            message = "Status saved.",
+            status = document.Status,
+            reviewStatus = document.ReviewStatus,
+            displayStatus = DisplayStatus(document),
+            pipelineUnchanged = document.Status == pipeline
+        });
+    }
+
     [HttpPost("bulk-assign")]
     [Authorize(Policy = RolePolicies.CanEdit)]
     public async Task<IActionResult> BulkAssign([FromBody] BulkAssignRequest request, CancellationToken cancellationToken)
@@ -599,14 +631,15 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         var normalized = ReviewWorkflow.NormalizeReviewStatus(reviewStatus);
         if (normalized is not null
             && !ReviewWorkflow.IsNeedsReview(normalized)
-            && !ReviewWorkflow.IsApproved(normalized))
+            && !ReviewWorkflow.IsApproved(normalized)
+            && !StatusCatalog.IsMustCode(normalized))
         {
             var allowed = await db.StatusDefinitions.AnyAsync(
                 x => x.Code == normalized && x.IsActive && !x.IsSystem,
                 cancellationToken);
             if (!allowed)
             {
-                return BadRequest(new { message = "Select a valid review status." });
+                return BadRequest(new { message = "Select a valid catalog status." });
             }
         }
 

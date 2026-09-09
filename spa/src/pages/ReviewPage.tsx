@@ -20,6 +20,7 @@ import { LabelWithHelp } from "../components/FieldHelp";
 import OcrRibbon from "../components/OcrRibbon";
 import StatusChip from "../components/StatusChip";
 import { displayStatus } from "../reviewStatus";
+import { assignableStatuses, assignedCatalogValue, catalogColor, catalogLabel } from "../statusCatalog";
 import { ribbonStepForDocument } from "../theme";
 
 const emptyFields: FieldDraft = {
@@ -342,13 +343,14 @@ export default function ReviewPage() {
   }
 
   const selectedFlags = new Set(doc.flags.map((flag) => flag.id));
-  const reviewStatuses = statuses.filter((status) => !status.isSystem);
+  const reviewStatuses = assignableStatuses(statuses);
   const shownStatus = displayStatus({
     status: doc.status,
     displayStatus: doc.displayStatus,
     reviewStatus: reviewStatus || doc.reviewStatus,
     flags: doc.flags
   });
+  const shownLabel = catalogLabel(shownStatus, statuses);
   const isFailed = doc.status === "Failed";
   const showFailedBanner = isFailed && shownStatus !== "Ready" && shownStatus !== "Approved";
 
@@ -358,7 +360,7 @@ export default function ReviewPage() {
       <div className="review-header">
         <div className="title-row">
           <h1>Deed Review</h1>
-          <StatusChip status={shownStatus} title={doc.errorMessage} />
+          <StatusChip status={shownStatus} label={shownLabel} color={catalogColor(shownStatus, statuses)} title={doc.errorMessage} />
           <span className="muted">
             {doc.name} · {doc.client}
           </span>
@@ -437,9 +439,19 @@ export default function ReviewPage() {
           </select>
         </label>
         <label>
-          Review Status
-          <select value={reviewStatus} disabled={!canEdit} onChange={(e) => setReviewStatus(e.target.value)}>
-            <option value="">None</option>
+          Status
+          <select
+            value={assignedCatalogValue(reviewStatus, reviewStatuses)}
+            disabled={!canEdit}
+            aria-label="Catalog status"
+            onChange={async (e) => {
+              const next = e.target.value;
+              setReviewStatus(next);
+              await endpoints.setCatalogStatus(doc.id, next || null);
+              await load(doc.id);
+            }}
+          >
+            <option value="">Pipeline</option>
             {reviewStatuses.map((item) => (
               <option key={item.id} value={item.code}>
                 {item.displayName}

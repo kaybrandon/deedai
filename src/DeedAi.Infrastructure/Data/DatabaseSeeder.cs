@@ -213,16 +213,7 @@ public sealed class DatabaseSeeder(
                 new FlagDefinition { Id = LegalHoldFlagId, Name = "Legal hold", Color = "#b91c1c", SortOrder = 3 });
         }
 
-        if (!await db.StatusDefinitions.AnyAsync(cancellationToken))
-        {
-            db.StatusDefinitions.AddRange(
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Code = DocumentStatuses.Queued, DisplayName = "Queued", Color = "#C5CED6", IsSystem = true, SortOrder = 1 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#E8C96A", IsSystem = true, SortOrder = 2 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#D8F0EA", IsSystem = true, SortOrder = 3 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#F5D6D3", IsSystem = true, SortOrder = 4 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#C5E8E4", IsSystem = false, SortOrder = 5 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#D8F0EA", IsSystem = false, SortOrder = 6 });
-        }
+        await SeedStatusCatalogAsync(cancellationToken);
 
         if (!await db.DeedTypeMaps.AnyAsync(cancellationToken))
         {
@@ -632,6 +623,61 @@ public sealed class DatabaseSeeder(
             await db.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE Documents SET ReviewStatus = {ReviewWorkflow.NeedsReview} WHERE Id = {id}",
                 cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedStatusCatalogAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.StatusDefinitions.ToListAsync(cancellationToken);
+        if (existing.Count == 0)
+        {
+            db.StatusDefinitions.AddRange(
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Code = DocumentStatuses.Queued, DisplayName = "Queued", Color = "#C5CED6", IsSystem = true, SortOrder = 1, MapsTo = DocumentStatuses.Queued, Kind = StatusCatalog.KindPipeline, IsSeed = false },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#E8C96A", IsSystem = true, SortOrder = 2, MapsTo = DocumentStatuses.Processing, Kind = StatusCatalog.KindPipeline, IsSeed = false },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#D8F0EA", IsSystem = true, SortOrder = 3, MapsTo = DocumentStatuses.Ready, Kind = StatusCatalog.KindPipeline, IsSeed = false },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#F5D6D3", IsSystem = true, SortOrder = 4, MapsTo = DocumentStatuses.Failed, Kind = StatusCatalog.KindPipeline, IsSeed = false },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#C5E8E4", IsSystem = false, SortOrder = 5, MapsTo = ReviewWorkflow.NeedsReview, Kind = StatusCatalog.KindReview, IsSeed = false },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#D8F0EA", IsSystem = false, SortOrder = 6, MapsTo = ReviewWorkflow.Approved, Kind = StatusCatalog.KindReview, IsSeed = false });
+            existing = [];
+        }
+
+        foreach (var row in existing)
+        {
+            row.CoalesceNullCatalogFields();
+            if (row.IsSystem && string.IsNullOrWhiteSpace(row.Kind))
+            {
+                row.Kind = StatusCatalog.KindPipeline;
+            }
+        }
+
+        var known = existing
+            .Select(x => x.Code)
+            .Concat(existing.Select(x => x.DisplayName))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in StatusCatalog.Must)
+        {
+            if (known.Contains(entry.Code) || known.Contains(entry.DisplayName))
+            {
+                continue;
+            }
+
+            db.StatusDefinitions.Add(new StatusDefinition
+            {
+                Id = entry.Id,
+                Code = entry.Code,
+                DisplayName = entry.DisplayName,
+                Color = entry.Color,
+                IsSystem = false,
+                SortOrder = entry.SortOrder,
+                IsActive = true,
+                MapsTo = entry.MapsTo,
+                Kind = entry.Kind,
+                IsSeed = true
+            });
+            known.Add(entry.Code);
+            known.Add(entry.DisplayName);
         }
 
         await db.SaveChangesAsync(cancellationToken);

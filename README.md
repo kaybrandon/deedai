@@ -33,6 +33,16 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.2.5 acceptance
+
+- **Statuses catalog (Admin):** Settings → System → Statuses lists and manages Client/Software statuses. Seeded if missing: **Complete** · **In Queue** · **Needs Work** · **New** · **Not Needed** · **Pending** · **Research** · **Upload Error**.
+- **Map ↔ pipeline:** Each catalog entry maps to Queued / Processing / Ready / Failed or a review state (Needs Work → NeedsReview, Complete → Approved-like) or a documented extension (New, Research, Not Needed). OCR `Document.Status` and the ribbon stay Queued → Processing → Ready. Catalog assign never writes pipeline status.
+- **Assign / filter:** Editors and Admins set catalog status on Documents and Review. List filters include catalog statuses. Chips use catalog display names (Title Case).
+- **CRUD:** Admin add / rename / soft-disable. System and seed Must entries cannot be hard-deleted (disable OK). ConfirmSheet on disable/delete (≥44px).
+- **Carry:** Client/Software only · no County/CAMA · Mask F · Designer-first `20260910030000_Phase525StatusesCatalog` · null-safe MapsTo / Kind / IsSeed (backfill + DEFAULT + coalesce) · health 200.
+- **Should:** Sort order and Mask F color tokens. DocumentLog history is parked.
+- **Won’t:** Super Admin · Flags catalog · Deed-type mapping table · replacing OCR with free-text-only statuses.
+
 ## Phase 5.2.4 acceptance
 
 - **Delete Policy** (Settings → System): Admin persists who may soft-delete documents — **All Editors** or **Admin only**. Label **Delete Policy** / **Who Can Delete**. Never County / CAMA / Super Admin.
@@ -155,7 +165,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 ## Phase 4.2 acceptance
 
 - **Ready PDF preview:** Seeded Ready demo deeds (`deeds/demo/…`) have a PDF in blob storage. Opening a Ready deed in review shows the iframe preview. `GET /api/documents/{id}/file` returns `application/pdf` when the blob exists or can be seeded for a demo path. The placeholder (“PDF is not available for this deed.”) shows only when there is truly no file.
-- **Status vs Needs review:** Pipeline status is OCR only (Queued / Processing / Ready / Failed). **Needs review** is a flag that implies review workflow and sets `ReviewStatus=NeedsReview`. List/review chips show Needs review — not Ready and Needs review together. Setting the flag, review-status dropdown, and `displayStatus` stay in sync. Approved clears the flag.
+- **Status vs Needs review:** Pipeline status is OCR only (Queued / Processing / Ready / Failed). Catalog statuses (Phase 5.2.5) are Client/Software labels mapped onto that pipeline or review workflow. **Needs Work** is the catalog name for Needs review (`ReviewStatus=NeedsWork` or `NeedsReview`). List/review chips show the catalog display name — not Ready and Needs Work together. Setting the flag, catalog status, and `displayStatus` stay in sync. Complete / Approved clears the flag. The OCR ribbon is unchanged.
 - **System health (Admin):** Settings has a **System health** card (`#system-health`) for `GET /api/health/detail` — SQL / storage / queue reachability, plus Phase 4.9 Blob R/W, Document Intelligence, OCR pipeline, and queue visibility. No connection strings or keys.
 - **Swagger Authorize:** Authorize (top bar and authorize-modal) hit target is ≥44px after Swagger paints (matches Copy Bearer). Phase 4.2.3 loads the pin **once, last** on a custom Swagger `index.html` (after `index.js`; no inline head dump / no early `InjectJavascript`) and re-applies every 250ms so React `display:inline` cannot shrink the button again. Phase 4.2.4 serves `/swagger/index.html` and `/swagger/index.js` with `Cache-Control: no-store` so browsers cannot keep a 7-day stale shell. After load, then QA2: `typeof window.__deedAiMeasureAuthorize === "function"`; `window.__deedAiMeasureAuthorize()` — every `getBoundingClientRect()` width/height ≥ 44; `html[data-deedai-authorize-hit=pass]`; `window.__deedAiAuthorizeRuntimeVersion === "4.2.3"`.
 - **Hard gates:** Client / Software naming, four roles, KV-only secrets, no new EF migration, no Azure zipdeploy.

@@ -149,6 +149,8 @@ public sealed record DashboardVolume(
 
 public sealed record UploadResult(int Queued, IReadOnlyList<DocumentListItem> Documents, IReadOnlyList<string> Errors);
 
+public sealed record CatalogStatusRequest(string? CatalogStatus);
+
 public sealed record AssignRequest(Guid? AssigneeUserId);
 
 public sealed record BulkAssignRequest(IReadOnlyList<Guid> DocumentIds, Guid? AssigneeUserId);

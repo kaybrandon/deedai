@@ -27,6 +27,7 @@ import type { HelpKey } from "../helpCatalog";
 type PendingDelete =
   | { kind: "flag"; id: string; name: string }
   | { kind: "status"; id: string; name: string }
+  | { kind: "status-disable"; id: string; name: string; color: string; code: string; sortOrder: number; isActive: boolean; mapsTo?: string | null; kindName?: string | null }
   | { kind: "deedType"; id: string; name: string }
   | { kind: "team"; id: string; name: string }
   | { kind: "client"; id: string; name: string }
@@ -52,7 +53,15 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingDelete | null>(null);
   const [flagForm, setFlagForm] = useState({ name: "", color: "#3730a3", sortOrder: 10, isActive: true });
-  const [statusForm, setStatusForm] = useState({ code: "", displayName: "", color: "#1d4ed8", sortOrder: 10, isActive: true });
+  const [statusForm, setStatusForm] = useState({
+    displayName: "",
+    color: "#C5E8E4",
+    sortOrder: 90,
+    isActive: true,
+    mapsTo: "NeedsReview",
+    kind: "Catalog"
+  });
+  const [statusDrafts, setStatusDrafts] = useState<Record<string, { displayName: string; color: string; sortOrder: number }>>({});
   const [mapForm, setMapForm] = useState({ deedType: "", softwareCode: "", fieldMapJson: "", isActive: true });
   const [teamForm, setTeamForm] = useState({ name: "", isActive: true, userIds: [] as string[] });
   const [clientForm, setClientForm] = useState({ name: "", isActive: true });
@@ -86,6 +95,11 @@ export default function SettingsPage() {
     ]);
     setFlags(nextFlags);
     setStatuses(nextStatuses);
+    setStatusDrafts(
+      Object.fromEntries(
+        nextStatuses.map((status) => [status.id, { displayName: status.displayName, color: status.color, sortOrder: status.sortOrder }])
+      )
+    );
     setDeedTypes(nextMaps);
     setTeams(nextTeams);
     setClients(nextClients);
@@ -111,12 +125,29 @@ export default function SettingsPage() {
     try {
       if (pending.kind === "flag") await endpoints.deleteFlag(pending.id);
       if (pending.kind === "status") await endpoints.deleteStatus(pending.id);
+      if (pending.kind === "status-disable") {
+        await endpoints.updateStatus(pending.id, {
+          code: pending.code,
+          displayName: pending.name,
+          color: pending.color,
+          sortOrder: pending.sortOrder,
+          isActive: false,
+          mapsTo: pending.mapsTo,
+          kind: pending.kindName
+        });
+      }
       if (pending.kind === "deedType") await endpoints.deleteDeedType(pending.id);
       if (pending.kind === "team") await endpoints.deleteTeam(pending.id);
       if (pending.kind === "client") await endpoints.deleteClient(pending.id);
       if (pending.kind === "ocr") await endpoints.deleteOcrCleanup(pending.id);
       if (pending.kind === "purge") await endpoints.purgeDeleted("");
-      setNotice(pending.kind === "purge" ? "Deleted deeds purged." : `${pending.name} removed.`);
+      setNotice(
+        pending.kind === "purge"
+          ? "Deleted deeds purged."
+          : pending.kind === "status-disable"
+            ? `${pending.name} disabled.`
+            : `${pending.name} removed.`
+      );
       setError(null);
       setPending(null);
       await load();
@@ -518,37 +549,178 @@ export default function SettingsPage() {
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Statuses" helpKey="settings.statuses" empty={statuses.length === 0} emptyBody="Pipeline and review statuses appear in filters and reports.">
-        <ul className="setting-list">
-          {statuses.map((status) => (
-            <li key={status.id}>
-              <span>
-                {status.displayName}{" "}
-                <span className="muted">
-                  ({status.code}
-                  {status.isSystem ? " · system" : ""})
-                </span>
-              </span>
-              {!status.isSystem && (
-                <button className="link" type="button" onClick={() => setPending({ kind: "status", id: status.id, name: status.displayName })}>
-                  Remove
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+      <SettingsBlock title="Statuses" helpKey="settings.statuses" empty={statuses.length === 0} emptyBody="Catalog statuses appear on Documents and Review. Seed the Must eight if the list is empty.">
+        <div className="statuses-catalog" id="statuses" data-testid="statuses-catalog">
+          <p className="muted">
+            Client/Software catalog. OCR stays Queued → Processing → Ready on the ribbon. Seed labels can be renamed or
+            disabled. Disable or delete uses a confirm sheet.
+          </p>
+          <ul className="setting-list">
+            {statuses.map((status) => {
+              const draft = statusDrafts[status.id] ?? {
+                displayName: status.displayName,
+                color: status.color,
+                sortOrder: status.sortOrder
+              };
+              return (
+                <li key={status.id} className="status-row">
+                  <span className="status-swatch" style={{ background: draft.color }} aria-hidden="true" />
+                  <div className="status-fields">
+                    <input
+                      aria-label={`Display name for ${status.code}`}
+                      value={draft.displayName}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, displayName: e.target.value }
+                        }))
+                      }
+                    />
+                    <input
+                      type="color"
+                      aria-label={`Color for ${status.displayName}`}
+                      value={draft.color}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, color: e.target.value }
+                        }))
+                      }
+                    />
+                    <input
+                      type="number"
+                      aria-label={`Sort order for ${status.displayName}`}
+                      value={draft.sortOrder}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, sortOrder: Number(e.target.value) }
+                        }))
+                      }
+                    />
+                    <span className="muted">
+                      {status.mapsTo ? `Maps to ${status.mapsTo}` : status.code}
+                      {status.isSystem ? " · system" : ""}
+                      {status.isSeed ? " · seed" : ""}
+                      {status.isActive ? "" : " · disabled"}
+                    </span>
+                  </div>
+                  <div className="status-actions">
+                    <button
+                      className="ghost"
+                      type="button"
+                      onClick={async () => {
+                        await endpoints.updateStatus(status.id, {
+                          code: status.code,
+                          displayName: draft.displayName,
+                          color: draft.color,
+                          sortOrder: draft.sortOrder,
+                          isActive: status.isActive,
+                          mapsTo: status.mapsTo,
+                          kind: status.kind
+                        });
+                        setNotice(`${draft.displayName} saved.`);
+                        await load();
+                      }}
+                    >
+                      Save
+                    </button>
+                    {status.isActive ? (
+                      <button
+                        className="ghost"
+                        type="button"
+                        onClick={() =>
+                          setPending({
+                            kind: "status-disable",
+                            id: status.id,
+                            name: status.displayName,
+                            color: draft.color,
+                            code: status.code,
+                            sortOrder: draft.sortOrder,
+                            isActive: status.isActive,
+                            mapsTo: status.mapsTo,
+                            kindName: status.kind
+                          })
+                        }
+                      >
+                        Disable
+                      </button>
+                    ) : (
+                      <button
+                        className="ghost"
+                        type="button"
+                        onClick={async () => {
+                          await endpoints.updateStatus(status.id, {
+                            code: status.code,
+                            displayName: draft.displayName,
+                            color: draft.color,
+                            sortOrder: draft.sortOrder,
+                            isActive: true,
+                            mapsTo: status.mapsTo,
+                            kind: status.kind
+                          });
+                          setNotice(`${status.displayName} enabled.`);
+                          await load();
+                        }}
+                      >
+                        Enable
+                      </button>
+                    )}
+                    {!status.isSystem && !status.isSeed && (
+                      <button
+                        className="link"
+                        type="button"
+                        onClick={() => setPending({ kind: "status", id: status.id, name: status.displayName })}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         <form
           className="inline-form"
           onSubmit={async (event: FormEvent) => {
             event.preventDefault();
             await endpoints.createStatus(statusForm);
-            setStatusForm({ code: "", displayName: "", color: "#1d4ed8", sortOrder: 10, isActive: true });
+            setStatusForm({
+              displayName: "",
+              color: "#C5E8E4",
+              sortOrder: 90,
+              isActive: true,
+              mapsTo: "NeedsReview",
+              kind: "Catalog"
+            });
             setNotice("Status saved.");
             await load();
           }}
         >
-          <input placeholder="Code" value={statusForm.code} onChange={(e) => setStatusForm({ ...statusForm, code: e.target.value })} required />
-          <input placeholder="Display name" value={statusForm.displayName} onChange={(e) => setStatusForm({ ...statusForm, displayName: e.target.value })} required />
+          <input
+            placeholder="Display name"
+            aria-label="New status display name"
+            value={statusForm.displayName}
+            onChange={(e) => setStatusForm({ ...statusForm, displayName: e.target.value })}
+            required
+          />
+          <input type="color" value={statusForm.color} aria-label="New status color" onChange={(e) => setStatusForm({ ...statusForm, color: e.target.value })} />
+          <select
+            aria-label="Maps to pipeline"
+            value={statusForm.mapsTo}
+            onChange={(e) => setStatusForm({ ...statusForm, mapsTo: e.target.value })}
+          >
+            <option value="Queued">Queued</option>
+            <option value="Processing">Processing</option>
+            <option value="Ready">Ready</option>
+            <option value="Failed">Failed</option>
+            <option value="NeedsReview">Needs Review</option>
+            <option value="Approved">Approved</option>
+            <option value="New">New</option>
+            <option value="Research">Research</option>
+            <option value="NotNeeded">Not Needed</option>
+          </select>
           <button className="primary" type="submit">
             Add Status
           </button>
@@ -589,13 +761,21 @@ export default function SettingsPage() {
 
       {pending && (
         <ConfirmSheet
-          title={pending.kind === "purge" ? "Purge all deleted deeds?" : `Remove ${pending.name}?`}
+          title={
+            pending.kind === "purge"
+              ? "Purge all deleted deeds?"
+              : pending.kind === "status-disable"
+                ? `Disable ${pending.name}?`
+                : `Remove ${pending.name}?`
+          }
           body={
             pending.kind === "purge"
               ? "Permanently delete every soft-deleted deed. This cannot be undone."
-              : "This Settings item will be deleted. Cancel if you are not sure."
+              : pending.kind === "status-disable"
+                ? "Deeds keep this catalog status. It will no longer appear as a new choice until you enable it."
+                : "This Settings item will be deleted. Cancel if you are not sure."
           }
-          confirmLabel={pending.kind === "purge" ? "Purge" : "Remove"}
+          confirmLabel={pending.kind === "purge" ? "Purge" : pending.kind === "status-disable" ? "Disable" : "Remove"}
           onCancel={() => setPending(null)}
           onConfirm={() => void confirmDelete()}
         />
