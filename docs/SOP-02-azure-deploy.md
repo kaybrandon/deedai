@@ -6,7 +6,7 @@
 - [ ] RG `rg-bis-deed-ai` · SQL `deedaihost01`/`dbdeedai` · Storage `stbisdeedai` (deeds + ocr-jobs queue) · KV `kv-bis-deed-ai`
 - [ ] App Settings use **Key Vault references** for the secret names (see AZURE-PROD-NOTE). No secret values in chat or git.
 - [ ] Publish Windows **Layout A** zip from `main`: `./scripts/publish-layout-a.sh` → zipdeploy to `appdeedai` (`.NET 10`)
-- [ ] Startup **EF `MigrateAsync`** applies pending migrations (Phase 3+ SQL Server scripts are idempotent for a partial apply)
+- [ ] Startup **EF `MigrateAsync`** applies pending migrations (Phase 3+ and Phase 4 SQL Server scripts are idempotent for a partial apply; Phase 4A / 4AQa must be discoverable EF migrations)
 - [ ] If **500.30**:
   - Resume serverless `dbdeedai` if paused
   - Verify KV refs resolve

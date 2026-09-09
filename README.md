@@ -129,7 +129,7 @@ chmod +x scripts/publish-layout-a.sh
 
 Writes `artifacts/layout-a/deedai-win-x64.zip` (framework-dependent `win-x64`, IIS in-process) plus a copy at `artifacts/appdeedai-windows.zip`, and a continuous WebJob at `App_Data/jobs/continuous/ocr-worker`.
 
-Deploy the zip to **appdeedai**. Set the App Service stack to **.NET 10**. Startup runs EF `MigrateAsync` (Phase 3+ SQL Server scripts tolerate a partial apply). Apply settings from `.env.example` (secrets live in App Settings / Key Vault, never in source or migrations).
+Deploy the zip to **appdeedai**. Set the App Service stack to **.NET 10**. Startup runs EF `MigrateAsync` (Phase 3+ and Phase 4 SQL Server scripts tolerate a partial apply). Apply settings from `.env.example` (secrets live in App Settings / Key Vault, never in source or migrations).
 
 If login 401s after rotating Key Vault `AdminSeedPassword`, restart the app — startup now updates the `admin@bisconsultants.com` hash. Do not wipe the database. Session idle timeout defaults to **30 minutes** (`Session__IdleTimeoutMinutes` and/or Admin Settings).
 

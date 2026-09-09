@@ -1,3 +1,5 @@
+using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,10 +7,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DeedAi.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(DeedAiDbContext))]
+    [Migration(Phase4SqlServerSchema.Phase4AQaId)]
     public partial class Phase4AQa : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            if (Phase4SqlServerSchema.IsSqlServer(migrationBuilder))
+            {
+                Phase4SqlServerSchema.EnsurePhase4AQa(migrationBuilder);
+                return;
+            }
+
+            UpStandard(migrationBuilder);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(name: "SalesTabCodes");
+            migrationBuilder.DropTable(name: "SoftwareClientConfigs");
+            migrationBuilder.DropColumn(name: "SalesTabCode", table: "Documents");
+        }
+
+        private static void UpStandard(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
                 name: "SalesTabCode",
@@ -89,14 +112,6 @@ namespace DeedAi.Infrastructure.Data.Migrations
                 table: "SalesTabCodes",
                 columns: new[] { "ClientId", "Code" },
                 unique: true);
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(name: "SalesTabCodes");
-            migrationBuilder.DropTable(name: "SoftwareClientConfigs");
-            migrationBuilder.DropColumn(name: "SalesTabCode", table: "Documents");
         }
     }
 }

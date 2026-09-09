@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text.Json;
 using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
@@ -13,6 +14,7 @@ using DeedAi.Infrastructure.Ocr;
 using DeedAi.Infrastructure.Security;
 using DeedAi.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Configuration;
@@ -59,15 +61,111 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
     public void Phase4_sql_server_hardening_tables_are_idempotent()
     {
         var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.SqlServer");
-        var up = typeof(Phase4Hardening).GetMethod("Up", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        Assert.NotNull(up);
-        up.Invoke(new Phase4Hardening(), [builder]);
+        InvokeUp<Phase4Hardening>(builder);
 
         var sql = string.Join('\n', builder.Operations.OfType<SqlOperation>().Select(x => x.Sql));
         Assert.Contains("IF OBJECT_ID", sql, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("OcrCleanupRules", sql, StringComparison.Ordinal);
         Assert.Contains("SessionSettings", sql, StringComparison.Ordinal);
         Assert.Contains("IF NOT EXISTS", sql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void All_ef_migrations_are_discoverable_including_phase4()
+    {
+        var migrationTypes = typeof(DeedAiDbContext).Assembly.GetTypes()
+            .Where(t => typeof(Migration).IsAssignableFrom(t) && t is { IsAbstract: false, IsGenericType: false })
+            .ToList();
+        Assert.NotEmpty(migrationTypes);
+
+        foreach (var type in migrationTypes)
+        {
+            Assert.True(
+                type.GetCustomAttribute<MigrationAttribute>() is not null,
+                $"{type.Name} is missing [Migration] and would be skipped on Azure SQL.");
+            Assert.True(
+                type.GetCustomAttribute<DbContextAttribute>() is not null,
+                $"{type.Name} is missing [DbContext] and would be skipped on Azure SQL.");
+        }
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DeedAiDbContext>();
+        var ids = db.Database.GetMigrations().ToList();
+        Assert.Contains(Phase4SqlServerSchema.Phase4HardeningId, ids);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AId, ids);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AQaId, ids);
+        Assert.Contains(Phase4SqlServerSchema.Phase4AzureRepairId, ids);
+        Assert.True(
+            string.CompareOrdinal(Phase4SqlServerSchema.Phase4AId, Phase4SqlServerSchema.Phase4AQaId) < 0);
+        Assert.True(
+            string.CompareOrdinal(Phase4SqlServerSchema.Phase4AQaId, Phase4SqlServerSchema.Phase4AzureRepairId) < 0);
+    }
+
+    [Fact]
+    public void Phase4_sql_server_up_is_guarded_sql_only()
+    {
+        foreach (var type in new[] { typeof(Phase4A), typeof(Phase4AQa), typeof(Phase4Hardening), typeof(Phase4AzureRepair) })
+        {
+            var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.SqlServer");
+            InvokeUp(type, builder);
+            Assert.Empty(builder.Operations.OfType<CreateTableOperation>());
+            Assert.Empty(builder.Operations.OfType<AddColumnOperation>());
+            Assert.NotEmpty(builder.Operations.OfType<SqlOperation>());
+        }
+    }
+
+    [Fact]
+    public void Phase4_sql_covers_required_objects_and_is_safe_to_reinvoke()
+    {
+        var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.SqlServer");
+        InvokeUp<Phase4AzureRepair>(builder);
+        InvokeUp<Phase4AzureRepair>(builder);
+
+        var sql = string.Join('\n', builder.Operations.OfType<SqlOperation>().Select(x => x.Sql));
+        Assert.Contains("IF OBJECT_ID", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("IF COL_LENGTH", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("IF NOT EXISTS", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("IF EXISTS", sql, StringComparison.OrdinalIgnoreCase);
+
+        foreach (var table in Phase4SqlServerSchema.RequiredTables)
+        {
+            Assert.Contains(table, sql, StringComparison.Ordinal);
+            Assert.Contains($"IF OBJECT_ID(N'dbo.{table}', N'U') IS NULL", sql, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("IF COL_LENGTH(N'dbo.Documents', N'SalesTabCode') IS NULL", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetExemptions", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetSupplementYear", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetSalesLetter", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetSalesTab", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetAgents", sql, StringComparison.Ordinal);
+        Assert.Contains("ResetMortgageCodes", sql, StringComparison.Ordinal);
+        Assert.Contains("SoftwareFieldMaps", sql, StringComparison.Ordinal);
+        Assert.Contains("FK_Documents_Users_UploadedByUserId", sql, StringComparison.Ordinal);
+        Assert.Contains("ON DELETE NO ACTION", sql, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "FK_Documents_Users_UploadedByUserId] FOREIGN KEY ([UploadedByUserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE",
+            sql,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("CREATE TABLE [Clients]", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DROP TABLE [Clients]", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("DROP TABLE [Documents]", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("CAMA", sql, StringComparison.Ordinal);
+        Assert.DoesNotContain("County", sql, StringComparison.Ordinal);
+        Assert.All(builder.Operations, op => Assert.IsType<SqlOperation>(op));
+    }
+
+    [Fact]
+    public void Phase4_repair_is_a_no_op_on_sqlite()
+    {
+        var builder = new MigrationBuilder("Microsoft.EntityFrameworkCore.Sqlite");
+        InvokeUp<Phase4AzureRepair>(builder);
+        Assert.Empty(builder.Operations);
+
+        InvokeUp<Phase4A>(builder);
+        Assert.Contains(builder.Operations.OfType<CreateTableOperation>(), x => x.Name == "AppPolicies");
+        Assert.Contains(builder.Operations.OfType<CreateTableOperation>(), x => x.Name == "PropertyDefaults");
+        Assert.Contains(builder.Operations.OfType<CreateTableOperation>(), x => x.Name == "SoftwareFieldMaps");
     }
 
     [Fact]
@@ -388,6 +486,16 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         }).Build();
         Assert.Equal("AliasPass!1", DatabaseSeeder.ReadAdminSeedPassword(config));
         Assert.Equal("AliasPass!1", DependencyInjection.FirstValue(config, "AdminSeedPassword", "Admin:SeedPassword", "Admin__SeedPassword"));
+    }
+
+    private static void InvokeUp<TMigration>(MigrationBuilder builder) where TMigration : Migration, new() =>
+        InvokeUp(typeof(TMigration), builder);
+
+    private static void InvokeUp(Type migrationType, MigrationBuilder builder)
+    {
+        var up = migrationType.GetMethod("Up", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(up);
+        up.Invoke(Activator.CreateInstance(migrationType), [builder]);
     }
 
     private async Task<HttpClient> Authed(string email)
