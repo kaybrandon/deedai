@@ -217,10 +217,10 @@ public sealed class DatabaseSeeder(
             db.StatusDefinitions.AddRange(
                 new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Code = DocumentStatuses.Queued, DisplayName = "Queued", Color = "#C5CED6", IsSystem = true, SortOrder = 1 },
                 new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#E8C96A", IsSystem = true, SortOrder = 2 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#A8D5C0", IsSystem = true, SortOrder = 3 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#E8B4B0", IsSystem = true, SortOrder = 4 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#C5DCE2", IsSystem = false, SortOrder = 5 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#A8D5C0", IsSystem = false, SortOrder = 6 });
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#D8F0EA", IsSystem = true, SortOrder = 3 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#F5D6D3", IsSystem = true, SortOrder = 4 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#C5E8E4", IsSystem = false, SortOrder = 5 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#D8F0EA", IsSystem = false, SortOrder = 6 });
         }
 
         if (!await db.DeedTypeMaps.AnyAsync(cancellationToken))

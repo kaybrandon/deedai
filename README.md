@@ -31,9 +31,18 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.1 acceptance
+
+- **Mask F theme:** Mockitt Admin tokens — rail `#1E2430` · canvas `#F0F2F5` · surface `#FFFFFF` · text `#1A1F2A` · muted `#5C6573` · teal `#0D8A7F` · accent `#3B82F6` · Ready `#D8F0EA`/`#0B5F56` · Failed `#F5D6D3`/`#8B2E28`. Dark rail sitewide. Inter. Radii 5/8. Spacing 4/8/12/16.
+- **Density:** Sidebar ~220px · top bar 48px · ribbon 42px · hit ≥44px · btn 32px · search max 360px · filters ~240px · forms ~32rem · Settings/Software detail ~680px · content max ~1440px.
+- **Documents:** exactly one search, in the filter row only (≤360px). No topbar search duplicate.
+- **Settings nest:** one child active at a time. Child label **Software** (never Systems / County / CAMA). Parent Settings is not highlighted with a child. `/settings` child is **Workspace**.
+- **Help:** no FieldHelp `?` pills. Help is label `title` / `aria-describedby` only — not a second page Help widget.
+- **Carry:** Phase 5.0.1 chart-click + Title Case. Client / Software naming · 4 roles · no secrets · no EF migration · no zipdeploy. Mask A stays on production until this ships.
+
 ## Phase 5.0 acceptance
 
-- **Mask A theme:** Mist Slate + Teal tokens — bg `#F4F6F8`, sidebar `#E8EEF2`, accent `#4F7C8A`, text `#2C3A45`, Ready `#A8D5C0`, Failed `#E8B4B0`. Processing gold · Queued slate · Review teal-tint. Failed/Queued chips use darker text and a soft border.
+- **Mask A theme (superseded by 5.1 in this tree):** Mist Slate + Teal tokens — bg `#F4F6F8`, sidebar `#E8EEF2`, accent `#4F7C8A`, text `#2C3A45`, Ready `#A8D5C0`, Failed `#E8B4B0`. Production remains Mask A until 5.1 deploys.
 - **Density:** Sidebar ~200px, top bar 48px, page pad 16px, card gap 12px. Filters 220–280px. Forms 28–36rem. Primary actions ≥44px. ConfirmSheet soft-delete. Soft-dense shell on Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software.
 - **IA:** Software + Users nest under Settings. No top-level Review (open from Documents). No Editor mode header toggle. Client / Software only · 4 roles · never County / CAMA.
 - **Must-ship UX:** Sticky OCR ribbon (Upload → Queued → Processing → Review → Ready) on Documents / Upload / Review. Dashboard count cards + status-mix donut + volume-over-time with empty chart states. Soft status chips + Failed Retry. Never Ready chip + OCR-failed banner together. Review PDF pane is a real preview or a filled placeholder (not an empty dashed box). Failed deeds show incomplete fields + Retry extract.
@@ -62,10 +71,10 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Profile photo:** upload, replace, and clear (ConfirmSheet on remove). Stored in blob storage. Shown in the header and on Users. JPEG/PNG/WebP/GIF, 2 MB max. Default avatar is initials when there is no photo.
 - **Header title:** `{Client} Deed AI` only when the signed-in user's effective scope is exactly one Client; otherwise the product name **Deed AI**.
 - **Left shell identity:** **Logged in as {name/email}** plus a **My profile** entry (≥44px) for display name, full name, photo, password change, and assigned Client(s) from existing identity / Client access (clear empty state when none).
-- **Settings → Systems:** the nested Settings nav item is labeled **Systems** so the hierarchy is Settings → Systems / Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same.
+- **Settings nest:** Settings → Workspace / Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Child label **Software** (never Systems / County / CAMA).
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
-- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909190000_Phase491RemovePropertyDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask A shell. No zipdeploy. Property defaults is not a live Settings feature.
+- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909190000_Phase491RemovePropertyDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
 
 ## Phase 4.3 acceptance
 

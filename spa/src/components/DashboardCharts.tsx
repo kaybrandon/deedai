@@ -3,6 +3,7 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Link, useNavigate } from "react-router-dom";
 import type { DashboardByUser, DashboardStatusMix, DashboardVolume, DashboardUserColumn } from "../api";
 import { hasSeriesData, seriesColor } from "../charts";
+import { maskF } from "../theme";
 import { documentsPath } from "../documentsPath";
 import EmptyState from "./EmptyState";
 
@@ -186,9 +187,8 @@ export function VolumeChart({
   data: DashboardVolume | null;
 } & ChartNavFilters) {
   const navigate = useNavigate();
-  const total = data?.series.find((item) => item.key === "total");
-  const statuses = data?.series.filter((item) => item.key !== "total") ?? [];
-  if (!data || data.labels.length === 0 || !hasSeriesData(data.series)) {
+  const total = data?.series.find((item) => item.key === "total") ?? data?.series[0];
+  if (!data || data.labels.length === 0 || !total || !hasSeriesData([total])) {
     return <EmptyState title={emptyCopy.volume.title} body={emptyCopy.volume.body} />;
   }
 
@@ -208,33 +208,18 @@ export function VolumeChart({
           data={{
             labels: data.labels,
             datasets: [
-              ...(total
-                ? [
-                    {
-                      label: total.label,
-                      data: total.data,
-                      borderColor: seriesColor(total.key, total.color),
-                      backgroundColor: "rgba(79, 124, 138, 0.14)",
-                      fill: true,
-                      tension: 0.3,
-                      pointRadius: 4,
-                      pointHoverRadius: 6,
-                      pointHitRadius: 12,
-                      borderWidth: 2
-                    }
-                  ]
-                : []),
-              ...statuses.map((series, index) => ({
-                label: series.label,
-                data: series.data,
-                borderColor: seriesColor(series.key, series.color, index),
-                backgroundColor: "transparent",
-                fill: false,
+              {
+                label: total.label,
+                data: total.data,
+                borderColor: maskF.teal,
+                backgroundColor: "rgba(13, 138, 127, 0.14)",
+                fill: true,
                 tension: 0.3,
-                pointRadius: 3,
-                pointHitRadius: 10,
-                borderWidth: 1.5
-              }))
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHitRadius: 12,
+                borderWidth: 2
+              }
             ]
           }}
           options={{
@@ -250,12 +235,10 @@ export function VolumeChart({
         />
       </div>
       <ul className="chart-key" aria-label="Volume series">
-        {data.series.map((series, index) => (
-          <li key={series.key}>
-            <span className="chart-legend-swatch" style={{ background: seriesColor(series.key, series.color, index) }} />
-            {series.label}
-          </li>
-        ))}
+        <li>
+          <span className="chart-legend-swatch" style={{ background: maskF.teal }} />
+          {total.label}
+        </li>
       </ul>
       <ul className="chart-legend">
         {daysWithVolume.map((day) => (

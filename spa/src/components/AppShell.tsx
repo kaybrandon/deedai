@@ -15,6 +15,10 @@ function productTitle(clients: { name: string }[] | undefined) {
   return "Deed AI";
 }
 
+function childClass(active: boolean) {
+  return active ? "active" : undefined;
+}
+
 export default function AppShell() {
   const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +28,10 @@ export default function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const title = productTitle(me?.clients);
   const identity = me?.displayName || me?.email || "signed-in user";
+  const onWorkspace = location.pathname === "/settings" && location.hash !== "#swagger";
+  const onApiDocs = location.pathname === "/settings" && location.hash === "#swagger";
+  const onSoftware = location.pathname === "/software" || location.pathname.startsWith("/software/");
+  const onUsers = location.pathname === "/users" || location.pathname.startsWith("/users/");
 
   function closeNav() {
     setNavOpen(false);
@@ -83,7 +91,7 @@ export default function AppShell() {
           )}
           <div className="nav-group" onClick={(e) => e.stopPropagation()}>
             <button
-              className={`nav-group-toggle${onSettingsSection ? " is-active" : ""}`}
+              className="nav-group-toggle"
               type="button"
               aria-expanded={settingsOpen}
               aria-controls="settings-nav"
@@ -95,8 +103,8 @@ export default function AppShell() {
             {settingsOpen && (
               <div className="nav-sub" id="settings-nav">
                 {canAdmin ? (
-                  <NavLink to="/settings" end onClick={closeNav}>
-                    Systems
+                  <NavLink to="/settings" end className={() => childClass(onWorkspace)} onClick={closeNav}>
+                    Workspace
                   </NavLink>
                 ) : (
                   <button
@@ -104,14 +112,14 @@ export default function AppShell() {
                     type="button"
                     onClick={() => navigate("/denied", { state: { action: "change settings" } })}
                   >
-                    Systems
+                    Workspace
                   </button>
                 )}
-                <NavLink to="/software" onClick={closeNav}>
+                <NavLink to="/software" className={() => childClass(onSoftware)} onClick={closeNav}>
                   Software
                 </NavLink>
                 {canAdmin ? (
-                  <NavLink to="/users" onClick={closeNav}>
+                  <NavLink to="/users" className={() => childClass(onUsers)} onClick={closeNav}>
                     Users
                   </NavLink>
                 ) : (
@@ -124,7 +132,7 @@ export default function AppShell() {
                   </button>
                 )}
                 {canAdmin && (
-                  <NavLink to="/settings#swagger" onClick={closeNav}>
+                  <NavLink to="/settings#swagger" className={() => childClass(onApiDocs)} onClick={closeNav}>
                     API
                   </NavLink>
                 )}

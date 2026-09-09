@@ -1,16 +1,19 @@
-/** Mask A — Mist Slate + Teal. Hex SoT for charts and ribbon (CSS :root is the shell SoT). */
-export const maskA = {
-  bg: "#F4F6F8",
-  sidebar: "#E8EEF2",
-  accent: "#4F7C8A",
-  accentHover: "#3E6774",
-  text: "#2C3A45",
-  muted: "#5A6B76",
-  ready: "#A8D5C0",
-  failed: "#E8B4B0",
+/** Mask F — Mockitt Admin. Hex SoT for charts and ribbon (CSS :root is the shell SoT). */
+export const maskF = {
+  rail: "#1E2430",
+  canvas: "#F0F2F5",
+  surface: "#FFFFFF",
+  text: "#1A1F2A",
+  muted: "#5C6573",
+  teal: "#0D8A7F",
+  accent: "#3B82F6",
+  ready: "#D8F0EA",
+  readyFg: "#0B5F56",
+  failed: "#F5D6D3",
+  failedFg: "#8B2E28",
   processing: "#E8C96A",
   queued: "#C5CED6",
-  review: "#C5DCE2"
+  review: "#C5E8E4"
 } as const;
 
 export const OCR_RIBBON_STEPS = ["Upload", "Queued", "Processing", "Review", "Ready"] as const;

@@ -308,9 +308,7 @@ export default function ReviewPage() {
           </label>
           {fields.isDraft && canEdit && <p className="muted">Draft — press Save to confirm field edits.</p>}
         </form>
-      </div>
-
-      <div className="collab-grid">
+        <aside className="review-side">
         <section className="panel">
           <h2>Flags</h2>
           <div className="flag-list">
@@ -505,7 +503,6 @@ export default function ReviewPage() {
             </dl>
           ) : null}
         </section>
-      </div>
       {notify && (
         <section className="panel">
           <h2>Notify Emails</h2>
@@ -521,6 +518,8 @@ export default function ReviewPage() {
           )}
         </section>
       )}
+        </aside>
+      </div>
       {saved && !isFailed && <span className="chip chip-saved saved-pill">Saved</span>}
       {pendingPush && doc && (
         <ConfirmSheet

@@ -5,25 +5,30 @@ namespace DeedAi.Tests;
 public sealed class Phase50Tests
 {
     [Fact]
-    public void Mask_a_tokens_are_wired_in_css_and_theme()
+    public void Mask_f_tokens_are_wired_in_css_and_theme()
     {
         var css = Read("spa/src/styles.css");
         var theme = Read("spa/src/theme.ts");
-        foreach (var token in new[] { "#F4F6F8", "#E8EEF2", "#4F7C8A", "#2C3A45", "#A8D5C0", "#E8B4B0" })
+        foreach (var token in new[] { "#1E2430", "#F0F2F5", "#FFFFFF", "#1A1F2A", "#5C6573", "#0D8A7F", "#3B82F6", "#D8F0EA", "#0B5F56", "#F5D6D3", "#8B2E28" })
         {
             Assert.Contains(token, css, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(token, theme, StringComparison.OrdinalIgnoreCase);
         }
 
-        Assert.Contains("--sidebar-w: 200px", css, StringComparison.Ordinal);
+        Assert.Contains("--sidebar-w: 220px", css, StringComparison.Ordinal);
         Assert.Contains("--topbar-h: 48px", css, StringComparison.Ordinal);
+        Assert.Contains("--ribbon-h: 42px", css, StringComparison.Ordinal);
+        Assert.Contains("--btn-h: 32px", css, StringComparison.Ordinal);
+        Assert.Contains("--search-max: 360px", css, StringComparison.Ordinal);
+        Assert.Contains("--detail-w: 680px", css, StringComparison.Ordinal);
+        Assert.Contains("--content-max: 1440px", css, StringComparison.Ordinal);
         Assert.Contains("--pad-x: 16px", css, StringComparison.Ordinal);
         Assert.Contains("--pad-y: 16px", css, StringComparison.Ordinal);
         Assert.Contains("gap: 12px", css, StringComparison.Ordinal);
         Assert.Contains("min-width: 220px", css, StringComparison.Ordinal);
         Assert.Contains("max-width: 280px", css, StringComparison.Ordinal);
-        Assert.Contains("max-width: 36rem", css, StringComparison.Ordinal);
-        Assert.Contains("max-width: 28rem", css, StringComparison.Ordinal);
+        Assert.Contains("max-width: var(--form-w)", css, StringComparison.Ordinal);
+        Assert.Contains("--form-w: 32rem", css, StringComparison.Ordinal);
         Assert.Contains("--action-h: 44px", css, StringComparison.Ordinal);
         Assert.Contains("chip-failed", css, StringComparison.Ordinal);
         Assert.Contains("chip-queued", css, StringComparison.Ordinal);
@@ -33,7 +38,7 @@ public sealed class Phase50Tests
         Assert.Contains("--review-bg", css, StringComparison.Ordinal);
         Assert.Contains(".ocr-ribbon", css, StringComparison.Ordinal);
         Assert.Contains("position: sticky", css, StringComparison.Ordinal);
-        Assert.Contains("data-theme=\"mask-a\"", Read("spa/index.html"), StringComparison.Ordinal);
+        Assert.Contains("data-theme=\"mask-f\"", Read("spa/index.html"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -94,7 +99,7 @@ public sealed class Phase50Tests
         Assert.Contains("StatusMixChart", dashboard, StringComparison.Ordinal);
         Assert.Contains("VolumeChart", dashboard, StringComparison.Ordinal);
         Assert.Contains("EmptyState", charts, StringComparison.Ordinal);
-        Assert.Contains("maskA", Read("spa/src/charts.ts"), StringComparison.Ordinal);
+        Assert.Contains("maskF", Read("spa/src/charts.ts"), StringComparison.Ordinal);
     }
 
     [Fact]

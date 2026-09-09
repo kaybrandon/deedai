@@ -1,5 +1,5 @@
-import { FieldHelp } from "./FieldHelp";
-import type { HelpKey } from "../helpCatalog";
+import { useId } from "react";
+import { HELP, type HelpKey } from "../helpCatalog";
 
 export default function ConfirmSheet({
   title,
@@ -18,13 +18,25 @@ export default function ConfirmSheet({
   danger?: boolean;
   helpKey?: HelpKey;
 }) {
+  const helpId = useId();
+  const help = helpKey ? HELP[helpKey] : undefined;
   return (
-    <div className="sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div
+      className="sheet-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sheet-title"
+      aria-describedby={help ? helpId : undefined}
+    >
       <div className="sheet">
-        <h2 id="sheet-title">
+        <h2 id="sheet-title" title={help} data-help={helpKey}>
           {title}
-          {helpKey && <FieldHelp helpKey={helpKey} />}
         </h2>
+        {help && (
+          <p id={helpId} className="visually-hidden">
+            {help}
+          </p>
+        )}
         <p>{body}</p>
         <div className="row-actions">
           <button className="ghost" type="button" onClick={onCancel}>

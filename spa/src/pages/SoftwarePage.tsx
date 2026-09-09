@@ -158,7 +158,7 @@ export default function SoftwarePage() {
   }
 
   return (
-    <section className="page">
+    <section className="page page-detail">
       <h1>Software</h1>
       <p className="muted">
         Lookup and push to the external Software system. Typed Client settings, property resets, and Sales Tab codes live
