@@ -323,6 +323,7 @@ td { padding: 8px 12px; border-top: 1px solid #f1f5f9; font-size: 13px; vertical
 .chip-processing { background: var(--processing-bg); color: var(--processing-fg); }
 .chip-queued { background: #f3f4f6; color: #374151; }
 .chip-needsreview { background: #dbeafe; color: #1d4ed8; }
+.chip-approved { background: #d1fae5; color: #047857; }
 
 .dropzone {
   border: 2px dashed #9ca3af;
@@ -541,4 +542,31 @@ h1 .field-help {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.health-check {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.health-status {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+.health-status.is-ok { color: #166534; }
+.health-status.is-degraded, .health-status.is-fail { color: #b91c1c; }
+
+@media (max-width: 800px) {
+  .health-grid { grid-template-columns: 1fr; }
 }

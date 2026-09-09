@@ -4,6 +4,7 @@ using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Export;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -121,7 +122,8 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             document.LastSoftwareSyncStatus,
             document.LastSoftwareSyncDirection,
             document.LastSoftwareSyncFailReason,
-            document.SoftwareRecordId);
+            document.SoftwareRecordId,
+            DisplayStatus(document));
     }
 
     [HttpGet("{id:guid}/file")]
@@ -133,9 +135,10 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             return NotFound();
         }
 
-        if (!await blobs.ExistsAsync(document.BlobPath, cancellationToken))
+        if (!await blobs.ExistsAsync(document.BlobPath, cancellationToken)
+            && !await DemoDeedPdf.EnsureUploadedAsync(blobs, document, cancellationToken))
         {
-            return NotFound(new { message = "PDF is not available for this demo row or has not been uploaded yet." });
+            return NotFound(new { message = "PDF is not available for this deed." });
         }
 
         var stream = await blobs.OpenReadAsync(document.BlobPath, cancellationToken);
@@ -181,7 +184,11 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
 
         if (request.ReviewStatus is not null)
         {
-            document.ReviewStatus = request.ReviewStatus;
+            var applied = await ApplyReviewStatusAsync(document, request.ReviewStatus, cancellationToken);
+            if (applied is not null)
+            {
+                return applied;
+            }
         }
 
         if (document.Fields is null)
@@ -316,6 +323,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             db.DocumentFlags.Add(new DocumentFlag { DocumentId = id, FlagDefinitionId = flagId });
         }
 
+        SyncReviewFlag(document, valid);
         document.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { message = "Flags updated." });
@@ -499,5 +507,75 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             x.DeedType,
             x.ReviewStatus,
             x.Flags.Select(f => new FlagSummary(f.FlagDefinitionId, f.Flag.Name, f.Flag.Color)).ToList(),
-            x.ErrorMessage);
+            x.ErrorMessage,
+            DisplayStatus(x));
+
+    private async Task<ActionResult?> ApplyReviewStatusAsync(
+        Document document,
+        string? reviewStatus,
+        CancellationToken cancellationToken)
+    {
+        var normalized = ReviewWorkflow.NormalizeReviewStatus(reviewStatus);
+        if (normalized is not null
+            && !ReviewWorkflow.IsNeedsReview(normalized)
+            && !ReviewWorkflow.IsApproved(normalized))
+        {
+            var allowed = await db.StatusDefinitions.AnyAsync(
+                x => x.Code == normalized && x.IsActive && !x.IsSystem,
+                cancellationToken);
+            if (!allowed)
+            {
+                return BadRequest(new { message = "Select a valid review status." });
+            }
+        }
+
+        document.ReviewStatus = normalized;
+        var existing = document.Flags.Select(x => x.FlagDefinitionId).ToHashSet();
+        if (ReviewWorkflow.IsNeedsReview(normalized))
+        {
+            if (existing.Add(ReviewWorkflow.NeedsReviewFlagId)
+                && await db.FlagDefinitions.AnyAsync(x => x.Id == ReviewWorkflow.NeedsReviewFlagId && x.IsActive, cancellationToken))
+            {
+                db.DocumentFlags.Add(new DocumentFlag
+                {
+                    DocumentId = document.Id,
+                    FlagDefinitionId = ReviewWorkflow.NeedsReviewFlagId
+                });
+            }
+        }
+        else if (existing.Remove(ReviewWorkflow.NeedsReviewFlagId))
+        {
+            var row = document.Flags.FirstOrDefault(x => x.FlagDefinitionId == ReviewWorkflow.NeedsReviewFlagId)
+                      ?? await db.DocumentFlags.FirstOrDefaultAsync(
+                          x => x.DocumentId == document.Id && x.FlagDefinitionId == ReviewWorkflow.NeedsReviewFlagId,
+                          cancellationToken);
+            if (row is not null)
+            {
+                db.DocumentFlags.Remove(row);
+            }
+        }
+
+        return null;
+    }
+
+    private static void SyncReviewFlag(Document document, IReadOnlyCollection<Guid> flagIds)
+    {
+        var hasFlag = flagIds.Contains(ReviewWorkflow.NeedsReviewFlagId);
+        if (hasFlag)
+        {
+            document.ReviewStatus = ReviewWorkflow.NeedsReview;
+            return;
+        }
+
+        if (ReviewWorkflow.IsNeedsReview(document.ReviewStatus))
+        {
+            document.ReviewStatus = null;
+        }
+    }
+
+    private static string DisplayStatus(Document document) =>
+        ReviewWorkflow.DisplayStatus(
+            document.Status,
+            document.ReviewStatus,
+            ReviewWorkflow.HasNeedsReviewFlag(document.Flags.Select(x => (x.FlagDefinitionId, x.Flag?.Name))));
 }

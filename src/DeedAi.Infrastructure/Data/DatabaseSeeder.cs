@@ -1,5 +1,7 @@
 using DeedAi.Domain;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
+using DeedAi.Infrastructure.Export;
 using DeedAi.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +9,11 @@ using Microsoft.Extensions.Logging;
 
 namespace DeedAi.Infrastructure.Data;
 
-public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configuration, ILogger<DatabaseSeeder> logger)
+public sealed class DatabaseSeeder(
+    DeedAiDbContext db,
+    IConfiguration configuration,
+    ILogger<DatabaseSeeder> logger,
+    IBlobStorage? blobs = null)
 {
     public static readonly Guid AdminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid EditorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -15,7 +21,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
     public static readonly Guid ViewerId = Guid.Parse("44444444-4444-4444-4444-444444444444");
     public static readonly Guid AcmeId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid NorthsideId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-    public static readonly Guid NeedsReviewFlagId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid NeedsReviewFlagId = ReviewWorkflow.NeedsReviewFlagId;
     public static readonly Guid MissingParcelFlagId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public static readonly Guid LegalHoldFlagId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     public static readonly Guid ReviewTeamId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
@@ -129,6 +135,9 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
             await db.SaveChangesAsync(cancellationToken);
         }
 
+        await EnsureReviewConsistencyAsync(cancellationToken);
+        await EnsureDemoPdfsAsync(cancellationToken);
+
         logger.LogInformation("Database seed complete.");
     }
 
@@ -201,8 +210,8 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#3730a3", IsSystem = true, SortOrder = 2 },
                 new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#166534", IsSystem = true, SortOrder = 3 },
                 new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#b91c1c", IsSystem = true, SortOrder = 4 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = "NeedsReview", DisplayName = "Needs review", Color = "#1d4ed8", IsSystem = false, SortOrder = 5 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = "Approved", DisplayName = "Approved", Color = "#047857", IsSystem = false, SortOrder = 6 });
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#1d4ed8", IsSystem = false, SortOrder = 5 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#047857", IsSystem = false, SortOrder = 6 });
         }
 
         if (!await db.DeedTypeMaps.AnyAsync(cancellationToken))
@@ -458,7 +467,8 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
                 Notes = "Example mapped fields — edit and Save.",
                 IsDraft = false,
                 UpdatedAt = now
-            });
+            },
+            ReviewWorkflow.NeedsReview);
         var failedId = AddDoc("Scan_bad.pdf", AcmeId, DocumentStatuses.Failed, now.AddDays(2), null, "deeds/demo/Scan_bad.pdf", "Quitclaim Deed", null);
         AddDoc("Batch_44.pdf", NorthsideId, DocumentStatuses.Processing, now.AddDays(1), UploaderId, "deeds/demo/Batch_44.pdf", null, null);
         AddDoc("Queued_north.pdf", NorthsideId, DocumentStatuses.Queued, now.AddDays(3), null, "deeds/demo/Queued_north.pdf", null, null);
@@ -470,6 +480,70 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         db.DocumentLinks.Add(new DocumentLink { SourceDocumentId = readyId, TargetDocumentId = failedId, Note = "Related scan" });
     }
 
+    private async Task EnsureReviewConsistencyAsync(CancellationToken cancellationToken)
+    {
+        var flagId = await db.FlagDefinitions
+            .Where(x => x.Id == NeedsReviewFlagId || x.Name == ReviewWorkflow.NeedsReviewFlagName)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (flagId is null)
+        {
+            return;
+        }
+
+        var flaggedIds = await db.DocumentFlags
+            .Where(x => x.FlagDefinitionId == flagId)
+            .Select(x => x.DocumentId)
+            .ToListAsync(cancellationToken);
+        var reviewIds = await db.Documents.IgnoreQueryFilters()
+            .Where(x => x.ReviewStatus == ReviewWorkflow.NeedsReview)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+        var ids = flaggedIds.Union(reviewIds).ToList();
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var documents = await db.Documents.IgnoreQueryFilters()
+            .Where(x => ids.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+        foreach (var document in documents)
+        {
+            var hasFlag = flaggedIds.Contains(document.Id);
+            if (hasFlag && !ReviewWorkflow.IsNeedsReview(document.ReviewStatus))
+            {
+                document.ReviewStatus = ReviewWorkflow.NeedsReview;
+            }
+            else if (!hasFlag && ReviewWorkflow.IsNeedsReview(document.ReviewStatus))
+            {
+                db.DocumentFlags.Add(new DocumentFlag { DocumentId = document.Id, FlagDefinitionId = flagId.Value });
+                flaggedIds.Add(document.Id);
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task EnsureDemoPdfsAsync(CancellationToken cancellationToken)
+    {
+        if (blobs is null)
+        {
+            return;
+        }
+
+        var documents = await db.Documents.IgnoreQueryFilters()
+            .Include(x => x.Client)
+            .Include(x => x.Fields)
+            .Include(x => x.Flags).ThenInclude(x => x.Flag)
+            .Where(x => x.BlobPath.StartsWith(DemoDeedPdf.BlobPrefix))
+            .ToListAsync(cancellationToken);
+        foreach (var document in documents)
+        {
+            await DemoDeedPdf.EnsureUploadedAsync(blobs, document, cancellationToken);
+        }
+    }
+
     private Guid AddDoc(
         string name,
         Guid clientId,
@@ -478,7 +552,8 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         Guid? assignee,
         string blobPath,
         string? deedType,
-        DocumentFields? fields)
+        DocumentFields? fields,
+        string? reviewStatus = null)
     {
         var id = Guid.NewGuid();
         db.Documents.Add(new Document
@@ -493,6 +568,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
             CreatedAt = at,
             UpdatedAt = at,
             DeedType = deedType,
+            ReviewStatus = reviewStatus,
             ErrorMessage = status == DocumentStatuses.Failed ? "OCR failed — Retry extract" : null
         });
 

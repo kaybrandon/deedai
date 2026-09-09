@@ -20,6 +20,7 @@ import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import { FieldHelp, LabelWithHelp } from "../components/FieldHelp";
 import SwaggerAdminPanel from "../components/SwaggerAdminPanel";
+import SystemHealthPanel from "../components/SystemHealthPanel";
 import type { HelpKey } from "../helpCatalog";
 
 type PendingDelete =
@@ -152,6 +153,9 @@ export default function SettingsPage() {
           <p className="page-kicker">Workspace lists, session, Software maps, and API docs.</p>
         </div>
         <div className="row-actions">
+          <a className="ghost swagger-open" href="#system-health">
+            System health
+          </a>
           <button className="ghost" type="button" onClick={() => endpoints.exportSettings("json").catch((e) => setError(e.message))}>
             Export JSON
           </button>
@@ -165,6 +169,8 @@ export default function SettingsPage() {
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
+
+      <SystemHealthPanel />
 
       <SwaggerAdminPanel />
 

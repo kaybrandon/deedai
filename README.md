@@ -35,7 +35,15 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 
 - **SPA shell:** Dense SaaS layout (~200px sidebar, 48px top bar, 16/12 padding). Compact count cards and denser tables. Tap targets stay ≥44px. No horizontal page scroll around 768px. Not an AdminLTE clone.
 - **Dashboard charts:** Chart.js on existing APIs — `GET /api/dashboard/charts/status-mix` (donut), `GET /api/dashboard/charts/by-user` (stacked bar, Must), `GET /api/dashboard/charts/volume` (line over time), plus existing `GET /api/dashboard/counts`. One date-range / Client filter drives counts and charts. Empty states when a series has no data. Same role / ClientAccess as the APIs (no extra client-side data).
-- **Surfaces:** Visual density on Login, Dashboard, Documents, Review, Users, Settings, and Reports. Phase 4.2 Musts (Review PDF preview, Needs-review logic, Settings health link, Swagger Authorize sizing) are out of scope.
+- **Surfaces:** Visual density on Login, Dashboard, Documents, Review, Users, Settings, and Reports.
+
+## Phase 4.2 acceptance
+
+- **Ready PDF preview:** Seeded Ready demo deeds (`deeds/demo/…`) have a PDF in blob storage. Opening a Ready deed in review shows the iframe preview. `GET /api/documents/{id}/file` returns `application/pdf` when the blob exists or can be seeded for a demo path. The placeholder (“PDF is not available for this deed.”) shows only when there is truly no file.
+- **Status vs Needs review:** Pipeline status is OCR only (Queued / Processing / Ready / Failed). **Needs review** is a flag that implies review workflow and sets `ReviewStatus=NeedsReview`. List/review chips show Needs review — not Ready and Needs review together. Setting the flag, review-status dropdown, and `displayStatus` stay in sync. Approved clears the flag.
+- **System health (Admin):** Settings has a **System health** card (`#system-health`) for `GET /api/health/detail` — SQL / storage / queue status and mode only. No connection strings or keys.
+- **Swagger Authorize:** Authorize button hit target is ≥44px (matches Copy Bearer).
+- **Hard gates:** Client / Software naming, four roles, KV-only secrets, no new EF migration, no Azure zipdeploy.
 
 ## Phase 4.1 acceptance
 

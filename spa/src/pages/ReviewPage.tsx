@@ -17,6 +17,7 @@ import { markDraftDirty, useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
 import StatusChip from "../components/StatusChip";
+import { displayStatus } from "../reviewStatus";
 
 const emptyFields: FieldDraft = {
   grantor: "",
@@ -41,6 +42,7 @@ export default function ReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfState, setPdfState] = useState<"loading" | "ready" | "missing">("loading");
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [flagDefs, setFlagDefs] = useState<FlagItem[]>([]);
   const [deedTypes, setDeedTypes] = useState<DeedTypeItem[]>([]);
@@ -87,15 +89,23 @@ export default function ReviewPage() {
     if (!id) return;
     let objectUrl: string | undefined;
     const token = sessionStorage.getItem("deedai.token");
+    setPdfState("loading");
     fetch(`/api/documents/${id}/file`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined
     })
       .then(async (response) => {
-        if (!response.ok) return;
+        if (!response.ok) {
+          setPdfState("missing");
+          return;
+        }
         objectUrl = URL.createObjectURL(await response.blob());
         setPdfUrl(objectUrl);
+        setPdfState("ready");
       })
-      .catch(() => setPdfUrl(null));
+      .catch(() => {
+        setPdfUrl(null);
+        setPdfState("missing");
+      });
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setPdfUrl(null);
@@ -155,7 +165,15 @@ export default function ReviewPage() {
       <div className="review-header">
         <div className="title-row">
           <h1>Deed review</h1>
-          <StatusChip status={doc.status} title={doc.errorMessage} />
+          <StatusChip
+            status={displayStatus({
+              status: doc.status,
+              displayStatus: doc.displayStatus,
+              reviewStatus: reviewStatus || doc.reviewStatus,
+              flags: doc.flags
+            })}
+            title={doc.errorMessage}
+          />
         </div>
         <div className="row-actions">
           <button className="ghost" type="button" disabled={!doc.previousId} onClick={() => doc.previousId && navigate(`/documents/${doc.previousId}`)}>
@@ -256,7 +274,13 @@ export default function ReviewPage() {
 
       <div className="review-grid">
         <div className="pdf-pane">
-          {pdfUrl ? <iframe title="PDF preview" src={pdfUrl} /> : <div className="pdf-placeholder">PDF preview</div>}
+          {pdfState === "ready" && pdfUrl ? (
+            <iframe title="PDF preview" src={pdfUrl} />
+          ) : (
+            <div className="pdf-placeholder">
+              {pdfState === "missing" ? "PDF is not available for this deed." : "Loading PDF…"}
+            </div>
+          )}
         </div>
         <form id="field-form" className="field-form" onSubmit={(e) => save(e, false)}>
           <Field label="Grantor" value={fields.grantor ?? ""} onChange={(v) => update("grantor", v)} readOnly={!canEdit} />

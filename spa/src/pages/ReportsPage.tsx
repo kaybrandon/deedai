@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { endpoints, type ClientItem, type FlagItem, type UserSummary } from "../api";
 import EmptyState from "../components/EmptyState";
 import { LabelWithHelp } from "../components/FieldHelp";
+import StatusChip from "../components/StatusChip";
+import { displayStatus } from "../reviewStatus";
 
 interface ReportRow {
   id: string;
@@ -99,6 +101,7 @@ export default function ReportsPage() {
             <option>Processing</option>
             <option>Ready</option>
             <option>Failed</option>
+            <option value="NeedsReview">Needs review</option>
           </select>
         </label>
         <label>
@@ -170,7 +173,9 @@ export default function ReportsPage() {
                 <tr key={row.id}>
                   <td>{row.name}</td>
                   <td>{row.client}</td>
-                  <td>{row.status}</td>
+                  <td>
+                    <StatusChip status={displayStatus(row)} />
+                  </td>
                   <td>{row.deedType ?? "—"}</td>
                   <td>{row.assignee ?? "—"}</td>
                   <td>{row.flags?.join(", ") || "—"}</td>

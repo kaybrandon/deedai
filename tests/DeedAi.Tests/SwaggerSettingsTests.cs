@@ -55,7 +55,10 @@ public sealed class SwaggerSettingsTests
         client.DefaultRequestHeaders.Authorization = null;
         var ui = await client.GetAsync("/swagger/index.html");
         Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
-        Assert.Contains("swagger", await ui.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
+        var html = await ui.Content.ReadAsStringAsync();
+        Assert.Contains("swagger", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("deedai-swagger-authorize", html, StringComparison.Ordinal);
+        Assert.Contains("min-height: 44px", html, StringComparison.Ordinal);
 
         var spec = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatusCode.OK, spec.StatusCode);

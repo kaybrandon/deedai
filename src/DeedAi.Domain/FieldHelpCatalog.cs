@@ -26,6 +26,7 @@ public static class FieldHelpCatalog
     public const string RestoreConfirmRestore = "restore.confirmRestore";
     public const string RestoreConfirmHardDelete = "restore.confirmHardDelete";
     public const string SettingsSwagger = "settings.swagger";
+    public const string SettingsSystemHealth = "settings.systemHealth";
     public const string UsersRole = "users.role";
     public const string SettingsIdleTimeout = "settings.idleTimeout";
     public const string SettingsOcrTrim = "settings.ocrTrim";
@@ -69,7 +70,7 @@ public static class FieldHelpCatalog
         [SalesConsiderationThreshold] = "Deeds at or above this amount appear on the Sales page when Display Sales Tab is on for the Client.",
         [ReportsDate] = "Limit the report to deeds updated in this date range. Leave both dates blank to include every date you can see.",
         [ReportsAssignee] = "Show only deeds assigned to this person. Clear the filter to include unassigned deeds and all assignees.",
-        [ReportsStatus] = "Filter by pipeline status (Queued, Processing, Ready, Failed). Combine with Client, flag, or assignee as needed.",
+        [ReportsStatus] = "Filter by pipeline status (Queued, Processing, Ready, Failed) or Needs review. Combine with Client, flag, or assignee as needed.",
         [ReportsFlag] = "Show deeds that have this review flag. Flags are defined by an Admin in Settings.",
         [ReportsClient] = "Limit the report to one Client. You only see Clients your account can access.",
         [SettingsFlags] = "Review flags the team can apply on a deed. Name and color appear on Documents and Reports.",
@@ -78,6 +79,7 @@ public static class FieldHelpCatalog
         [RestoreConfirmRestore] = "Restore puts this soft-deleted deed back on Documents for its Client. Review history stays attached.",
         [RestoreConfirmHardDelete] = "Hard-delete permanently removes the deed and its PDF blob. This cannot be undone — use Restore if you only meant to bring it back.",
         [SettingsSwagger] = "When on, /swagger serves the API UI so Admins can authorize with a JWT. When off, /swagger returns 404. Enabling Swagger does not open anonymous API access.",
+        [SettingsSystemHealth] = "Admin-only SQL, storage, and queue checks. Modes only — never connection strings, keys, or other secrets.",
         [UsersRole] = "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
         [SettingsIdleTimeout] = "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
         [SettingsOcrTrim] = "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list."
