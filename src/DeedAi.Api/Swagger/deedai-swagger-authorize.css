@@ -1,0 +1,46 @@
+/* Phase 4.2.1 runtime companion: stronger selectors than Swagger's
+   `.btn.authorize { display: inline; line-height: 1 }`. Stylesheets still
+   lose after paint when Swagger injects a later equal-specificity rule —
+   the HeadContent script pins these again and sets inline !important. */
+html body .swagger-ui .btn.authorize,
+html body .swagger-ui button.authorize,
+html body .swagger-ui .auth-wrapper .authorize,
+html body .swagger-ui .auth-wrapper button.authorize,
+html body .swagger-ui .scheme-container .btn.authorize,
+html body .swagger-ui .scheme-container button.authorize,
+html body .swagger-ui .modal-ux .btn.modal-btn,
+html body .swagger-ui .modal-ux .btn.modal-btn.authorize,
+html body .swagger-ui .dialog-ux .btn.modal-btn,
+html body .swagger-ui .auth-btn-wrapper .btn,
+html body .swagger-ui .auth-btn-wrapper .btn.modal-btn,
+html body .swagger-ui .auth-btn-wrapper .btn.modal-btn.authorize,
+html body .swagger-ui .auth-btn-wrapper button,
+html body .swagger-ui .btn.modal-btn.authorize,
+html body .swagger-ui .btn-done {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  min-height: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  padding: 10px 16px !important;
+  line-height: 1.2 !important;
+  float: none !important;
+}
+html body .swagger-ui .auth-wrapper,
+html body .swagger-ui .scheme-container .auth-wrapper,
+html body .swagger-ui .auth-btn-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 44px !important;
+}
+html body .swagger-ui .btn.authorize span,
+html body .swagger-ui .auth-wrapper .authorize span,
+html body .swagger-ui .auth-btn-wrapper .btn span {
+  float: none !important;
+  display: inline !important;
+  padding: 0 8px 0 0 !important;
+  line-height: inherit !important;
+}

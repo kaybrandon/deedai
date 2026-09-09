@@ -10,45 +10,15 @@ public static class SwaggerExtensions
     public const string ConfigKey = "Swagger:Enabled";
 
     /// <summary>
-    /// Swagger UI's default Authorize control is ~34px because
-    /// <c>.swagger-ui .btn.authorize { display: inline; line-height: 1 }</c>
-    /// (padding 5px + 20px lock icon + 5px + 2px borders). <c>min-height</c>
-    /// does not apply to inline boxes, so a HeadContent-only min-height
-    /// override is ignored. Force a flex box and a 44px tap target to match
-    /// Copy Bearer and the rest of the Admin Settings UI.
+    /// Stronger Authorize CSS plus the post-paint runtime script. Prefer
+    /// <see cref="AuthorizeHitTargetHead"/>; this alias stays for tests that
+    /// asserted the #17 stylesheet.
     /// </summary>
-    public const string AuthorizeHitTargetCss =
-        """
-        <style id="deedai-swagger-authorize">
-        .swagger-ui .btn.authorize,
-        .swagger-ui .auth-wrapper .authorize,
-        .swagger-ui .scheme-container .btn.authorize,
-        .swagger-ui .modal-ux .btn.modal-btn,
-        .swagger-ui .modal-ux .btn.modal-btn.authorize,
-        .swagger-ui .auth-btn-wrapper .btn,
-        .swagger-ui .auth-btn-wrapper .btn.modal-btn,
-        .swagger-ui .auth-btn-wrapper .btn.modal-btn.authorize,
-        .swagger-ui .btn.modal-btn.authorize,
-        .swagger-ui .btn-done {
-          display: inline-flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          box-sizing: border-box !important;
-          min-height: 44px !important;
-          min-width: 44px !important;
-          height: auto !important;
-          padding: 10px 16px !important;
-          line-height: 1.2 !important;
-        }
-        .swagger-ui .btn.authorize span,
-        .swagger-ui .auth-wrapper .authorize span {
-          float: none !important;
-          display: inline !important;
-          padding: 0 8px 0 0 !important;
-          line-height: inherit !important;
-        }
-        </style>
-        """;
+    public static string AuthorizeHitTargetCss => SwaggerAuthorizeHitTarget.StyleTag;
+
+    public static string AuthorizeHitTargetScript => SwaggerAuthorizeHitTarget.ScriptTag;
+
+    public static string AuthorizeHitTargetHead => SwaggerAuthorizeHitTarget.HeadContent;
 
     /// <summary>
     /// Default when the database has no Swagger row. Always off unless
@@ -139,7 +109,7 @@ public static class SwaggerExtensions
             options.SwaggerEndpoint($"/{RoutePrefix}/{DocumentName}/swagger.json", "Deed AI API v1");
             options.RoutePrefix = RoutePrefix;
             options.EnablePersistAuthorization();
-            options.HeadContent = AuthorizeHitTargetCss;
+            options.HeadContent = AuthorizeHitTargetHead;
         });
         return app;
     }
