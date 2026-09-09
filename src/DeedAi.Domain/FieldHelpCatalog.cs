@@ -30,6 +30,10 @@ public static class FieldHelpCatalog
     public const string UsersRole = "users.role";
     public const string SettingsIdleTimeout = "settings.idleTimeout";
     public const string SettingsOcrTrim = "settings.ocrTrim";
+    public const string SettingsEmailMode = "settings.emailMode";
+    public const string SettingsEmailTest = "settings.emailTest";
+    public const string SettingsVerifyRequired = "settings.verifyRequired";
+    public const string UsersResendVerification = "users.resendVerification";
 
     public static readonly IReadOnlyList<string> MustKeys =
     [
@@ -53,7 +57,10 @@ public static class FieldHelpCatalog
         SettingsDeedTypeMaps,
         RestoreConfirmRestore,
         RestoreConfirmHardDelete,
-        SettingsSwagger
+        SettingsSwagger,
+        SettingsEmailMode,
+        SettingsEmailTest,
+        SettingsVerifyRequired
     ];
 
     public static readonly IReadOnlyDictionary<string, string> All = new Dictionary<string, string>
@@ -82,6 +89,10 @@ public static class FieldHelpCatalog
         [SettingsSystemHealth] = "Admin-only SQL, Storage, Queue, Blob read/write, Document Intelligence, and OCR pipeline checks plus queue depth. Modes and counts only — never connection strings, keys, or other secrets.",
         [UsersRole] = "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
         [SettingsIdleTimeout] = "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
-        [SettingsOcrTrim] = "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list."
+        [SettingsOcrTrim] = "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list.",
+        [SettingsEmailMode] = "Active mail mode is SendGrid or SMTP — only one sends. API keys, SMTP username, and SMTP password stay in Key Vault.",
+        [SettingsEmailTest] = "Sends one test message to the address you type using the active mode. Result is Pass or Fail. Secrets are never shown.",
+        [SettingsVerifyRequired] = "When on, unverified users cannot sign in. Disabled accounts stay blocked even after they verify.",
+        [UsersResendVerification] = "Sends a new verification link to this user through the active mail mode. Disabled accounts still cannot sign in."
     };
 }

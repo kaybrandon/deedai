@@ -12,6 +12,8 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<DocumentFields> DocumentFields => Set<DocumentFields>();
     public DbSet<UserClientAccess> UserClientAccess => Set<UserClientAccess>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
+    public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
     public DbSet<FlagDefinition> FlagDefinitions => Set<FlagDefinition>();
     public DbSet<StatusDefinition> StatusDefinitions => Set<StatusDefinition>();
     public DbSet<DeedTypeMap> DeedTypeMaps => Set<DeedTypeMap>();
@@ -44,6 +46,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.PhotoBlobPath).HasMaxLength(512);
             entity.Property(x => x.Role).HasMaxLength(32).IsRequired();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.Property(x => x.EmailVerified).HasDefaultValue(true);
             entity.ToTable(t => t.HasCheckConstraint(
                 "CK_Users_Role",
                 $"Role IN ('{AppRoles.Admin}','{AppRoles.Editor}','{AppRoles.Uploader}','{AppRoles.Viewer}')"));
@@ -84,6 +87,32 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailVerificationToken>(entity =>
+        {
+            entity.ToTable("EmailVerificationTokens");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => x.UserId);
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailSettings>(entity =>
+        {
+            entity.ToTable("EmailSettings");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Mode).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.FromName).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.FromAddress).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.LastFailReason).HasMaxLength(200);
+            entity.ToTable(t => t.HasCheckConstraint(
+                "CK_EmailSettings_Mode",
+                $"Mode IN ('{EmailModes.SendGrid}','{EmailModes.Smtp}')"));
         });
 
         modelBuilder.Entity<FlagDefinition>(entity =>

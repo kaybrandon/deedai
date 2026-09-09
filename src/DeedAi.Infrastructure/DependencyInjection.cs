@@ -47,6 +47,8 @@ public static class DependencyInjection
         services.AddHttpClient(nameof(SendGridEmailSender));
         services.AddHttpClient(nameof(HttpSoftwareClient));
         AddEmail(services, configuration);
+        services.AddScoped<EmailOutbound>();
+        services.AddScoped<IEmailOutbound>(sp => sp.GetRequiredService<EmailOutbound>());
         AddSoftware(services, configuration);
         AddStorage(services, configuration);
         AddQueue(services, configuration);
@@ -72,21 +74,10 @@ public static class DependencyInjection
 
     private static void AddEmail(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<SendGridOptions>(options =>
-        {
-            options.ApiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey", "SendGrid__ApiKey");
-            options.FromEmail = FirstValue(configuration, "SendGridFromEmail", "SendGrid:FromEmail") ?? options.FromEmail;
-            options.FromName = FirstValue(configuration, "SendGridFromName", "SendGrid:FromName") ?? options.FromName;
-        });
-
-        var apiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey", "SendGrid__ApiKey");
-        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase))
-        {
-            services.AddSingleton<IEmailSender, LoggingEmailSender>();
-            return;
-        }
-
-        services.AddSingleton<IEmailSender, SendGridEmailSender>();
+        services.Configure<EmailOptions>(options => EmailKv.Bind(options, configuration));
+        services.AddSingleton<SendGridEmailSender>();
+        services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<SendGridEmailSender>());
+        services.AddSingleton<SmtpEmailSender>();
     }
 
     private static void AddSoftware(IServiceCollection services, IConfiguration configuration)

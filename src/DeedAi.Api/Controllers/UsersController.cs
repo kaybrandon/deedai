@@ -3,7 +3,9 @@ using DeedAi.Api.Contracts;
 using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
+using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +16,11 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize(Policy = RolePolicies.CanAdmin)]
 [Route("api/admin/users")]
-public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : ControllerBase
+public sealed class UsersController(
+    DeedAiDbContext db,
+    IBlobStorage blobs,
+    IEmailOutbound email,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UserDetail>>> List(CancellationToken cancellationToken)
@@ -58,11 +64,13 @@ public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : Co
             Role = request.Role,
             PasswordHash = PasswordHasher.Hash(request.Password!),
             IsActive = request.IsActive,
+            EmailVerified = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
         db.Users.Add(user);
         await ReplaceAccessAsync(user.Id, request.ClientIds, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        await TrySendVerificationAsync(user, required: false, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = user.Id }, ToDetail(await Reload(user.Id, cancellationToken)));
     }
 
@@ -98,11 +106,17 @@ public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : Co
             return Conflict(new { message = "A user with that email already exists." });
         }
 
+        var emailChanged = !string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase);
         user.Email = email;
         user.DisplayName = request.DisplayName.Trim();
         user.FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
         user.Role = request.Role;
         user.IsActive = request.IsActive;
+        if (emailChanged)
+        {
+            user.EmailVerified = false;
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
             user.PasswordHash = PasswordHasher.Hash(request.Password);
@@ -110,7 +124,44 @@ public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : Co
 
         await ReplaceAccessAsync(user.Id, request.ClientIds, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        if (emailChanged)
+        {
+            await TrySendVerificationAsync(user, required: false, cancellationToken);
+        }
+
         return ToDetail(await Reload(user.Id, cancellationToken));
+    }
+
+    [HttpPost("{id:guid}/resend-verification")]
+    public async Task<IActionResult> ResendVerification(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (user.EmailVerified)
+        {
+            return BadRequest(new { message = "This account is already verified." });
+        }
+
+        try
+        {
+            await TrySendVerificationAsync(user, required: true, cancellationToken);
+        }
+        catch (EmailNotConfiguredException)
+        {
+            return BadRequest(new { message = "Email is not configured for the active mode." });
+        }
+        catch (InvalidOperationException)
+        {
+            return BadRequest(new { message = "Could not send the verification email." });
+        }
+
+        return Ok(new { message = user.IsActive
+            ? "Verification email sent."
+            : "Verification email sent. This account is disabled, so they still cannot sign in." });
     }
 
     [HttpDelete("{id:guid}")]
@@ -191,9 +242,41 @@ public sealed class UsersController(DeedAiDbContext db, IBlobStorage blobs) : Co
         await db.Users.AsNoTracking().Include(x => x.ClientAccess).FirstAsync(x => x.Id == id, cancellationToken);
 
     private static UserDetail ToDetail(UserAccount user) =>
-        new(user.Id, user.Email, user.DisplayName, user.FullName, user.Role, user.IsActive, user.CreatedAt,
+        new(user.Id, user.Email, user.DisplayName, user.FullName, user.Role, user.IsActive, user.EmailVerified, user.CreatedAt,
             user.ClientAccess.Select(x => x.ClientId).ToList(),
             !string.IsNullOrWhiteSpace(user.PhotoBlobPath));
+
+    private async Task TrySendVerificationAsync(UserAccount user, bool required, CancellationToken cancellationToken)
+    {
+        var raw = TokenHasher.NewToken();
+        db.EmailVerificationTokens.Add(new EmailVerificationToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = TokenHasher.Hash(raw),
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(EmailOutbound.VerifyHours)
+        });
+        await db.SaveChangesAsync(cancellationToken);
+
+        var publicUrl = DependencyInjection.FirstValue(configuration, "AppPublicUrl", "App:PublicUrl")
+                        ?? $"{Request.Scheme}://{Request.Host.Value}";
+        var link = $"{publicUrl.TrimEnd('/')}/verify-email?token={Uri.EscapeDataString(raw)}";
+        try
+        {
+            await email.SendAsync(
+                new EmailMessage(
+                    user.Email,
+                    "Verify your Deed AI email",
+                    $"Verify your Deed AI email using this link (expires in {EmailOutbound.VerifyHours} hours):\n{link}\nVerify token: {raw}",
+                    $"<p>Verify your Deed AI email using this link (expires in {EmailOutbound.VerifyHours} hours):</p><p><a href=\"{link}\">{link}</a></p>"),
+                cancellationToken);
+        }
+        catch (Exception) when (!required)
+        {
+            // User is saved; Admin can resend when mail is configured.
+        }
+    }
 
     private static ValidationIssue? Validate(UpsertUserRequest request, bool requirePassword)
     {

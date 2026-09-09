@@ -36,6 +36,7 @@ export default function UsersPage() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoRevision, setPhotoRevision] = useState(0);
   const [pendingDisable, setPendingDisable] = useState<UserDetail | null>(null);
+  const [pendingResend, setPendingResend] = useState<UserDetail | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   async function load() {
@@ -169,6 +170,7 @@ export default function UsersPage() {
               onToggle={() => toggleGroup(group.client.id)}
               onEdit={startEdit}
               onDisable={setPendingDisable}
+              onResend={setPendingResend}
               revision={photoRevision}
             />
           ))}
@@ -181,6 +183,7 @@ export default function UsersPage() {
               onToggle={() => toggleGroup("unassigned")}
               onEdit={startEdit}
               onDisable={setPendingDisable}
+              onResend={setPendingResend}
               revision={photoRevision}
             />
           )}
@@ -297,6 +300,29 @@ export default function UsersPage() {
         </form>
       )}
 
+      {pendingResend && (
+        <ConfirmSheet
+          title="Resend verification email?"
+          body={`${pendingResend.displayName} will get a new verification link through the active mail mode. Disabled accounts still cannot sign in.`}
+          confirmLabel="Resend"
+          danger={false}
+          helpKey="users.resendVerification"
+          onCancel={() => setPendingResend(null)}
+          onConfirm={async () => {
+            try {
+              const result = await endpoints.resendVerification(pendingResend.id);
+              setPendingResend(null);
+              setNotice(result.message);
+              setError(null);
+              await load();
+            } catch (err) {
+              setPendingResend(null);
+              setError(err instanceof Error ? err.message : "Resend failed.");
+            }
+          }}
+        />
+      )}
+
       {pendingDisable && (
         <ConfirmSheet
           title="Disable this user?"
@@ -329,6 +355,7 @@ function UserGroup({
   onToggle,
   onEdit,
   onDisable,
+  onResend,
   revision
 }: {
   title: string;
@@ -338,6 +365,7 @@ function UserGroup({
   onToggle: () => void;
   onEdit: (user: UserDetail) => void;
   onDisable: (user: UserDetail) => void;
+  onResend: (user: UserDetail) => void;
   revision: number;
 }) {
   return (
@@ -363,6 +391,7 @@ function UserGroup({
                 <th>Role</th>
                 <th>Clients</th>
                 <th>Status</th>
+                <th>Verified</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -391,10 +420,16 @@ function UserGroup({
                       .join(", ") || "—"}
                   </td>
                   <td>{user.isActive ? "Active" : "Disabled"}</td>
+                  <td>{user.emailVerified ? "Verified" : "Unverified"}</td>
                   <td className="actions-cell">
                     <button className="ghost" type="button" onClick={() => onEdit(user)}>
                       Edit
                     </button>
+                    {!user.emailVerified && (
+                      <button className="ghost" type="button" onClick={() => onResend(user)}>
+                        Resend verify
+                      </button>
+                    )}
                     {user.isActive && (
                       <button className="ghost" type="button" onClick={() => onDisable(user)}>
                         Disable

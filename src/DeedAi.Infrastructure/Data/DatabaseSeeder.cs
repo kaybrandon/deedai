@@ -73,6 +73,7 @@ public sealed class DatabaseSeeder(
                     Role = AppRoles.Admin,
                     PasswordHash = PasswordHasher.Hash(password),
                     IsActive = true,
+                    EmailVerified = true,
                     CreatedAt = now
                 },
                 new UserAccount
@@ -84,6 +85,7 @@ public sealed class DatabaseSeeder(
                     Role = AppRoles.Editor,
                     PasswordHash = PasswordHasher.Hash(password),
                     IsActive = true,
+                    EmailVerified = true,
                     CreatedAt = now
                 },
                 new UserAccount
@@ -95,6 +97,7 @@ public sealed class DatabaseSeeder(
                     Role = AppRoles.Uploader,
                     PasswordHash = PasswordHasher.Hash(password),
                     IsActive = true,
+                    EmailVerified = true,
                     CreatedAt = now
                 },
                 new UserAccount
@@ -106,6 +109,7 @@ public sealed class DatabaseSeeder(
                     Role = AppRoles.Viewer,
                     PasswordHash = PasswordHasher.Hash(password),
                     IsActive = true,
+                    EmailVerified = true,
                     CreatedAt = now
                 });
         }
@@ -130,6 +134,7 @@ public sealed class DatabaseSeeder(
         await SeedSessionAsync(cancellationToken);
         await SeedOcrCleanupAsync(cancellationToken);
         await SeedSwaggerSettingAsync(cancellationToken);
+        await SeedEmailSettingsAsync(cancellationToken);
 
         var seedDemo = string.Equals(configuration["Seed:DemoDocuments"], "true", StringComparison.OrdinalIgnoreCase)
                        || string.Equals(configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
@@ -571,6 +576,36 @@ public sealed class DatabaseSeeder(
         }
 
         return id;
+    }
+
+    private async Task SeedEmailSettingsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.EmailSettings.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var fromEmail = DependencyInjection.FirstValue(
+                            configuration,
+                            "SendGridFromEmail",
+                            "SendGrid:FromEmail",
+                            "SmtpFromEmail")
+                        ?? "noreply@bisconsultants.com";
+        var fromName = DependencyInjection.FirstValue(
+                           configuration,
+                           "SendGridFromName",
+                           "SendGrid:FromName")
+                       ?? "Deed AI";
+        db.EmailSettings.Add(new EmailSettings
+        {
+            Id = EmailSettings.SingletonId,
+            Mode = EmailModes.SendGrid,
+            FromName = fromName,
+            FromAddress = fromEmail,
+            VerifyRequired = true,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private async Task SeedSwaggerSettingAsync(CancellationToken cancellationToken)

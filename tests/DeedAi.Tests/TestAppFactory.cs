@@ -58,6 +58,7 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("DocumentIntelligence:Endpoint", "");
         builder.UseSetting("DocumentIntelligence:Key", "");
+        builder.UseSetting("SendGridApiKey", "sg-test-configured-0000");
         foreach (var pair in _extra)
         {
             builder.UseSetting(pair.Key, pair.Value ?? "");
@@ -74,7 +75,8 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
                 ["Jwt:Key"] = "TEST_ONLY_JWT_KEY_MUST_BE_32_CHARS_MIN",
                 ["Jwt:Issuer"] = "deedai",
                 ["Jwt:Audience"] = "deedai-spa",
-                ["Cors:AllowedOrigins:0"] = "http://localhost:5173"
+                ["Cors:AllowedOrigins:0"] = "http://localhost:5173",
+                ["SendGridApiKey"] = "sg-test-configured-0000"
             };
             foreach (var pair in _extra)
             {

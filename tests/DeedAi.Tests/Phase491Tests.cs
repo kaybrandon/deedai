@@ -40,6 +40,8 @@ public sealed class Phase491Tests : IClassFixture<TestAppFactory>
         Assert.Contains("[Migration(\"20260909190000_Phase491RemovePropertyDefaults\")]", designer, StringComparison.Ordinal);
         Assert.Contains("[DbContext(typeof(DeedAiDbContext))]", designer, StringComparison.Ordinal);
         Assert.Contains("BuildTargetModel", designer, StringComparison.Ordinal);
+        Assert.Contains("DeedAi.Domain.Entities.EmailSettings", designer, StringComparison.Ordinal);
+        Assert.Contains("EmailVerified", designer, StringComparison.Ordinal);
         Assert.DoesNotContain("DeedAi.Domain.Entities.PropertyDefault", designer, StringComparison.Ordinal);
         Assert.DoesNotContain("ToTable(\"PropertyDefaults\"", designer, StringComparison.Ordinal);
         Assert.DoesNotContain("County", designer, StringComparison.Ordinal);
@@ -62,6 +64,9 @@ public sealed class Phase491Tests : IClassFixture<TestAppFactory>
         Assert.False(File.Exists(Path.Combine(RepoRoot(), "src", "DeedAi.Domain", "Entities", "PropertyDefault.cs")));
 
         var snapshot = Read("src/DeedAi.Infrastructure/Data/Migrations/DeedAiDbContextModelSnapshot.cs");
+        Assert.Contains("DeedAi.Domain.Entities.EmailSettings", snapshot, StringComparison.Ordinal);
+        Assert.Contains("DeedAi.Domain.Entities.EmailVerificationToken", snapshot, StringComparison.Ordinal);
+        Assert.Contains("EmailVerified", snapshot, StringComparison.Ordinal);
         Assert.DoesNotContain("DeedAi.Domain.Entities.PropertyDefault", snapshot, StringComparison.Ordinal);
         Assert.DoesNotContain("ToTable(\"PropertyDefaults\"", snapshot, StringComparison.Ordinal);
 

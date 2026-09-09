@@ -10,6 +10,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import LoginPage from "./pages/LoginPage";
 import ReportsPage from "./pages/ReportsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import RestorePage from "./pages/RestorePage";
 import ReviewPage from "./pages/ReviewPage";
 import SalesPage from "./pages/SalesPage";
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/login" element={me ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
               <Route path="/forgot-password" element={me ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/denied" element={<DeniedPage />} />
             </Route>
             <Route element={me ? <AppShell /> : <Navigate to="/login" replace />}>

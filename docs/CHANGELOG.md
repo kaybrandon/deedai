@@ -1,5 +1,12 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.8 Admin email (SendGrid | SMTP)
+- Admin Settings email panel switches **SendGrid** or **SMTP**. Secrets stay in Key Vault; UI shows configured yes/no and SendGrid last-4 only.
+- Status panel: active mode, configured?, last success/fail. Test send to a typed address with ConfirmSheet and Pass/Fail.
+- User email verification (link/token), unverified gate, Admin resend. Disabled accounts stay blocked.
+- Forgot/reset and OCR notify use the active mode and fail closed when it is unconfigured.
+- EF migration `20260909180000_Phase48AdminEmail` (after Phase 4.5, before Phase 4.9.1) includes Designer + `[Migration]` + `[DbContext]` + `BuildTargetModel`.
+
 ## 2026-09-09 — Phase 4.9.1 remove Property defaults
 - Settings no longer has a Property defaults panel (Admin and non-Admin). Software field maps, the six push resets (Exemptions / Supplement Year / Sales Letter / Sales Tab / Agents / Mortgage Codes), and OCR Settings stay.
 - `/api/settings/property-defaults` create/read/update/delete/reset are gone (404/410). No stubs.

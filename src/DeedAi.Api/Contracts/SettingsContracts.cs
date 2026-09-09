@@ -53,3 +53,33 @@ public sealed record UpsertOcrCleanupRequest(string Kind, string Value, bool IsA
 public sealed record SwaggerSettingResponse(bool Enabled);
 
 public sealed record UpdateSwaggerSettingRequest(bool Enabled);
+
+public sealed record EmailSettingsResponse(
+    string Mode,
+    bool Configured,
+    bool SendGridConfigured,
+    string? SendGridKeyLast4,
+    bool SmtpHostConfigured,
+    string? SmtpHost,
+    bool SmtpPortConfigured,
+    int? SmtpPort,
+    bool? SmtpTls,
+    bool SmtpUsernameConfigured,
+    bool SmtpPasswordConfigured,
+    int SmtpTimeoutSeconds,
+    string FromName,
+    string FromAddress,
+    bool VerifyRequired,
+    DateTimeOffset? LastSuccessAt,
+    DateTimeOffset? LastFailAt,
+    string? LastFailReason);
+
+public sealed record UpdateEmailSettingsRequest(
+    string Mode,
+    string? FromName,
+    string? FromAddress,
+    bool VerifyRequired);
+
+public sealed record TestEmailRequest(string To);
+
+public sealed record TestEmailResponse(bool Passed, string Message, DateTimeOffset At);

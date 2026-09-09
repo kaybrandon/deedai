@@ -2,9 +2,11 @@ using System.Text.Json;
 using DeedAi.Api.Contracts;
 using DeedAi.Api.Swagger;
 using DeedAi.Domain;
+using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Export;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +18,88 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/settings")]
-public sealed class SettingsController(DeedAiDbContext db, IConfiguration configuration, ISwaggerEnablement swagger) : ControllerBase
+public sealed class SettingsController(
+    DeedAiDbContext db,
+    IConfiguration configuration,
+    ISwaggerEnablement swagger,
+    EmailOutbound outbound,
+    IEmailOutbound email) : ControllerBase
 {
+    [HttpGet("email")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<EmailSettingsResponse>> GetEmail(CancellationToken cancellationToken) =>
+        ToEmail(await outbound.EnsureAsync(cancellationToken), outbound.KvStatus());
+
+    [HttpPut("email")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<EmailSettingsResponse>> SaveEmail(
+        [FromBody] UpdateEmailSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!EmailModes.IsKnown(request.Mode))
+        {
+            return BadRequest(new { message = "Mode must be SendGrid or Smtp." });
+        }
+
+        var fromAddress = string.IsNullOrWhiteSpace(request.FromAddress)
+            ? "noreply@bisconsultants.com"
+            : request.FromAddress.Trim();
+        if (!fromAddress.Contains('@'))
+        {
+            return BadRequest(new { message = "From address must be a valid email." });
+        }
+
+        var item = await outbound.EnsureAsync(cancellationToken);
+        item.Mode = EmailModes.Normalize(request.Mode);
+        item.FromName = string.IsNullOrWhiteSpace(request.FromName) ? "Deed AI" : request.FromName.Trim();
+        item.FromAddress = fromAddress;
+        item.VerifyRequired = request.VerifyRequired;
+        item.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return ToEmail(item, outbound.KvStatus());
+    }
+
+    [HttpPost("email/test")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<TestEmailResponse>> TestEmail(
+        [FromBody] TestEmailRequest request,
+        CancellationToken cancellationToken)
+    {
+        var to = request.To?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(to) || !to.Contains('@'))
+        {
+            return BadRequest(new { message = "Enter an email address to test." });
+        }
+
+        var item = await outbound.EnsureAsync(cancellationToken);
+        var kv = outbound.KvStatus();
+        if (!kv.ConfiguredFor(item.Mode))
+        {
+            await outbound.RecordFailureAsync(item, "Email is not configured for the active mode.", cancellationToken);
+            return new TestEmailResponse(false, "Fail — email is not configured for the active mode.", DateTimeOffset.UtcNow);
+        }
+
+        try
+        {
+            await email.SendAsync(
+                new EmailMessage(
+                    to,
+                    "Deed AI test email",
+                    "This is a Deed AI test email from Admin Settings.",
+                    "<p>This is a Deed AI test email from Admin Settings.</p>"),
+                cancellationToken);
+            return new TestEmailResponse(true, "Pass — test email sent.", DateTimeOffset.UtcNow);
+        }
+        catch (EmailNotConfiguredException)
+        {
+            return new TestEmailResponse(false, "Fail — email is not configured for the active mode.", DateTimeOffset.UtcNow);
+        }
+        catch (InvalidOperationException)
+        {
+            return new TestEmailResponse(false, "Fail — the active mail mode rejected the test send.", DateTimeOffset.UtcNow);
+        }
+    }
+
     [HttpGet("swagger")]
     [Authorize(Policy = RolePolicies.CanAdmin)]
     public async Task<ActionResult<SwaggerSettingResponse>> GetSwagger(CancellationToken cancellationToken) =>
@@ -609,6 +691,27 @@ public sealed class SettingsController(DeedAiDbContext db, IConfiguration config
             settings.NotifyUploader
                 ? "Assignee, and the uploader when that option is on."
                 : "Assignee only. Turn on “also notify uploader” to include the person who uploaded the deed.");
+
+    private static EmailSettingsResponse ToEmail(EmailSettings settings, EmailKvStatus kv) =>
+        new(
+            EmailModes.Normalize(settings.Mode),
+            kv.ConfiguredFor(settings.Mode),
+            kv.SendGridConfigured,
+            kv.SendGridKeyLast4,
+            kv.SmtpHostConfigured,
+            kv.SmtpHost,
+            kv.SmtpPortConfigured,
+            kv.SmtpPort,
+            kv.SmtpTls,
+            kv.SmtpUsernameConfigured,
+            kv.SmtpPasswordConfigured,
+            kv.SmtpTimeoutSeconds,
+            settings.FromName,
+            settings.FromAddress,
+            settings.VerifyRequired,
+            settings.LastSuccessAt,
+            settings.LastFailAt,
+            settings.LastFailReason);
 
     private static string NormalizeColor(string? color) =>
         string.IsNullOrWhiteSpace(color) ? "#374151" : color.Trim();

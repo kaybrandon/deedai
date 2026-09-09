@@ -73,6 +73,16 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Dashboard charts:** Chart.js on existing APIs — `GET /api/dashboard/charts/status-mix` (donut), `GET /api/dashboard/charts/by-user` (stacked bar, Must), `GET /api/dashboard/charts/volume` (line over time), plus existing `GET /api/dashboard/counts`. One date-range / Client filter drives counts and charts. Empty states when a series has no data. Same role / ClientAccess as the APIs (no extra client-side data).
 - **Surfaces:** Visual density on Login, Dashboard, Documents, Review, Users, Settings, and Reports.
 
+## Phase 4.8 acceptance
+
+- **Admin Email (SendGrid | SMTP):** Settings panel switches the active mode. Only one mode sends (no dual-send). From name / address are Admin-editable. SMTP timeouts come from Key Vault (`SmtpTimeoutSeconds`, default 30s).
+- **KV-only secrets:** SendGrid API key and SMTP host / port / TLS / username / password are App Setting / Key Vault names only. UI shows configured yes/no (SendGrid last-4 when present). Secret values never appear in the UI, API payloads, logs, or tests.
+- **Status panel:** Active mode, configured?, last success / last fail (reason sanitized, no secrets).
+- **Test send:** Admin types an address, confirms with ConfirmSheet, gets Pass/Fail. Actions ≥ 44px.
+- **User email verification:** Verify link/token, unverified users gated when the toggle is on, Admin resend, disabled accounts stay blocked after verify.
+- **Forgot / reset + OCR notify** use the active mode and fail closed when that mode is unconfigured (no silent Logging send).
+- **Hard gates:** Client / Software naming, four roles, no secrets in repo, no Azure deploy, no 4.7 Print/PDF / 4.9 probes / 5.0 theme / 4.5–4.6 user-field work.
+
 ## Phase 4.2 acceptance
 
 - **Ready PDF preview:** Seeded Ready demo deeds (`deeds/demo/…`) have a PDF in blob storage. Opening a Ready deed in review shows the iframe preview. `GET /api/documents/{id}/file` returns `application/pdf` when the blob exists or can be seeded for a demo path. The placeholder (“PDF is not available for this deed.”) shows only when there is truly no file.
@@ -201,6 +211,12 @@ StorageConnection
 SqlConnection
 SendGridApiKey
 SendGrid__ApiKey
+SmtpHost
+SmtpPort
+SmtpTls
+SmtpUsername
+SmtpPassword
+SmtpTimeoutSeconds
 SoftwareApiKey
 Software__ApiKey
 Database__Provider=SqlServer

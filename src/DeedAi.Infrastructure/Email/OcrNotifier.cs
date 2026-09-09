@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DeedAi.Infrastructure.Email;
 
-public sealed class OcrNotifier(DeedAiDbContext db, IEmailSender email, ILogger<OcrNotifier> logger) : IOcrNotifier
+public sealed class OcrNotifier(DeedAiDbContext db, IEmailOutbound email, ILogger<OcrNotifier> logger) : IOcrNotifier
 {
     public static readonly string[] Events = ["OCR Failed", "Ready"];
 
@@ -33,6 +33,12 @@ public sealed class OcrNotifier(DeedAiDbContext db, IEmailSender email, ILogger<
         var recipients = Recipients(document, settings);
         if (recipients.Count == 0)
         {
+            return;
+        }
+
+        if (!email.IsActiveConfigured())
+        {
+            logger.LogWarning("OCR notify skipped — email is not configured for the active mode.");
             return;
         }
 
