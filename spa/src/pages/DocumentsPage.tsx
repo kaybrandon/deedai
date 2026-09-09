@@ -150,7 +150,7 @@ export default function DocumentsPage() {
         <label className="documents-search-field">
           Search
           <input
-            className="search-field documents-search"
+            className="search-field"
             type="search"
             placeholder="Search deeds"
             value={searchDraft}

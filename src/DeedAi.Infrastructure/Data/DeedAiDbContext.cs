@@ -164,7 +164,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.MailingState).HasMaxLength(32);
             entity.Property(x => x.MailingZip).HasMaxLength(16);
             var partiesComparer = new ValueComparer<List<string>>(
-                (left, right) => (left ?? []).SequenceEqual(right ?? []),
+                (left, right) => (left ?? new List<string>()).SequenceEqual(right ?? new List<string>()),
                 names => names.Aggregate(0, (hash, name) => HashCode.Combine(hash, name.GetHashCode(StringComparison.Ordinal))),
                 names => names.ToList());
             entity.Property(x => x.Grantors)

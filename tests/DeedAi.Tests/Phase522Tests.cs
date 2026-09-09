@@ -6,6 +6,7 @@ using DeedAi.Infrastructure.Data.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DeedAi.Tests;
 
@@ -32,7 +33,7 @@ public sealed class Phase522Tests : IClassFixture<TestAppFactory>
         Assert.Contains("Retry Failed", page, StringComparison.Ordinal);
         Assert.Contains("ConfirmSheet", page, StringComparison.Ordinal);
         Assert.Contains("Soft-delete", page, StringComparison.Ordinal);
-        Assert.Contains("className=\"search-field documents-search\"", page, StringComparison.Ordinal);
+        Assert.Contains("className=\"search-field\"", page, StringComparison.Ordinal);
         Assert.Equal(1, Count(page, "placeholder=\"Search deeds\""));
         Assert.Equal(1, Count(page, "className=\"search-field"));
         Assert.DoesNotContain("placeholder=\"Search", shell, StringComparison.Ordinal);
