@@ -19,7 +19,8 @@ public sealed class DashboardController(DeedAiDbContext db) : ControllerBase
         [FromQuery] Guid? clientId,
         CancellationToken cancellationToken)
     {
-        var rows = await db.Documents.AsNoTracking().ToListAsync(cancellationToken);
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        var rows = await ClientAccess.VisibleDocuments(db.Documents.AsNoTracking(), allowed).ToListAsync(cancellationToken);
         if (clientId is not null)
         {
             rows = rows.Where(x => x.ClientId == clientId).ToList();

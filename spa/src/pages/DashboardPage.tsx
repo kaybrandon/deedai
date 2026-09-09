@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { endpoints, type ClientItem, type DashboardCounts } from "../api";
+import EmptyState from "../components/EmptyState";
 
 function defaultBounds() {
   return { from: "2024-08-01", to: toInput(new Date()) };
@@ -38,6 +39,8 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const empty = counts !== null && counts.uploaded === 0;
+
   return (
     <section className="page">
       <h1>Dashboard</h1>
@@ -66,13 +69,17 @@ export default function DashboardPage() {
         </button>
       </form>
       {error && <div className="denied-box">{error}</div>}
-      <div className="cards">
-        <CountCard label="Uploaded" value={counts?.uploaded ?? 0} />
-        <CountCard label="Queued" value={counts?.queued ?? 0} />
-        <CountCard label="Processing" value={counts?.processing ?? 0} />
-        <CountCard label="Ready" value={counts?.ready ?? 0} />
-        <CountCard label="Failed" value={counts?.failed ?? 0} danger />
-      </div>
+      {empty ? (
+        <EmptyState title="No deeds in this range" body="Upload a PDF or widen the dates to see dashboard counts." />
+      ) : (
+        <div className="cards">
+          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} />
+          <CountCard label="Queued" value={counts?.queued ?? 0} />
+          <CountCard label="Processing" value={counts?.processing ?? 0} />
+          <CountCard label="Ready" value={counts?.ready ?? 0} />
+          <CountCard label="Failed" value={counts?.failed ?? 0} danger />
+        </div>
+      )}
     </section>
   );
 }

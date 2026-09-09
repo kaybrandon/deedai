@@ -1,7 +1,9 @@
 import { DragEvent, FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { endpoints, type ClientItem } from "../api";
+import { endpoints, uploadWithProgress, type ClientItem } from "../api";
 import { useAuth } from "../auth";
+import EmptyState from "../components/EmptyState";
+import { useProgress } from "../progress";
 
 interface LocalFile {
   file: File;
@@ -15,6 +17,7 @@ const MAX_BYTES = 50 * 1024 * 1024;
 export default function UploadPage() {
   const { canUpload } = useAuth();
   const navigate = useNavigate();
+  const progress = useProgress();
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [clientId, setClientId] = useState("");
   const [items, setItems] = useState<LocalFile[]>([]);
@@ -65,12 +68,16 @@ export default function UploadPage() {
       return;
     }
 
-    setItems((current) =>
-      current.map((item) => (item.error || item.skipped ? item : { ...item, progress: 70 }))
-    );
-
+    const jobId = `upload-${Date.now()}`;
+    progress.start(jobId, `Uploading ${ready.length} PDF${ready.length === 1 ? "" : "s"}`);
     try {
-      const result = await endpoints.upload(clientId, ready);
+      const result = await uploadWithProgress(clientId, ready, (percent) => {
+        progress.update(jobId, percent);
+        setItems((current) =>
+          current.map((item) => (item.error || item.skipped ? item : { ...item, progress: percent }))
+        );
+      });
+      progress.finish(jobId);
       setItems((current) =>
         current.map((item) => {
           if (item.error || item.skipped) return item;
@@ -80,13 +87,16 @@ export default function UploadPage() {
       );
       setNotice(`${result.queued} queued for OCR`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      const message = err instanceof Error ? err.message : "Upload failed.";
+      progress.finish(jobId, message);
+      setError(message);
     }
   }
 
   return (
     <section className="page">
       <h1>Upload documents</h1>
+      <p className="muted">Upload continues in the progress dock if you leave this page.</p>
       <form onSubmit={onSubmit}>
         <label className="narrow">
           Client
@@ -115,54 +125,63 @@ export default function UploadPage() {
             onChange={(e) => e.target.files && addFiles(e.target.files)}
           />
         </div>
-        <ul className="file-list">
-          {items.map((item, index) => (
-            <li key={`${item.file.name}-${index}`}>
-              {item.error ? (
-                <span className="fail-line">
-                  {item.file.name} failed —{" "}
-                  <button
-                    className="link"
-                    type="button"
-                    onClick={() =>
-                      setItems((current) =>
-                        current.map((row, i) =>
-                          i === index ? { file: row.file, progress: 0 } : row
+        {items.length === 0 ? (
+          <EmptyState title="No files queued" body="Drop PDFs here. Progress will not block the rest of Deed AI." />
+        ) : (
+          <ul className="file-list">
+            {items.map((item, index) => (
+              <li key={`${item.file.name}-${index}`}>
+                {item.error ? (
+                  <span className="fail-line">
+                    {item.file.name} failed —{" "}
+                    <button
+                      className="link"
+                      type="button"
+                      onClick={() =>
+                        setItems((current) =>
+                          current.map((row, i) => (i === index ? { file: row.file, progress: 0 } : row))
                         )
-                      )
-                    }
-                  >
-                    Retry
-                  </button>{" "}
-                  |{" "}
-                  <button
-                    className="link"
-                    type="button"
-                    onClick={() =>
-                      setItems((current) =>
-                        current.map((row, i) => (i === index ? { ...row, skipped: true } : row))
-                      )
-                    }
-                  >
-                    Skip
-                  </button>
-                </span>
-              ) : item.skipped ? (
-                <span className="muted">{item.file.name} skipped</span>
-              ) : (
-                <>
-                  <span>{item.file.name}</span>
-                  <progress max={100} value={item.progress} />
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+                      }
+                    >
+                      Retry
+                    </button>{" "}
+                    |{" "}
+                    <button
+                      className="link"
+                      type="button"
+                      onClick={() =>
+                        setItems((current) =>
+                          current.map((row, i) => (i === index ? { ...row, skipped: true } : row))
+                        )
+                      }
+                    >
+                      Skip
+                    </button>
+                  </span>
+                ) : item.skipped ? (
+                  <span className="muted">{item.file.name} skipped</span>
+                ) : (
+                  <>
+                    <span>{item.file.name}</span>
+                    <progress max={100} value={item.progress} />
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="row-actions">
           <button className="primary" type="submit">
             Upload
           </button>
-          <button className="ghost" type="button" onClick={() => { setItems([]); setNotice(null); }}>
+          <button
+            className="ghost"
+            type="button"
+            onClick={() => {
+              setItems([]);
+              setNotice(null);
+            }}
+          >
             Clear
           </button>
         </div>

@@ -4,10 +4,13 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using DeedAi.Domain.Abstractions;
 using DeedAi.Infrastructure.Data;
+using DeedAi.Infrastructure.Email;
 using DeedAi.Infrastructure.Ocr;
 using DeedAi.Infrastructure.Queueing;
+using DeedAi.Infrastructure.Software;
 using DeedAi.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,6 +40,10 @@ public static class DependencyInjection
         services.AddDbContext<DeedAiDbContext>(options => ConfigureDatabase(options, configuration));
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<OcrProcessor>();
+        services.AddHttpClient(nameof(SendGridEmailSender));
+        services.AddHttpClient(nameof(HttpSoftwareClient));
+        AddEmail(services, configuration);
+        AddSoftware(services, configuration);
         AddStorage(services, configuration);
         AddQueue(services, configuration);
         AddDocumentIntelligence(services, configuration);
@@ -46,6 +53,7 @@ public static class DependencyInjection
     public static void ConfigureDatabase(DbContextOptionsBuilder options, IConfiguration configuration)
     {
         var provider = configuration["Database:Provider"] ?? "Sqlite";
+        options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         if (string.Equals(provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
         {
             var sql = FirstValue(configuration, "SqlConnection", "ConnectionStrings:Sql")
@@ -56,6 +64,45 @@ public static class DependencyInjection
 
         var sqlite = configuration.GetConnectionString("Sqlite") ?? "Data Source=deedai.db";
         options.UseSqlite(sqlite);
+    }
+
+    private static void AddEmail(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<SendGridOptions>(options =>
+        {
+            options.ApiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey");
+            options.FromEmail = FirstValue(configuration, "SendGridFromEmail", "SendGrid:FromEmail") ?? options.FromEmail;
+            options.FromName = FirstValue(configuration, "SendGridFromName", "SendGrid:FromName") ?? options.FromName;
+        });
+
+        var apiKey = FirstValue(configuration, "SendGridApiKey", "SendGrid:ApiKey");
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+            return;
+        }
+
+        services.AddSingleton<IEmailSender, SendGridEmailSender>();
+    }
+
+    private static void AddSoftware(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<SoftwareOptions>(options =>
+        {
+            options.BaseUrl = FirstValue(configuration, "SoftwareBaseUrl", "Software:BaseUrl");
+            options.ApiKey = FirstValue(configuration, "SoftwareApiKey", "Software:ApiKey");
+        });
+
+        var mode = configuration["Software:Mode"];
+        var baseUrl = FirstValue(configuration, "SoftwareBaseUrl", "Software:BaseUrl");
+        if (string.Equals(mode, "Http", StringComparison.OrdinalIgnoreCase)
+            || (!string.IsNullOrWhiteSpace(baseUrl) && !baseUrl.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase)))
+        {
+            services.AddSingleton<ISoftwareClient, HttpSoftwareClient>();
+            return;
+        }
+
+        services.AddSingleton<ISoftwareClient, MockSoftwareClient>();
     }
 
     private static void AddStorage(IServiceCollection services, IConfiguration configuration)
