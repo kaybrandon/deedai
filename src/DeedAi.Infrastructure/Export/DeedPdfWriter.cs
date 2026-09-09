@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace DeedAi.Infrastructure.Export;
@@ -62,8 +63,34 @@ public static class DeedPdfWriter
         return Render("Deed AI documents report", lines);
     }
 
-    public static string DashboardFileName(DateTimeOffset from, DateTimeOffset to) =>
-        $"deedai-dashboard-{from.UtcDateTime:yyyy-MM-dd}-to-{to.UtcDateTime:yyyy-MM-dd}.pdf";
+    public static string DashboardFileName(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        string? fromDate = null,
+        string? toDate = null) =>
+        $"deedai-dashboard-{FilterCalendarDate(from, fromDate)}-to-{FilterCalendarDate(to, toDate)}.pdf";
+
+    /// <summary>
+    /// User-facing filter calendar date (YYYY-MM-DD). Uses the DateTimeOffset's
+    /// own date — not <see cref="DateTimeOffset.UtcDateTime"/> — so a local
+    /// inclusive end-of-day (T23:59:59) does not become the next UTC day in
+    /// the download name. Optional <paramref name="calendarDate"/> (from the
+    /// date picker) wins when the query instant was already converted to UTC.
+    /// </summary>
+    public static string FilterCalendarDate(DateTimeOffset value, string? calendarDate = null)
+    {
+        if (DateOnly.TryParseExact(
+                calendarDate,
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var parsed))
+        {
+            return parsed.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        return value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    }
 
     public static byte[] Dashboard(
         string title,
