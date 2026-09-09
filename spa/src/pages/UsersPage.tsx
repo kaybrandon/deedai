@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail } from "../api";
 import { useAuth } from "../auth";
@@ -41,6 +41,10 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = useMemo(() => parseUsersTableQuery(searchParams), [searchParams]);
+  const [searchDraft, setSearchDraft] = useState(query.q);
+  const searchTyping = useRef(false);
+  const queryRef = useRef(query);
+  queryRef.current = query;
   const [users, setUsers] = useState<UserDetail[]>([]);
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [editing, setEditing] = useState<string | "new" | null>(null);
@@ -85,10 +89,34 @@ export default function UsersPage() {
     const stored = readStoredUsersTableQuery();
     if (stored && hasActiveUsersTableState(stored)) {
       setSearchParams(serializeUsersTableQuery(stored), { replace: true });
+      setSearchDraft(stored.q);
     }
-  }, [canAdmin, searchParams, setSearchParams]);
+    // Hydrate once from the URL or session so clearing search cannot restore a stale filter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAdmin]);
 
-  const table = useMemo(() => applyUsersTable(users, clients, query), [users, clients, query]);
+  useEffect(() => {
+    if (!searchTyping.current) {
+      setSearchDraft(query.q);
+    }
+  }, [query.q]);
+
+  useEffect(() => {
+    if (searchDraft === queryRef.current.q) {
+      searchTyping.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      applyQuery(patchUsersTableQuery(queryRef.current, { q: searchDraft }));
+      searchTyping.current = false;
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [searchDraft]);
+
+  const table = useMemo(
+    () => applyUsersTable(users, clients, { ...query, q: searchDraft }),
+    [users, clients, query, searchDraft]
+  );
 
   function startCreate() {
     setEditing("new");
@@ -185,8 +213,11 @@ export default function UsersPage() {
           type="search"
           aria-label="Search users"
           placeholder="Search name or email"
-          value={query.q}
-          onChange={(e) => patchQuery({ q: e.target.value })}
+          value={searchDraft}
+          onChange={(e) => {
+            searchTyping.current = true;
+            setSearchDraft(e.target.value);
+          }}
         />
       </div>
       {users.length === 0 ? (

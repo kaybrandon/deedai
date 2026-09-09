@@ -37,6 +37,8 @@ public sealed class Phase511Tests
         Assert.Contains("className=\"users-search\"", page, StringComparison.Ordinal);
         Assert.Contains("aria-label=\"Search users\"", page, StringComparison.Ordinal);
         Assert.Contains("placeholder=\"Search name or email\"", page, StringComparison.Ordinal);
+        Assert.Contains("searchDraft", page, StringComparison.Ordinal);
+        Assert.Contains("value={searchDraft}", page, StringComparison.Ordinal);
         Assert.Equal(1, Count(page, "users-search"));
         Assert.DoesNotContain("placeholder=\"Search", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("type=\"search\"", shell, StringComparison.Ordinal);
