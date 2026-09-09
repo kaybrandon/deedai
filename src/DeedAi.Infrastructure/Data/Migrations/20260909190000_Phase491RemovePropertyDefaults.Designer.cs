@@ -25,6 +25,50 @@ namespace DeedAi.Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("DeedAi.Domain.Entities.AppPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SoftwareDefaultGroup")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("SoftwareFieldDefaultsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("SoftwarePushEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppPolicies", (string)null);
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.AppSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("AppSettings", (string)null);
+                });
+
             modelBuilder.Entity("DeedAi.Domain.Entities.Client", b =>
                 {
                     b.Property<Guid>("Id")
@@ -279,6 +323,84 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.ToTable("DocumentTeamMembers", (string)null);
                 });
 
+            modelBuilder.Entity("DeedAi.Domain.Entities.EmailSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FromAddress")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FromName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset?>("LastFailAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastFailReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("LastSuccessAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("VerifyRequired")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailSettings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EmailSettings_Mode", "Mode IN ('SendGrid','Smtp')");
+                        });
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.EmailVerificationToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailVerificationTokens", (string)null);
+                });
+
             modelBuilder.Entity("DeedAi.Domain.Entities.FlagDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -362,65 +484,37 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("DeedAi.Domain.Entities.SessionSettings", b =>
+            modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("IdleTimeoutMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("SessionSettings", (string)null);
-                });
-
-            modelBuilder.Entity("DeedAi.Domain.Entities.AppPolicy", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("SoftwareDefaultGroup")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<string>("SoftwareFieldDefaultsJson")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<bool>("SoftwarePushEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("AppPolicies", (string)null);
-                });
-
-            modelBuilder.Entity("DeedAi.Domain.Entities.AppSetting", b =>
-                {
-                    b.Property<string>("Key")
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UsedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Key");
+                    b.HasKey("Id");
 
-                    b.ToTable("AppSettings", (string)null);
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetTokens", (string)null);
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>
@@ -458,12 +552,28 @@ namespace DeedAi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("ClientId", "Code")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[ClientId] IS NOT NULL");
 
                     b.ToTable("SalesTabCodes", (string)null);
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SessionSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("IdleTimeoutMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SessionSettings", (string)null);
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareClientConfig", b =>
@@ -569,39 +679,6 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.HasIndex("DeedField", "ClientId", "DeedType");
 
                     b.ToTable("SoftwareFieldMaps", (string)null);
-                });
-
-            modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<DateTimeOffset?>("UsedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordResetTokens", (string)null);
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
@@ -732,6 +809,11 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("FullName")
                         .HasMaxLength(128)
@@ -875,7 +957,7 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
+            modelBuilder.Entity("DeedAi.Domain.Entities.EmailVerificationToken", b =>
                 {
                     b.HasOne("DeedAi.Domain.Entities.UserAccount", "User")
                         .WithMany()
@@ -886,15 +968,15 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
+            modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                 {
-                    b.HasOne("DeedAi.Domain.Entities.Document", "Document")
+                    b.HasOne("DeedAi.Domain.Entities.UserAccount", "User")
                         .WithMany()
-                        .HasForeignKey("DocumentId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Document");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.SalesTabCode", b =>
@@ -926,6 +1008,17 @@ namespace DeedAi.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
+                {
+                    b.HasOne("DeedAi.Domain.Entities.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Document");
                 });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.TeamUser", b =>
