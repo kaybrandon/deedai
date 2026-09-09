@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { endpoints, type ClientItem, type DocumentListItem, type UserSummary } from "../api";
+import { endpoints, type ClientItem, type DeletePolicy, type DocumentListItem, type UserSummary } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
@@ -34,6 +34,7 @@ const statuses = [
 
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
+  const [deletePolicy, setDeletePolicy] = useState<DeletePolicy | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = useMemo(() => parseDocumentsTableQuery(searchParams), [searchParams]);
@@ -118,7 +119,9 @@ export default function DocumentsPage() {
   useEffect(() => {
     endpoints.clients().then(setClients).catch(() => undefined);
     endpoints.users().then(setUsers).catch(() => undefined);
+    endpoints.deletePolicy().then(setDeletePolicy).catch(() => undefined);
   }, []);
+  const canDelete = deletePolicy ? deletePolicy.canDelete : canAdmin;
 
   const table = useMemo(
     () => applyDocumentsTable(rows, { ...query, search: searchDraft }),
@@ -144,6 +147,12 @@ export default function DocumentsPage() {
         <div>
           <h1>Documents</h1>
           <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
+          {canEdit && !canAdmin && deletePolicy && (
+            <p className="muted delete-policy-hint">
+              Delete Policy: {deletePolicy.label}
+              {deletePolicy.canDelete ? "" : " — soft-delete is Admin only."}
+            </p>
+          )}
         </div>
       </header>
       <div className="filter-row documents-filter-row">
@@ -403,7 +412,7 @@ export default function DocumentsPage() {
                           Retry
                         </button>
                       )}
-                      {canEdit && !row.isDeleted && (
+                      {canDelete && !row.isDeleted && (
                         <button className="ghost" type="button" onClick={() => setPendingDelete(row)}>
                           Delete
                         </button>

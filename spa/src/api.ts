@@ -255,6 +255,16 @@ export interface SessionConfig {
   source: "admin" | "appSetting" | "default";
 }
 
+export type WhoCanDelete = "AllEditors" | "AdminOnly";
+
+export interface DeletePolicy {
+  whoCanDelete: WhoCanDelete;
+  label: string;
+  canDelete: boolean;
+  updatedByEmail: string | null;
+  updatedAt: string | null;
+}
+
 export interface OcrCleanupItem {
   id: string;
   kind: "Trim" | "Discard" | string;
@@ -554,6 +564,12 @@ export const endpoints = {
     api<SessionConfig>("/api/settings/session", {
       method: "PUT",
       body: JSON.stringify({ idleTimeoutMinutes })
+    }),
+  deletePolicy: () => api<DeletePolicy>("/api/settings/delete-policy"),
+  updateDeletePolicy: (whoCanDelete: WhoCanDelete) =>
+    api<DeletePolicy>("/api/settings/delete-policy", {
+      method: "PUT",
+      body: JSON.stringify({ whoCanDelete })
     }),
   ocrCleanup: () => api<OcrCleanupItem[]>("/api/settings/ocr-cleanup"),
   createOcrCleanup: (body: object) =>

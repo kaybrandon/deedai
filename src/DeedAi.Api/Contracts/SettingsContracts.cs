@@ -46,6 +46,15 @@ public sealed record SessionConfigResponse(int IdleTimeoutMinutes, int DefaultMi
 
 public sealed record UpdateSessionSettingsRequest(int IdleTimeoutMinutes);
 
+public sealed record DeletePolicyResponse(
+    string WhoCanDelete,
+    string Label,
+    bool CanDelete,
+    string? UpdatedByEmail,
+    DateTimeOffset? UpdatedAt);
+
+public sealed record UpdateDeletePolicyRequest(string WhoCanDelete);
+
 public sealed record OcrCleanupItem(Guid Id, string Kind, string Value, bool IsActive, int SortOrder);
 
 public sealed record UpsertOcrCleanupRequest(string Kind, string Value, bool IsActive, int SortOrder);

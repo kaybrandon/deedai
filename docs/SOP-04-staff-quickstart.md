@@ -18,7 +18,7 @@
 2. **Retry** on Failed when available
 3. **Upload** deed PDF (type/size limits apply)
 4. Open a deed — Ready demo deeds show a PDF preview while editing. Review/edit mapped fields; save keeps draft; **Retry** on save fail. Placeholder only if no PDF exists.
-5. Soft-delete uses a confirm sheet (ConfirmSheet)
+5. Soft-delete uses a confirm sheet (ConfirmSheet). An Admin sets **Delete Policy** under Settings → System: All Editors or Admin only.
 6. List actions are large enough for tablet (≥44px)
 
 ## Swagger Authorize (Admin QA2)

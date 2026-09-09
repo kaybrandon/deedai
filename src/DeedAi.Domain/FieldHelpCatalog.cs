@@ -29,6 +29,7 @@ public static class FieldHelpCatalog
     public const string SettingsSystemHealth = "settings.systemHealth";
     public const string UsersRole = "users.role";
     public const string SettingsIdleTimeout = "settings.idleTimeout";
+    public const string SettingsDeletePolicy = "settings.deletePolicy";
     public const string SettingsOcrTrim = "settings.ocrTrim";
     public const string SettingsEmailMode = "settings.emailMode";
     public const string SettingsEmailTest = "settings.emailTest";
@@ -101,6 +102,7 @@ public static class FieldHelpCatalog
         [SettingsSystemHealth] = "Admin-only SQL, Storage, Queue, Blob read/write, Document Intelligence, and OCR pipeline checks plus queue depth. Modes and counts only — never connection strings, keys, or other secrets.",
         [UsersRole] = "Admin manages users and Settings. Editor reviews and pushes. Uploader adds PDFs. Viewer reads assigned Clients only.",
         [SettingsIdleTimeout] = "After this many idle minutes the SPA signs you out and returns to login. Unsaved draft field edits are not silently wiped.",
+        [SettingsDeletePolicy] = "Choose who may soft-delete documents: All Editors, or Admin only. Restore stays Admin-only. Uploader and Viewer never delete.",
         [SettingsOcrTrim] = "Trim strips listed characters from extracted text. Discard drops listed words. Never put secrets in this list.",
         [SettingsEmailMode] = "Active mail mode is SendGrid or SMTP — only one sends. API keys, SMTP username, and SMTP password stay in Key Vault.",
         [SettingsEmailTest] = "Sends one test message to the address you type using the active mode. Result is Pass or Fail. Secrets are never shown.",

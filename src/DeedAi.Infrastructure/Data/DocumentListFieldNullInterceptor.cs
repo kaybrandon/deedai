@@ -19,6 +19,11 @@ internal sealed class DocumentListFieldNullInterceptor : IMaterializationInterce
             document.CoalesceNullListFields();
         }
 
+        if (entity is DeletePolicySettings policy)
+        {
+            policy.CoalesceNulls();
+        }
+
         return entity;
     }
 }

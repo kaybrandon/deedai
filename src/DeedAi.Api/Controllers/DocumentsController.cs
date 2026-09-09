@@ -531,6 +531,18 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
     [Authorize(Policy = RolePolicies.CanEdit)]
     public async Task<IActionResult> SoftDelete(Guid id, CancellationToken cancellationToken)
     {
+        var role = ClientAccess.Role(User);
+        var policy = await DeletePolicyStore.EnsureAsync(db, cancellationToken);
+        if (!DeletePolicy.Allows(role, policy.WhoCanDelete))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                title = "Access denied",
+                message = $"Access denied. Your {role} role cannot perform this action.",
+                role
+            });
+        }
+
         var document = await LoadVisible(id, includeDeleted: false, cancellationToken);
         if (document is null)
         {

@@ -4,6 +4,7 @@ import {
   endpoints,
   type ClientItem,
   type DeedTypeItem,
+  type DeletePolicy,
   type FlagItem,
   type NotificationSettings,
   type OcrCleanupItem,
@@ -11,7 +12,8 @@ import {
   type SoftwareSettings,
   type StatusItem,
   type TeamItem,
-  type UserSummary
+  type UserSummary,
+  type WhoCanDelete
 } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
@@ -42,6 +44,7 @@ export default function SettingsPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [notifications, setNotifications] = useState<NotificationSettings | null>(null);
   const [session, setSession] = useState<SessionConfig | null>(null);
+  const [deletePolicy, setDeletePolicy] = useState<DeletePolicy | null>(null);
   const [ocrRules, setOcrRules] = useState<OcrCleanupItem[]>([]);
   const [idleMinutes, setIdleMinutes] = useState(30);
   const [ocrForm, setOcrForm] = useState({ kind: "Discard", value: "", isActive: true, sortOrder: 50 });
@@ -66,6 +69,7 @@ export default function SettingsPage() {
       nextNotify,
       nextSoftware,
       nextSession,
+      nextDeletePolicy,
       nextOcr
     ] = await Promise.all([
       endpoints.flags(),
@@ -77,6 +81,7 @@ export default function SettingsPage() {
       endpoints.notifications(),
       endpoints.softwareSettings(),
       endpoints.session(),
+      endpoints.deletePolicy(),
       endpoints.ocrCleanup()
     ]);
     setFlags(nextFlags);
@@ -89,6 +94,7 @@ export default function SettingsPage() {
     setSoftware(nextSoftware);
     setSession(nextSession);
     setIdleMinutes(nextSession.idleTimeoutMinutes);
+    setDeletePolicy(nextDeletePolicy);
     setOcrRules(nextOcr);
   }
 
@@ -125,7 +131,7 @@ export default function SettingsPage() {
       <div className="page-head">
         <div>
           <h1>System</h1>
-          <p className="page-kicker">Lists, session, Software maps, and API docs.</p>
+          <p className="page-kicker">Lists, session, delete policy, Software maps, and API docs.</p>
         </div>
         <div className="row-actions">
           <a className="ghost swagger-open" href="#system-health">
@@ -163,6 +169,48 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
+
+      {deletePolicy && (
+        <section className="panel">
+          <h2 title="Choose who may soft-delete documents: All Editors, or Admin only. Restore stays Admin-only. Uploader and Viewer never delete." data-help="settings.deletePolicy">
+            Delete Policy
+            <FieldHelp helpKey="settings.deletePolicy" />
+          </h2>
+          <p className="muted">
+            Who may soft-delete documents. Restore stays Admin-only. Uploader and Viewer never delete.
+          </p>
+          <fieldset className="delete-policy-choices">
+            <legend>Who Can Delete</legend>
+            {(
+              [
+                { value: "AllEditors", label: "All Editors" },
+                { value: "AdminOnly", label: "Admin only" }
+              ] as const
+            ).map((choice) => (
+              <label key={choice.value} className="remember delete-policy-choice">
+                <input
+                  type="radio"
+                  name="deletePolicy"
+                  value={choice.value}
+                  checked={deletePolicy.whoCanDelete === choice.value}
+                  onChange={async () => {
+                    const next = await endpoints.updateDeletePolicy(choice.value as WhoCanDelete);
+                    setDeletePolicy(next);
+                    setNotice(`Delete Policy saved: ${next.label}.`);
+                  }}
+                />
+                {choice.label}
+              </label>
+            ))}
+          </fieldset>
+          {deletePolicy.updatedByEmail && (
+            <p className="muted delete-policy-audit">
+              Last changed by {deletePolicy.updatedByEmail}
+              {deletePolicy.updatedAt ? ` · ${new Date(deletePolicy.updatedAt).toLocaleString()}` : ""}.
+            </p>
+          )}
+        </section>
+      )}
 
       {session && (
         <section className="panel">

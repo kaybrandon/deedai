@@ -24,6 +24,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<DocumentTeamMember> DocumentTeamMembers => Set<DocumentTeamMember>();
     public DbSet<SoftwareSyncLog> SoftwareSyncLogs => Set<SoftwareSyncLog>();
     public DbSet<SessionSettings> SessionSettings => Set<SessionSettings>();
+    public DbSet<DeletePolicySettings> DeletePolicySettings => Set<DeletePolicySettings>();
     public DbSet<OcrCleanupRule> OcrCleanupRules => Set<OcrCleanupRule>();
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
@@ -385,6 +386,19 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
         {
             entity.ToTable("SessionSettings");
             entity.HasKey(x => x.Id);
+        });
+
+        modelBuilder.Entity<DeletePolicySettings>(entity =>
+        {
+            entity.ToTable("DeletePolicySettings");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.WhoCanDelete)
+                .HasMaxLength(32)
+                .HasDefaultValue(DeletePolicy.AllEditors);
+            entity.Property(x => x.UpdatedByEmail).HasMaxLength(256);
+            entity.ToTable(t => t.HasCheckConstraint(
+                "CK_DeletePolicySettings_WhoCanDelete",
+                "WhoCanDelete IS NULL OR WhoCanDelete IN ('AllEditors','AdminOnly')"));
         });
 
         modelBuilder.Entity<OcrCleanupRule>(entity =>
