@@ -392,6 +392,29 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
 .narrow, .compact-field { width: min(280px, 100%); max-width: 280px; margin-bottom: 16px; }
 .compact-form { max-width: 36rem; }
 .compact-form-sm { max-width: 28rem; }
+.profile-clients h2 { margin: 0 0 10px; font-size: 16px; }
+.profile-client-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-client-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--action-h);
+  min-width: var(--action-h);
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--navy-soft);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.profile-clients .empty-state { border-style: dashed; }
 
 .cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .chart-grid {
@@ -721,6 +744,8 @@ progress { width: 220px; height: 10px; }
   }
   .topbar-name { max-width: 140px; }
   .review-grid, .cards, .collab-row, .collab-grid, .form-grid, .chart-grid { grid-template-columns: 1fr; }
+  .profile-client-list { display: grid; grid-template-columns: 1fr; }
+  .profile-client-chip { width: 100%; }
   .filter-row > input,
   .filter-row > select,
   .filter-row > label,

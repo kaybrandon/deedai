@@ -187,6 +187,12 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("Full name", profile, StringComparison.Ordinal);
         Assert.Contains("PasswordPair", profile, StringComparison.Ordinal);
         Assert.Contains("PhotoEditor", profile, StringComparison.Ordinal);
+        Assert.Contains("Assigned Client(s)", profile, StringComparison.Ordinal);
+        Assert.Contains("me?.clients", profile, StringComparison.Ordinal);
+        Assert.Contains("No Client assigned", profile, StringComparison.Ordinal);
+        Assert.Contains("EmptyState", profile, StringComparison.Ordinal);
+        Assert.DoesNotContain("County", profile, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", profile, StringComparison.Ordinal);
 
         var photo = Read("spa/src/components/PhotoEditor.tsx");
         Assert.Contains("ConfirmSheet", photo, StringComparison.Ordinal);
@@ -201,6 +207,53 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("min-height: var(--action-h)", css, StringComparison.Ordinal);
         Assert.Contains(".user-group-toggle", css, StringComparison.Ordinal);
         Assert.Contains(".topbar-title", css, StringComparison.Ordinal);
+        Assert.Contains(".profile-client-chip", css, StringComparison.Ordinal);
+        Assert.Contains(".profile-client-list { display: grid; grid-template-columns: 1fr; }", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Me_with_no_client_access_returns_empty_clients()
+    {
+        var admin = await Authed(DatabaseSeeder.AdminEmail);
+        var created = await admin.PostAsync("/api/admin/users", TestAppFactory.Json(
+            """{"email":"noclient.profile@bisconsultants.com","displayName":"No Client","fullName":"No Client Profile","role":"Viewer","password":"ChangeMe!1","isActive":true,"clientIds":[]}"""));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+
+        var client = await Authed("noclient.profile@bisconsultants.com");
+        var me = await client.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.OK, me.StatusCode);
+        var body = await me.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        Assert.Equal(0, json.RootElement.GetProperty("clients").GetArrayLength());
+        Assert.Equal(0, json.RootElement.GetProperty("clientIds").GetArrayLength());
+        Assert.DoesNotContain("County", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Nested_settings_nav_is_systems_with_existing_route_and_admin_gate()
+    {
+        var shell = Read("spa/src/components/AppShell.tsx");
+        Assert.Contains("aria-controls=\"settings-nav\"", shell, StringComparison.Ordinal);
+        Assert.Contains("              Settings\n              <span className=\"nav-group-caret\"", shell, StringComparison.Ordinal);
+        Assert.Contains("<NavLink to=\"/settings\" end onClick={closeNav}>\n                    Systems", shell, StringComparison.Ordinal);
+        Assert.Contains("navigate(\"/denied\", { state: { action: \"change settings\" } })", shell, StringComparison.Ordinal);
+        Assert.Contains("                    Systems\n                  </button>", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("<NavLink to=\"/settings\" end onClick={closeNav}>\n                    Settings", shell, StringComparison.Ordinal);
+        Assert.Contains("canAdmin", shell, StringComparison.Ordinal);
+        Assert.Contains("to=\"/software\"", shell, StringComparison.Ordinal);
+        Assert.Contains("to=\"/users\"", shell, StringComparison.Ordinal);
+
+        var settings = Read("spa/src/pages/SettingsPage.tsx");
+        Assert.Contains("<h1>Systems</h1>", settings, StringComparison.Ordinal);
+        Assert.Contains("if (!canAdmin)", settings, StringComparison.Ordinal);
+        Assert.Contains("navigate(\"/denied\", { state: { action: \"change settings\" } })", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("County", settings, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", settings, StringComparison.Ordinal);
+
+        var app = Read("spa/src/App.tsx");
+        Assert.Contains("<Route path=\"/settings\" element={<SettingsPage />} />", app, StringComparison.Ordinal);
+        Assert.Contains("<Route path=\"/profile\" element={<ProfilePage />} />", app, StringComparison.Ordinal);
     }
 
     [Fact]
