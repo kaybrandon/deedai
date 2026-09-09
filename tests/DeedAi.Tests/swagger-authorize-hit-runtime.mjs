@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * Phase 4.2.2 — prove the Authorize runtime survives Swagger React resetting
- * display:inline AFTER our first pin (the live Azure #18 failure).
+ * Phase 4.2.3 — prove the Authorize runtime survives Swagger React resetting
+ * display:inline AFTER our first pin (the live Azure #18 / #QA2 failure).
  *
- * 1. Pin top-bar + modal Authorize / Close to inline !important 44px.
- * 2. Simulate Swagger re-applying display:inline, height:auto, max-height:30px.
- * 3. Fire MutationObserver / 250ms poll (do not call measure yet).
- * 4. getBoundingClientRect must still be ≥44×44 (display:inline ignores height).
+ * 1. Helper is defined after script eval (even on re-entry / messy runtime flag).
+ * 2. Pin top-bar + modal Authorize / Close to inline !important 44px.
+ * 3. Simulate Swagger re-applying display:inline, height:auto, max-height:30px.
+ * 4. Fire MutationObserver / 250ms poll (do not call measure yet).
+ * 5. getBoundingClientRect must still be ≥44×44 (display:inline ignores height).
  *
- * On a real page after zipdeploy: window.__deedAiMeasureAuthorize()
+ * On a real page after load: window.__deedAiMeasureAuthorize()
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -28,6 +29,15 @@ if (!js.includes("max-height") || !js.includes("none")) {
 }
 if (!js.includes("__deedAiAuthorizeRuntimeVersion")) {
   throw new Error("runtime must expose version for Dev self-verify");
+}
+if (!js.includes("__deedAiAuthorizeRuntimeVersion = \"4.2.3\"")) {
+  throw new Error("runtime version must be 4.2.3");
+}
+if (!js.includes("deedaiAuthorizeError")) {
+  throw new Error("runtime must mark document.documentElement.dataset.deedaiAuthorizeError on init failure");
+}
+if (js.includes("if (typeof window.__deedAiMeasureAuthorize === \"function\") return;")) {
+  throw new Error("must not return before assigning __deedAiMeasureAuthorize");
 }
 
 function makeStyle() {
@@ -131,7 +141,7 @@ const bySelector = {
 };
 
 const created = [];
-const documentElement = { nodeType: 1, attrs: Object.create(null) };
+const documentElement = { nodeType: 1, attrs: Object.create(null), dataset: Object.create(null) };
 documentElement.getAttribute = (n) => documentElement.attrs[n] || null;
 documentElement.setAttribute = (n, v) => { documentElement.attrs[n] = String(v); };
 
@@ -198,18 +208,35 @@ globalThis.window = window;
 globalThis.document = document;
 globalThis.MutationObserver = MutationObserver;
 
-new Function("window", "document", "MutationObserver", "setInterval", "setTimeout", "getComputedStyle", js)(
-  window, document, MutationObserver, globalThis.setInterval, globalThis.setTimeout, globalThis.getComputedStyle
-);
+function evalRuntime() {
+  new Function("window", "document", "MutationObserver", "setInterval", "setTimeout", "getComputedStyle", js)(
+    window, document, MutationObserver, globalThis.setInterval, globalThis.setTimeout, globalThis.getComputedStyle
+  );
+}
 
+evalRuntime();
+
+const helperDefinedAfterEval = typeof window.__deedAiMeasureAuthorize === "function";
 if (typeof window.__deedAiApplyAuthorizeHit !== "function") {
   throw new Error("runtime did not expose __deedAiApplyAuthorizeHit");
 }
-if (typeof window.__deedAiMeasureAuthorize !== "function") {
-  throw new Error("runtime did not expose __deedAiMeasureAuthorize");
+if (!helperDefinedAfterEval) {
+  throw new Error("runtime did not expose __deedAiMeasureAuthorize after script eval");
 }
-if (window.__deedAiAuthorizeRuntimeVersion !== "4.2.2") {
-  throw new Error("expected runtime version 4.2.2, got " + window.__deedAiAuthorizeRuntimeVersion);
+if (window.__deedAiAuthorizeRuntimeVersion !== "4.2.3") {
+  throw new Error("expected runtime version 4.2.3, got " + window.__deedAiAuthorizeRuntimeVersion);
+}
+
+delete window.__deedAiMeasureAuthorize;
+delete window.__deedAiApplyAuthorizeHit;
+window.__deedAiAuthorizeRuntime = true;
+evalRuntime();
+const helperDefinedAfterReentry = typeof window.__deedAiMeasureAuthorize === "function";
+if (!helperDefinedAfterReentry) {
+  throw new Error("re-entry must still assign __deedAiMeasureAuthorize");
+}
+if (window.__deedAiAuthorizeRuntimeVersion !== "4.2.3") {
+  throw new Error("re-entry must keep runtime version 4.2.3");
 }
 
 function assertPinned(el, label) {
@@ -283,6 +310,8 @@ if (!String(late.textContent).includes("max-height: none")) {
 
 console.log(JSON.stringify({
   ok: true,
+  helperDefinedAfterEval,
+  helperDefinedAfterReentry,
   recoveredFromSwaggerInlineReset: true,
   measured: recovered,
   marker: documentElement.attrs["data-deedai-authorize-hit"],

@@ -10,10 +10,11 @@ public static class SwaggerExtensions
     public const string ConfigKey = "Swagger:Enabled";
 
     /// <summary>
-    /// Stronger Authorize CSS plus the post-paint runtime script. Prefer
-    /// <see cref="AuthorizeHitTargetHead"/>; this alias stays for tests that
-    /// asserted the #17 stylesheet. Phase 4.2.2 also serves the same CSS/JS
-    /// as files and a custom index that loads the script last.
+    /// Stronger Authorize CSS. Prefer <see cref="AuthorizeHitTargetHead"/>
+    /// (stylesheet link only). Phase 4.2.3 serves CSS/JS as files and a
+    /// custom index that loads the script once, after <c>index.js</c>.
+    /// Do not inject the JS via HeadContent or InjectJavascript — that
+    /// races Swagger and can leave <c>__deedAiMeasureAuthorize</c> undefined.
     /// </summary>
     public static string AuthorizeHitTargetCss => SwaggerAuthorizeHitTarget.StyleTag;
 
@@ -116,8 +117,6 @@ public static class SwaggerExtensions
             options.RoutePrefix = RoutePrefix;
             options.EnablePersistAuthorization();
             options.HeadContent = AuthorizeHitTargetHead;
-            options.InjectStylesheet(SwaggerAuthorizeHitTarget.CssUrl);
-            options.InjectJavascript(SwaggerAuthorizeHitTarget.JsUrl);
             options.IndexStream = SwaggerAuthorizeHitTarget.OpenIndexHtml;
         });
         return app;

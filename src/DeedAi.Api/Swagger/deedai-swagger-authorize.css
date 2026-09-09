@@ -1,4 +1,4 @@
-/* Phase 4.2.2: beat Swagger's `.btn.authorize { display: inline; line-height: 1 }`
+/* Phase 4.2.3: beat Swagger's `.btn.authorize { display: inline; line-height: 1 }`
    (~34px top bar, ~30px modal). More classes than swagger-ui.css so we win
    even without !important; !important still present. height is ignored while
    display is inline — display:inline-flex is mandatory. max-height:none stops
