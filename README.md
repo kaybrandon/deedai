@@ -65,7 +65,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Settings → Systems:** the nested Settings nav item is labeled **Systems** so the hierarchy is Settings → Systems / Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
-- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. EF migration `20260909160000_Phase45UsersIdentity` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask A shell. No zipdeploy.
+- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909190000_Phase491RemovePropertyDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask A shell. No zipdeploy. Property defaults is not a live Settings feature.
 
 ## Phase 4.3 acceptance
 

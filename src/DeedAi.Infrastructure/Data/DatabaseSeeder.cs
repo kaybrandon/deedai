@@ -273,18 +273,6 @@ public sealed class DatabaseSeeder(
                 Map(DeedFields.Notes, "Notes", "Notes", 7));
         }
 
-        if (!await db.PropertyDefaults.AnyAsync(cancellationToken))
-        {
-            db.PropertyDefaults.Add(new PropertyDefault
-            {
-                Id = Guid.Parse("40000000-0000-0000-0000-000000000001"),
-                Scope = PropertyDefaultScopes.Client,
-                ClientId = AcmeId,
-                FieldKey = DeedFields.Client,
-                DefaultValue = "Acme"
-            });
-        }
-
         if (!await db.SoftwareClientConfigs.AnyAsync(cancellationToken))
         {
             db.SoftwareClientConfigs.AddRange(

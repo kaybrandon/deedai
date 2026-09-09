@@ -135,25 +135,21 @@ public sealed class Phase4ATests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
-    public async Task Property_reset_is_admin_only_and_clears_client_defaults()
+    public async Task Property_defaults_api_is_gone()
     {
-        var editor = await Authed("editor@bisconsultants.com");
-        var denied = await editor.PostAsync("/api/settings/property-defaults/reset", TestAppFactory.Json(
-            "{\"scope\":\"Client\",\"clientId\":\"" + DatabaseSeeder.AcmeId + "\"}"));
-        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
-
         var admin = await Authed("admin@bisconsultants.com");
-        var reset = await admin.PostAsync("/api/settings/property-defaults/reset", TestAppFactory.Json(
-            "{\"scope\":\"Client\",\"clientId\":\"" + DatabaseSeeder.AcmeId + "\"}"));
-        Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
-        Assert.Contains("Reset", await reset.Content.ReadAsStringAsync());
-
-        var list = await admin.GetAsync("/api/settings/property-defaults");
-        using var json = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
-        Assert.DoesNotContain(
-            json.RootElement.EnumerateArray(),
-            x => x.GetProperty("scope").GetString() == "Client"
-                 && x.GetProperty("clientId").GetGuid() == DatabaseSeeder.AcmeId);
+        var editor = await Authed("editor@bisconsultants.com");
+        foreach (var client in new[] { admin, editor })
+        {
+            AssertGone(await client.GetAsync("/api/settings/property-defaults"));
+            AssertGone(await client.PostAsync("/api/settings/property-defaults", TestAppFactory.Json(
+                "{\"scope\":\"Client\",\"clientId\":\"" + DatabaseSeeder.AcmeId + "\",\"fieldKey\":\"client\",\"defaultValue\":\"Acme\"}")));
+            AssertGone(await client.PutAsync($"/api/settings/property-defaults/{Guid.NewGuid()}", TestAppFactory.Json(
+                "{\"scope\":\"Client\",\"clientId\":\"" + DatabaseSeeder.AcmeId + "\",\"fieldKey\":\"client\",\"defaultValue\":\"Acme\"}")));
+            AssertGone(await client.DeleteAsync($"/api/settings/property-defaults/{Guid.NewGuid()}"));
+            AssertGone(await client.PostAsync("/api/settings/property-defaults/reset", TestAppFactory.Json(
+                "{\"scope\":\"Client\",\"clientId\":\"" + DatabaseSeeder.AcmeId + "\"}")));
+        }
     }
 
     [Fact]
@@ -342,6 +338,11 @@ public sealed class Phase4ATests : IClassFixture<TestAppFactory>
         Assert.NotEqual(default, ready.ValueKind);
         return ready.GetProperty("id").GetGuid();
     }
+
+    private static void AssertGone(HttpResponseMessage response) =>
+        Assert.True(
+            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone,
+            $"Expected 404/410 for Property defaults, got {(int)response.StatusCode}.");
 
     private static string ClientConfigJson(
         bool displaySalesTab = true,

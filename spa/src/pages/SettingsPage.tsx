@@ -1,14 +1,12 @@
 import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  DEED_FIELDS,
   endpoints,
   type ClientItem,
   type DeedTypeItem,
   type FlagItem,
   type NotificationSettings,
   type OcrCleanupItem,
-  type PropertyDefaultItem,
   type SessionConfig,
   type SoftwareSettings,
   type StatusItem,
@@ -29,9 +27,7 @@ type PendingDelete =
   | { kind: "deedType"; id: string; name: string }
   | { kind: "team"; id: string; name: string }
   | { kind: "client"; id: string; name: string }
-  | { kind: "property"; id: string; name: string }
   | { kind: "ocr"; id: string; name: string }
-  | { kind: "reset"; scope: "Client" | "DeedType"; clientId?: string; deedType?: string; name: string }
   | { kind: "purge" };
 
 export default function SettingsPage() {
@@ -57,17 +53,6 @@ export default function SettingsPage() {
   const [teamForm, setTeamForm] = useState({ name: "", isActive: true, userIds: [] as string[] });
   const [clientForm, setClientForm] = useState({ name: "", isActive: true });
   const [software, setSoftware] = useState<SoftwareSettings | null>(null);
-  const [defaults, setDefaults] = useState<PropertyDefaultItem[]>([]);
-  const [defaultForm, setDefaultForm] = useState({
-    scope: "Client",
-    clientId: "",
-    deedType: "",
-    fieldKey: "client",
-    defaultValue: ""
-  });
-  const [resetScope, setResetScope] = useState<"Client" | "DeedType">("Client");
-  const [resetClientId, setResetClientId] = useState("");
-  const [resetDeedType, setResetDeedType] = useState("");
 
   async function load() {
     const [
@@ -79,7 +64,6 @@ export default function SettingsPage() {
       nextUsers,
       nextNotify,
       nextSoftware,
-      nextDefaults,
       nextSession,
       nextOcr
     ] = await Promise.all([
@@ -91,7 +75,6 @@ export default function SettingsPage() {
       endpoints.users(),
       endpoints.notifications(),
       endpoints.softwareSettings(),
-      endpoints.propertyDefaults(),
       endpoints.session(),
       endpoints.ocrCleanup()
     ]);
@@ -103,7 +86,6 @@ export default function SettingsPage() {
     setUsers(nextUsers);
     setNotifications(nextNotify);
     setSoftware(nextSoftware);
-    setDefaults(nextDefaults);
     setSession(nextSession);
     setIdleMinutes(nextSession.idleTimeoutMinutes);
     setOcrRules(nextOcr);
@@ -126,16 +108,8 @@ export default function SettingsPage() {
       if (pending.kind === "team") await endpoints.deleteTeam(pending.id);
       if (pending.kind === "client") await endpoints.deleteClient(pending.id);
       if (pending.kind === "ocr") await endpoints.deleteOcrCleanup(pending.id);
-      if (pending.kind === "property") await endpoints.deletePropertyDefault(pending.id);
-      if (pending.kind === "reset") {
-        await endpoints.resetPropertyDefaults({
-          scope: pending.scope,
-          clientId: pending.clientId || null,
-          deedType: pending.deedType || null
-        });
-      }
       if (pending.kind === "purge") await endpoints.purgeDeleted("");
-      setNotice(pending.kind === "purge" ? "Deleted deeds purged." : pending.kind === "reset" ? `${pending.name} reset.` : `${pending.name} removed.`);
+      setNotice(pending.kind === "purge" ? "Deleted deeds purged." : `${pending.name} removed.`);
       setError(null);
       setPending(null);
       await load();
@@ -330,140 +304,6 @@ export default function SettingsPage() {
             Add Rule
           </button>
         </form>
-      </SettingsBlock>
-
-      <SettingsBlock
-        title="Property Defaults"
-        empty={defaults.length === 0}
-        emptyBody="Set mapped field defaults per Client or deed type. Reset clears that scope."
-      >
-        <ul className="setting-list">
-          {defaults.map((item) => (
-            <li key={item.id}>
-              <span>
-                {item.scope === "Client" ? item.clientName : item.deedType} · {item.fieldKey} = {item.defaultValue ?? "—"}
-              </span>
-              <button
-                className="link"
-                type="button"
-                onClick={() => setPending({ kind: "property", id: item.id, name: `${item.fieldKey} default` })}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-        <form
-          className="inline-form"
-          onSubmit={async (event: FormEvent) => {
-            event.preventDefault();
-            await endpoints.createPropertyDefault({
-              scope: defaultForm.scope,
-              clientId: defaultForm.clientId || null,
-              deedType: defaultForm.deedType || null,
-              fieldKey: defaultForm.fieldKey,
-              defaultValue: defaultForm.defaultValue
-            });
-            setDefaultForm({ scope: "Client", clientId: "", deedType: "", fieldKey: "client", defaultValue: "" });
-            setNotice("Property default saved.");
-            await load();
-          }}
-        >
-          <select
-            value={defaultForm.scope}
-            onChange={(e) => setDefaultForm({ ...defaultForm, scope: e.target.value })}
-            aria-label="Default scope"
-          >
-            <option>Client</option>
-            <option>DeedType</option>
-          </select>
-          {defaultForm.scope === "Client" ? (
-            <select
-              value={defaultForm.clientId}
-              onChange={(e) => setDefaultForm({ ...defaultForm, clientId: e.target.value })}
-              aria-label="Default Client"
-              required
-            >
-              <option value="">Client</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <select
-              value={defaultForm.deedType}
-              onChange={(e) => setDefaultForm({ ...defaultForm, deedType: e.target.value })}
-              aria-label="Default deed type"
-              required
-            >
-              <option value="">Deed Type</option>
-              {deedTypes.map((item) => (
-                <option key={item.id} value={item.deedType}>
-                  {item.deedType}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={defaultForm.fieldKey}
-            onChange={(e) => setDefaultForm({ ...defaultForm, fieldKey: e.target.value })}
-            aria-label="Default field"
-          >
-            {DEED_FIELDS.map((field) => (
-              <option key={field}>{field}</option>
-            ))}
-          </select>
-          <input
-            placeholder="Default value"
-            value={defaultForm.defaultValue}
-            onChange={(e) => setDefaultForm({ ...defaultForm, defaultValue: e.target.value })}
-          />
-          <button className="primary" type="submit">
-            Add Default
-          </button>
-        </form>
-        <div className="inline-form">
-          <select value={resetScope} onChange={(e) => setResetScope(e.target.value as "Client" | "DeedType")} aria-label="Reset scope">
-            <option>Client</option>
-            <option>DeedType</option>
-          </select>
-          {resetScope === "Client" ? (
-            <select value={resetClientId} onChange={(e) => setResetClientId(e.target.value)} aria-label="Reset Client">
-              <option value="">Client to Reset</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <select value={resetDeedType} onChange={(e) => setResetDeedType(e.target.value)} aria-label="Reset deed type">
-              <option value="">Deed Type to Reset</option>
-              {deedTypes.map((item) => (
-                <option key={item.id} value={item.deedType}>
-                  {item.deedType}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            className="danger"
-            type="button"
-            onClick={() =>
-              setPending({
-                kind: "reset",
-                scope: resetScope,
-                clientId: resetClientId || undefined,
-                deedType: resetDeedType || undefined,
-                name: resetScope === "Client" ? "Client property defaults" : "deed-type property defaults"
-              })
-            }
-          >
-            Reset Defaults
-          </button>
-        </div>
       </SettingsBlock>
 
       {notifications && (
@@ -697,21 +537,13 @@ export default function SettingsPage() {
 
       {pending && (
         <ConfirmSheet
-          title={
-            pending.kind === "purge"
-              ? "Purge all deleted deeds?"
-              : pending.kind === "reset"
-                ? `Reset ${pending.name}?`
-                : `Remove ${pending.name}?`
-          }
+          title={pending.kind === "purge" ? "Purge all deleted deeds?" : `Remove ${pending.name}?`}
           body={
             pending.kind === "purge"
               ? "Permanently delete every soft-deleted deed. This cannot be undone."
-              : pending.kind === "reset"
-                ? "All mapped field defaults for that Client or deed type will be removed."
-                : "This Settings item will be deleted. Cancel if you are not sure."
+              : "This Settings item will be deleted. Cancel if you are not sure."
           }
-          confirmLabel={pending.kind === "purge" ? "Purge" : pending.kind === "reset" ? "Reset" : "Remove"}
+          confirmLabel={pending.kind === "purge" ? "Purge" : "Remove"}
           onCancel={() => setPending(null)}
           onConfirm={() => void confirmDelete()}
         />

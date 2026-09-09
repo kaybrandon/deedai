@@ -27,7 +27,6 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<AppPolicy> AppPolicies => Set<AppPolicy>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<SoftwareFieldMap> SoftwareFieldMaps => Set<SoftwareFieldMap>();
-    public DbSet<PropertyDefault> PropertyDefaults => Set<PropertyDefault>();
     public DbSet<SoftwareClientConfig> SoftwareClientConfigs => Set<SoftwareClientConfig>();
     public DbSet<SalesTabCode> SalesTabCodes => Set<SalesTabCode>();
 
@@ -317,21 +316,6 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.MinConsideration).HasPrecision(18, 2);
             entity.Property(x => x.MaxConsideration).HasPrecision(18, 2);
             entity.HasIndex(x => new { x.ClientId, x.Code }).IsUnique();
-            entity.HasOne(x => x.Client)
-                .WithMany()
-                .HasForeignKey(x => x.ClientId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<PropertyDefault>(entity =>
-        {
-            entity.ToTable("PropertyDefaults");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.Scope).HasMaxLength(16).IsRequired();
-            entity.Property(x => x.DeedType).HasMaxLength(64);
-            entity.Property(x => x.FieldKey).HasMaxLength(64).IsRequired();
-            entity.Property(x => x.DefaultValue).HasMaxLength(256);
-            entity.HasIndex(x => new { x.Scope, x.ClientId, x.DeedType, x.FieldKey }).IsUnique();
             entity.HasOne(x => x.Client)
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)

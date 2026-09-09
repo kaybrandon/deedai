@@ -109,24 +109,6 @@ public sealed record UpsertSoftwareFieldMapRequest(
     bool IsActive,
     int SortOrder);
 
-public sealed record PropertyDefaultItem(
-    Guid Id,
-    string Scope,
-    Guid? ClientId,
-    string? ClientName,
-    string? DeedType,
-    string FieldKey,
-    string? DefaultValue);
-
-public sealed record UpsertPropertyDefaultRequest(
-    string Scope,
-    Guid? ClientId,
-    string? DeedType,
-    string FieldKey,
-    string? DefaultValue);
-
-public sealed record ResetPropertyDefaultsRequest(string Scope, Guid? ClientId, string? DeedType);
-
 public sealed record SaleRow(
     Guid Id,
     string Name,

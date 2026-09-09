@@ -403,8 +403,6 @@ public sealed class SoftwareController(
             .OrderBy(x => x.SortOrder)
             .ToListAsync(cancellationToken);
         var values = SoftwarePushMapper.ResolveFieldValues(document, policy, clientConfig);
-        var defaults = await db.PropertyDefaults.AsNoTracking().ToListAsync(cancellationToken);
-        SoftwarePushMapper.ApplyPropertyDefaults(values, defaults, document.ClientId, document.DeedType);
         var mapped = await SoftwarePushMapper.BuildMappedFieldsAsync(
             db, document, map, policy, clientConfig, salesCodes, cancellationToken);
         foreach (var pair in values.Where(x => !string.IsNullOrWhiteSpace(x.Value)))

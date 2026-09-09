@@ -15,11 +15,3 @@ public static class DeedFields
         Grantor, Grantee, InstrumentDate, Consideration, ParcelId, Client, Notes
     ];
 }
-
-public static class PropertyDefaultScopes
-{
-    public const string Client = "Client";
-    public const string DeedType = "DeedType";
-
-    public static readonly string[] All = [Client, DeedType];
-}
