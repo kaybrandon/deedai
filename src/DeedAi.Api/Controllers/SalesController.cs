@@ -28,7 +28,7 @@ public sealed class SalesController(DeedAiDbContext db) : ControllerBase
             DocumentFilters.WithReportIncludes(ClientAccess.VisibleDocuments(db.Documents.AsNoTracking(), allowed)),
             search, status, clientId, assigneeUserId, flagId, from, to);
 
-        var rows = await query.ToListAsync(cancellationToken);
+        var rows = DocumentFilters.ApplyDates(await query.ToListAsync(cancellationToken), from, to);
         return rows
             .OrderByDescending(x => x.Fields?.InstrumentDate)
             .ThenByDescending(x => x.UpdatedAt)

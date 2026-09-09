@@ -30,7 +30,7 @@ public sealed class ReportsController(DeedAiDbContext db) : ControllerBase
             DocumentFilters.WithReportIncludes(ClientAccess.VisibleDocuments(db.Documents.AsNoTracking(), allowed)),
             search, status, clientId, assigneeUserId, flagId, from, to);
 
-        var rows = await query.ToListAsync(cancellationToken);
+        var rows = DocumentFilters.ApplyDates(await query.ToListAsync(cancellationToken), from, to);
         var ordered = rows.OrderByDescending(x => x.UpdatedAt).ToList();
         var headers = new[]
         {

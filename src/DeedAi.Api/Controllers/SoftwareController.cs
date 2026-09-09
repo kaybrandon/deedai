@@ -23,10 +23,12 @@ public sealed class SoftwareController(
     public async Task<ActionResult<SoftwareStatusResponse>> Status(CancellationToken cancellationToken)
     {
         var policy = await SoftwarePushMapper.EnsurePolicyAsync(db, cancellationToken);
-        var last = await db.SoftwareSyncLogs.AsNoTracking()
-            .Include(x => x.Document)
+        var last = (await db.SoftwareSyncLogs.AsNoTracking()
+                .IgnoreQueryFilters()
+                .Include(x => x.Document)
+                .ToListAsync(cancellationToken))
             .OrderByDescending(x => x.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefault();
         var connected = !string.IsNullOrWhiteSpace(options.Value.BaseUrl)
                         || software is MockSoftwareClient;
         return new SoftwareStatusResponse(
@@ -34,11 +36,11 @@ public sealed class SoftwareController(
             connected,
             policy.SoftwarePushEnabled,
             policy.SoftwareDefaultGroup,
-            last?.CreatedAt ?? last?.Document.LastSoftwareSyncAt,
-            last?.Status ?? last?.Document.LastSoftwareSyncStatus,
-            last is { Status: "Failed" or "Miss" } ? last.Detail : last?.Document.LastSoftwareSyncFailReason,
+            last?.CreatedAt ?? last?.Document?.LastSoftwareSyncAt,
+            last?.Status ?? last?.Document?.LastSoftwareSyncStatus,
+            last is { Status: "Failed" or "Miss" } ? last.Detail : last?.Document?.LastSoftwareSyncFailReason,
             last?.DocumentId,
-            last?.Document.Name);
+            last?.Document?.Name);
     }
 
     [HttpGet("software/settings")]

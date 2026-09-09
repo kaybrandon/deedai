@@ -42,17 +42,26 @@ public static class DocumentFilters
             query = query.Where(x => x.Flags.Any(f => f.FlagDefinitionId == flagId));
         }
 
+        return query;
+    }
+
+    public static IReadOnlyList<Document> ApplyDates(
+        IEnumerable<Document> rows,
+        DateTimeOffset? from,
+        DateTimeOffset? to)
+    {
+        var filtered = rows;
         if (from is not null)
         {
-            query = query.Where(x => x.CreatedAt >= from);
+            filtered = filtered.Where(x => x.CreatedAt >= from);
         }
 
         if (to is not null)
         {
-            query = query.Where(x => x.CreatedAt <= to);
+            filtered = filtered.Where(x => x.CreatedAt <= to);
         }
 
-        return query;
+        return filtered.ToList();
     }
 
     public static IQueryable<Document> WithReportIncludes(IQueryable<Document> query) =>
