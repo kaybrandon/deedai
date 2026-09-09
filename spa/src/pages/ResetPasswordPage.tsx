@@ -42,8 +42,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={onSubmit}>
+    <form className="login-card" onSubmit={onSubmit}>
         <h1>Choose a new password</h1>
         <p className="subtitle">Use the link from your email.</p>
         {!token && <div className="denied-box">This reset link is missing a token.</div>}
@@ -94,7 +93,6 @@ export default function ResetPasswordPage() {
             {error}
           </div>
         )}
-      </form>
-    </div>
+    </form>
   );
 }

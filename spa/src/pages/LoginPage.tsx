@@ -45,8 +45,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={onSubmit}>
+    <form className="login-card" onSubmit={onSubmit}>
         <div className="login-brand">
           <span className="brand-mark" aria-hidden="true">
             D
@@ -100,7 +99,6 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-      </form>
-    </div>
+    </form>
   );
 }
