@@ -31,6 +31,16 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 5.2.2 acceptance
+
+- **Documents table:** Mask F SoT density — hug rows, sticky header, zebra stripes, min 44px. One filter-row search ≤360px (no top-bar duplicate) across geo/legal (mailing + legal description), grantors/grantees, Volume, Page, Document Number, PID, name, status, and assignee.
+- **Sort / filter:** Column headings sort Status · Client · Volume · Page · Type · PID · Doc # · Assignee · Updated with `aria-sort`. Filters on status, date, Client, assignee, and type.
+- **Locked fields (shared with 5.2.1):** `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. Never `docNo` / `vol` / County / CAMA.
+- **Carry:** OCR ribbon, Retry Failed, ConfirmSheet soft-delete, chart-click deep links. Client / Software only.
+- **Should:** URL + session persist. **No Documents Yet** / **No Documents Match**. Page size 50.
+- **Won’t:** CSV, Super Admin, Flags/Statuses/Delete policy, 5.2.1 Review multi-party UI, glass/gradients, Azure deploy.
+- **Hard gates:** EF migration `20260909220000_DocumentListFields` is Designer-first. No zipdeploy.
+
 ## Phase 5.1.1 acceptance
 
 - **Users table:** Admin Users is a real data table (not a card stack). Mask F SoT density (`05-settings-users`): hug rows, sticky gray header, zebra stripes, role chips, single-line sort+filter headings, min 44px (`--table-row-h: 44px`).
@@ -93,7 +103,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Settings nest:** Settings → System (mid-level, singular) → Software / Users / API. Top-level Settings group, `/settings`, and Admin permission stay the same. Never Systems / County / CAMA.
 - **Full name** sits under **Display name** on Users add/edit and My profile. Required when creating a user.
 - **Confirm new password** whenever an Admin or the user sets or changes a password. Mismatch is an inline error. Same Identity password rules. Fields stay ≥44px.
-- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909190000_Phase491RemovePropertyDefaults` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
+- **Hard gates:** Client / Software naming only. Secrets stay in App Settings / Key Vault. Latest EF migration `20260909220000_DocumentListFields` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). Dense Mask F shell. No zipdeploy. Property defaults is not a live Settings feature.
 
 ## Phase 4.3 acceptance
 

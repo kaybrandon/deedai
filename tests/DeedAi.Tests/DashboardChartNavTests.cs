@@ -73,6 +73,7 @@ public sealed class DashboardChartNavTests
         var page = Read("spa/src/pages/DashboardPage.tsx");
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var documents = Read("spa/src/pages/DocumentsPage.tsx");
+        var table = Read("spa/src/documentsTable.ts");
 
         Assert.Contains("params.set(\"status\", filters.status)", helper, StringComparison.Ordinal);
         Assert.Contains("params.set(\"clientId\", filters.clientId)", helper, StringComparison.Ordinal);
@@ -93,8 +94,9 @@ public sealed class DashboardChartNavTests
         Assert.Contains("documentsPath({ status: slice.status, clientId, from, to })", charts, StringComparison.Ordinal);
         Assert.Contains("goStatus(slice.status)", charts, StringComparison.Ordinal);
 
-        Assert.Contains("params.get(\"status\")", documents, StringComparison.Ordinal);
-        Assert.Contains("params.set(\"status\", status)", documents, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"status\")", table, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"status\", query.status)", table, StringComparison.Ordinal);
+        Assert.Contains("parseDocumentsTableQuery", documents, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -104,6 +106,7 @@ public sealed class DashboardChartNavTests
         var page = Read("spa/src/pages/DashboardPage.tsx");
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var documents = Read("spa/src/pages/DocumentsPage.tsx");
+        var table = Read("spa/src/documentsTable.ts");
 
         Assert.Contains("params.set(\"assigneeUserId\", filters.assigneeUserId)", helper, StringComparison.Ordinal);
         Assert.Contains("<ByUserChart data={byUser} {...applied} />", page, StringComparison.Ordinal);
@@ -112,8 +115,9 @@ public sealed class DashboardChartNavTests
         Assert.Contains("if (!user?.userId)", charts, StringComparison.Ordinal);
         Assert.Contains("chart-legend-static", charts, StringComparison.Ordinal);
 
-        Assert.Contains("params.get(\"assigneeUserId\")", documents, StringComparison.Ordinal);
-        Assert.Contains("params.set(\"assigneeUserId\", assignee)", documents, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"assigneeUserId\")", table, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"assigneeUserId\", query.assigneeUserId)", table, StringComparison.Ordinal);
+        Assert.Contains("query.assigneeUserId", documents, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -121,6 +125,7 @@ public sealed class DashboardChartNavTests
     {
         var charts = Read("spa/src/components/DashboardCharts.tsx");
         var documents = Read("spa/src/pages/DocumentsPage.tsx");
+        var table = Read("spa/src/documentsTable.ts");
         var page = Read("spa/src/pages/DashboardPage.tsx");
         var api = Read("src/DeedAi.Api/Controllers/DocumentsController.cs");
 
@@ -133,10 +138,10 @@ public sealed class DashboardChartNavTests
         Assert.Contains("chart-legend-link", volumeFn, StringComparison.Ordinal);
         Assert.Contains("<VolumeChart data={volume} {...applied} />", page, StringComparison.Ordinal);
 
-        Assert.Contains("params.get(\"from\")", documents, StringComparison.Ordinal);
-        Assert.Contains("params.set(\"from\", from)", documents, StringComparison.Ordinal);
-        Assert.Contains("params.get(\"to\")", documents, StringComparison.Ordinal);
-        Assert.Contains("params.set(\"to\", to)", documents, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"from\")", table, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"from\", query.from)", table, StringComparison.Ordinal);
+        Assert.Contains("params.get(\"to\")", table, StringComparison.Ordinal);
+        Assert.Contains("params.set(\"to\", query.to)", table, StringComparison.Ordinal);
         Assert.Contains("No Documents Match", documents, StringComparison.Ordinal);
         Assert.Contains("DateTimeOffset? from", api, StringComparison.Ordinal);
         Assert.Contains("DocumentFilters.ApplyDates", api, StringComparison.Ordinal);

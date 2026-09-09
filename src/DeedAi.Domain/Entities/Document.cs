@@ -18,6 +18,16 @@ public sealed class Document
     public DateTimeOffset? DeletedAt { get; set; }
     public string? ErrorMessage { get; set; }
     public string? DeedType { get; set; }
+    public string? DocumentNumber { get; set; }
+    public string? Volume { get; set; }
+    public string? Page { get; set; }
+    public string? Pid { get; set; }
+    public string? MailingStreet { get; set; }
+    public string? MailingCity { get; set; }
+    public string? MailingState { get; set; }
+    public string? MailingZip { get; set; }
+    public List<string> Grantors { get; set; } = [];
+    public List<string> Grantees { get; set; } = [];
     public string? ReviewStatus { get; set; }
     public DateTimeOffset? LastSoftwareSyncAt { get; set; }
     public string? LastSoftwareSyncStatus { get; set; }

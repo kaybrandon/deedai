@@ -137,6 +137,16 @@ export interface DocumentListItem {
   flags: FlagSummary[];
   errorMessage: string | null;
   displayStatus: string;
+  volume?: string | null;
+  page?: string | null;
+  documentNumber?: string | null;
+  pid?: string | null;
+  mailingStreet?: string | null;
+  mailingCity?: string | null;
+  mailingState?: string | null;
+  mailingZip?: string | null;
+  grantors?: string[] | null;
+  grantees?: string[] | null;
 }
 
 export interface FieldDraft {
@@ -187,6 +197,16 @@ export interface DocumentDetail {
   lastSoftwareSyncFailReason: string | null;
   softwareRecordId: string | null;
   displayStatus: string;
+  documentNumber?: string | null;
+  volume?: string | null;
+  page?: string | null;
+  pid?: string | null;
+  mailingStreet?: string | null;
+  mailingCity?: string | null;
+  mailingState?: string | null;
+  mailingZip?: string | null;
+  grantors?: string[] | null;
+  grantees?: string[] | null;
 }
 
 export interface TeamMemberItem {

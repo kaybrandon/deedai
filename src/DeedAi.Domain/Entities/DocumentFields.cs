@@ -10,6 +10,7 @@ public sealed class DocumentFields
     public string? InstrumentDate { get; set; }
     public string? Consideration { get; set; }
     public string? ParcelId { get; set; }
+    public string? LegalDescription { get; set; }
     public string? Client { get; set; }
     public string? Notes { get; set; }
     public bool IsDraft { get; set; }

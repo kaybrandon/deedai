@@ -1,6 +1,7 @@
 using DeedAi.Domain;
 using DeedAi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace DeedAi.Infrastructure.Data;
 
@@ -154,6 +155,30 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.DiRawBlobPath).HasMaxLength(512);
             entity.Property(x => x.ErrorMessage).HasMaxLength(1024);
             entity.Property(x => x.DeedType).HasMaxLength(64);
+            entity.Property(x => x.DocumentNumber).HasMaxLength(64);
+            entity.Property(x => x.Volume).HasMaxLength(32);
+            entity.Property(x => x.Page).HasMaxLength(32);
+            entity.Property(x => x.Pid).HasMaxLength(64);
+            entity.Property(x => x.MailingStreet).HasMaxLength(256);
+            entity.Property(x => x.MailingCity).HasMaxLength(128);
+            entity.Property(x => x.MailingState).HasMaxLength(32);
+            entity.Property(x => x.MailingZip).HasMaxLength(16);
+            var partiesComparer = new ValueComparer<List<string>>(
+                (left, right) => (left ?? new List<string>()).SequenceEqual(right ?? new List<string>()),
+                names => names.Aggregate(0, (hash, name) => HashCode.Combine(hash, name.GetHashCode(StringComparison.Ordinal))),
+                names => names.ToList());
+            entity.Property(x => x.Grantors)
+                .HasMaxLength(4000)
+                .HasConversion(
+                    names => PartyNames.ToJson(names),
+                    json => PartyNames.FromJson(json))
+                .Metadata.SetValueComparer(partiesComparer);
+            entity.Property(x => x.Grantees)
+                .HasMaxLength(4000)
+                .HasConversion(
+                    names => PartyNames.ToJson(names),
+                    json => PartyNames.FromJson(json))
+                .Metadata.SetValueComparer(partiesComparer);
             entity.Property(x => x.ReviewStatus).HasMaxLength(32);
             entity.Property(x => x.LastSoftwareSyncStatus).HasMaxLength(16);
             entity.Property(x => x.LastSoftwareSyncDirection).HasMaxLength(16);
@@ -198,6 +223,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.InstrumentDate).HasMaxLength(32);
             entity.Property(x => x.Consideration).HasMaxLength(64);
             entity.Property(x => x.ParcelId).HasMaxLength(64);
+            entity.Property(x => x.LegalDescription).HasMaxLength(4000);
             entity.Property(x => x.Client).HasMaxLength(128);
             entity.Property(x => x.Notes).HasMaxLength(4000);
         });

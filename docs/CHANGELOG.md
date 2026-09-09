@@ -1,5 +1,12 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 5.2.2 Manage Documents rich list
+- Documents is a Mask F SoT table: hug 44px rows, sticky gray header, zebra stripes, one filter-row Search ≤360px. No top-bar search.
+- Search covers name/status/assignee, grantors/grantees, Volume, Page, Document Number, PID, mailing street/city/state/zip, and existing legal description.
+- Column headings sort Status · Client · Volume · Page · Type · PID · Doc # · Assignee · Updated with `aria-sort`. Filters: status, date, Client, assignee, type (≥44px). Page size 50. URL + session persist. Empty / no-match.
+- Locked shared fields with 5.2.1 Review: `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. No `docNo` / `vol` / County / CAMA aliases.
+- Carry OCR ribbon, Retry Failed, ConfirmSheet soft-delete, chart-click deep links. EF migration `20260909220000_DocumentListFields` is Designer-first (`[Migration]` + `[DbContext]` + `BuildTargetModel`). No zipdeploy.
+
 ## 2026-09-09 — Phase 5.1.1 Users searchable sortable table
 - Admin Users is a real data table matching Mask F SoT density (`05-settings-users`): hug 44px rows, sticky gray header, zebra stripes, role chips, single-line sort+filter headings. One filter-row Search ≤360px across display name, full name, and email. No top-bar search.
 - Column headings sort Display Name, Email, Role, Client(s), and Status. Role / Client / Status filters sit on those headings.
