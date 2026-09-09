@@ -47,7 +47,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.Client", b =>
                         .IsUnique();
 
                     b.ToTable("Clients", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DeedTypeMap", b =>
                 {
@@ -78,7 +78,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DeedTypeMap", b =>
                         .IsUnique();
 
                     b.ToTable("DeedTypeMaps", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.Document", b =>
                 {
@@ -174,7 +174,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.Document", b =>
                         {
                             t.HasCheckConstraint("CK_Documents_Status", "Status IN ('Queued','Processing','Ready','Failed')");
                         });
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFields", b =>
                 {
@@ -225,7 +225,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFields", b =>
                         .IsUnique();
 
                     b.ToTable("DocumentFields", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFlag", b =>
                 {
@@ -240,7 +240,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFlag", b =>
                     b.HasIndex("FlagDefinitionId");
 
                     b.ToTable("DocumentFlags", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentLink", b =>
                 {
@@ -259,7 +259,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentLink", b =>
                     b.HasIndex("TargetDocumentId");
 
                     b.ToTable("DocumentLinks", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentTeamMember", b =>
                 {
@@ -274,7 +274,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentTeamMember", b =>
                     b.HasIndex("UserId");
 
                     b.ToTable("DocumentTeamMembers", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.FlagDefinition", b =>
                 {
@@ -304,7 +304,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.FlagDefinition", b =>
                         .IsUnique();
 
                     b.ToTable("FlagDefinitions", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.NotificationSettings", b =>
                 {
@@ -324,7 +324,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.NotificationSettings", b =>
                     b.HasKey("Id");
 
                     b.ToTable("NotificationSettings", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.OcrCleanupRule", b =>
                 {
@@ -357,7 +357,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.OcrCleanupRule", b =>
                         {
                             t.HasCheckConstraint("CK_OcrCleanupRules_Kind", "Kind IN ('Trim','Discard')");
                         });
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.SessionSettings", b =>
                 {
@@ -374,7 +374,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.SessionSettings", b =>
                     b.HasKey("Id");
 
                     b.ToTable("SessionSettings", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.AppPolicy", b =>
                 {
@@ -399,7 +399,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.AppPolicy", b =>
                     b.HasKey("Id");
 
                     b.ToTable("AppPolicies", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
                 {
@@ -436,7 +436,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
                         .IsUnique();
 
                     b.ToTable("PropertyDefaults", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareFieldMap", b =>
                 {
@@ -478,7 +478,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareFieldMap", b =>
                     b.HasIndex("DeedField", "ClientId", "DeedType");
 
                     b.ToTable("SoftwareFieldMaps", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                 {
@@ -511,7 +511,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                     b.HasIndex("UserId");
 
                     b.ToTable("PasswordResetTokens", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
                 {
@@ -544,7 +544,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
                     b.HasIndex("DocumentId");
 
                     b.ToTable("SoftwareSyncLogs", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.StatusDefinition", b =>
                 {
@@ -582,7 +582,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.StatusDefinition", b =>
                         .IsUnique();
 
                     b.ToTable("StatusDefinitions", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.Team", b =>
                 {
@@ -606,7 +606,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.Team", b =>
                         .IsUnique();
 
                     b.ToTable("Teams", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.TeamUser", b =>
                 {
@@ -621,7 +621,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.TeamUser", b =>
                     b.HasIndex("UserId");
 
                     b.ToTable("TeamUsers", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.UserAccount", b =>
                 {
@@ -666,7 +666,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.UserAccount", b =>
                         {
                             t.HasCheckConstraint("CK_Users_Role", "Role IN ('Admin','Editor','Uploader','Viewer')");
                         });
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.UserClientAccess", b =>
                 {
@@ -681,7 +681,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.UserClientAccess", b =>
                     b.HasIndex("ClientId");
 
                     b.ToTable("UserClientAccess", (string)null);
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.Document", b =>
                 {
@@ -706,7 +706,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.Document", b =>
                     b.Navigation("Client");
 
                     b.Navigation("UploadedBy");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFields", b =>
                 {
@@ -717,7 +717,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFields", b =>
                         .IsRequired();
 
                     b.Navigation("Document");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFlag", b =>
                 {
@@ -736,7 +736,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentFlag", b =>
                     b.Navigation("Document");
 
                     b.Navigation("Flag");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentLink", b =>
                 {
@@ -755,7 +755,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentLink", b =>
                     b.Navigation("Source");
 
                     b.Navigation("Target");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.DocumentTeamMember", b =>
                 {
@@ -774,7 +774,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.DocumentTeamMember", b =>
                     b.Navigation("Document");
 
                     b.Navigation("User");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                 {
@@ -785,7 +785,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.PasswordResetToken", b =>
                         .IsRequired();
 
                     b.Navigation("User");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
                 {
@@ -796,7 +796,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareSyncLog", b =>
                         .IsRequired();
 
                     b.Navigation("Document");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
                 {
@@ -806,7 +806,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Client");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareFieldMap", b =>
                 {
@@ -816,7 +816,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.SoftwareFieldMap", b =>
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Client");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.TeamUser", b =>
                 {
@@ -835,7 +835,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.TeamUser", b =>
                     b.Navigation("Team");
 
                     b.Navigation("User");
-                }
+                });
 
 modelBuilder.Entity("DeedAi.Domain.Entities.UserClientAccess", b =>
                 {
@@ -854,7 +854,7 @@ modelBuilder.Entity("DeedAi.Domain.Entities.UserClientAccess", b =>
                     b.Navigation("Client");
 
                     b.Navigation("User");
-                }
+                });
 
             modelBuilder.Entity("DeedAi.Domain.Entities.Client", b =>
                 {
