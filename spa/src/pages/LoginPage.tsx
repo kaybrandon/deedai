@@ -86,15 +86,15 @@ export default function LoginPage() {
           />
         </label>
         <button className="primary" type="submit" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? "Signing In…" : "Sign In"}
         </button>
         <div className="login-meta">
           <Link className="link-plain" to="/forgot-password">
-            Forgot password?
+            Forgot Password?
           </Link>
           <label className="remember">
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-            Remember email
+            Remember Email
           </label>
         </div>
         {error && (

@@ -15,8 +15,26 @@ function filtersFromParams(params: URLSearchParams) {
     status: params.get("status") ?? "",
     clientId: params.get("clientId") ?? "",
     assignee: params.get("assigneeUserId") ?? "",
+    from: dateInput(params.get("from")),
+    to: dateInput(params.get("to")),
     includeDeleted: params.get("includeDeleted") === "true"
   };
+}
+
+function dateInput(value: string | null) {
+  if (!value) {
+    return "";
+  }
+  return value.length >= 10 ? value.slice(0, 10) : value;
+}
+
+function apiQuery(params: URLSearchParams) {
+  const next = new URLSearchParams(params);
+  const from = dateInput(next.get("from"));
+  const to = dateInput(next.get("to"));
+  if (from) next.set("from", new Date(from).toISOString());
+  if (to) next.set("to", new Date(`${to}T23:59:59`).toISOString());
+  return `?${next}`;
 }
 
 export default function DocumentsPage() {
@@ -28,6 +46,8 @@ export default function DocumentsPage() {
   const [status, setStatus] = useState("");
   const [clientId, setClientId] = useState("");
   const [assignee, setAssignee] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -40,7 +60,7 @@ export default function DocumentsPage() {
   const [notice, setNotice] = useState<string | null>(null);
 
   async function fetchRows(params: URLSearchParams) {
-    setRows(await endpoints.documents(`?${params}`));
+    setRows(await endpoints.documents(apiQuery(params)));
     setSelected([]);
   }
 
@@ -55,6 +75,8 @@ export default function DocumentsPage() {
     if (status) params.set("status", status);
     if (clientId) params.set("clientId", clientId);
     if (assignee) params.set("assigneeUserId", assignee);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
     if (includeDeleted && canAdmin) params.set("includeDeleted", "true");
     setSearchParams(params, { replace: true });
   }
@@ -65,6 +87,8 @@ export default function DocumentsPage() {
     setStatus(next.status);
     setClientId(next.clientId);
     setAssignee(next.assignee);
+    setFrom(next.from);
+    setTo(next.to);
     setIncludeDeleted(next.includeDeleted);
     void fetchRows(searchParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -101,7 +125,7 @@ export default function DocumentsPage() {
           <option>Processing</option>
           <option>Ready</option>
           <option>Failed</option>
-          <option value="NeedsReview">Needs review</option>
+          <option value="NeedsReview">Needs Review</option>
         </select>
         <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Client">
           <option value="">Client</option>
@@ -119,6 +143,14 @@ export default function DocumentsPage() {
             </option>
           ))}
         </select>
+        <label>
+          From
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label>
+          To
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        </label>
         {canAdmin && (
           <label className="remember">
             <input
@@ -126,7 +158,7 @@ export default function DocumentsPage() {
               checked={includeDeleted}
               onChange={(e) => setIncludeDeleted(e.target.checked)}
             />
-            Show deleted
+            Show Deleted
           </label>
         )}
         <button className="primary" type="submit">
@@ -145,14 +177,14 @@ export default function DocumentsPage() {
               await reload();
             }}
           >
-            Requeue failed
+            Requeue Failed
           </button>
         </div>
       )}
       {canEdit && selected.length > 0 && (
         <div className="bulk-bar">
           <span>{selected.length} selected</span>
-          <select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} aria-label="Bulk assignee">
+          <select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} aria-label="Bulk Assignee">
             <option value="">Assignee</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
@@ -169,13 +201,13 @@ export default function DocumentsPage() {
               await reload();
             }}
           >
-            Bulk assign
+            Bulk Assign
           </button>
         </div>
       )}
       {notice && <div className="success-banner">{notice}</div>}
       {rows.length === 0 ? (
-        <EmptyState title="No documents match" body="Try another Client, status, or upload a PDF to get started." />
+        <EmptyState title="No Documents Match" body="Try another Client, status, or upload a PDF to get started." />
       ) : (
         <div className="table-wrap">
           <table>
@@ -264,7 +296,7 @@ export default function DocumentsPage() {
                           Restore
                         </button>
                         <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
-                          Hard delete
+                          Hard Delete
                         </button>
                       </>
                     )}
@@ -308,7 +340,7 @@ export default function DocumentsPage() {
         <ConfirmSheet
           title={`Permanently delete ${pendingHard.name}?`}
           body="Hard-delete cannot be undone. Soft-delete first if this deed is still active."
-          confirmLabel="Hard delete"
+          confirmLabel="Hard Delete"
           onCancel={() => setPendingHard(null)}
           onConfirm={async () => {
             await endpoints.hardDelete(pendingHard.id);

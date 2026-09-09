@@ -83,7 +83,7 @@ export default function SystemHealthPanel() {
   return (
     <section className="panel" id="system-health">
       <h2>
-        System health <FieldHelp helpKey="settings.systemHealth" />
+        System Health <FieldHelp helpKey="settings.systemHealth" />
       </h2>
       <p className="muted">
         Admin-only view of <code>GET /api/health/detail</code>. SQL, Storage, and Queue stay as reachability.
@@ -107,11 +107,11 @@ export default function SystemHealthPanel() {
       {queue && (
         <div className="health-metrics" aria-label="OCR queue visibility">
           <div className="health-metric">
-            <span className="health-metric-label">Queue depth</span>
+            <span className="health-metric-label">Queue Depth</span>
             <strong>{queue.depth}</strong>
           </div>
           <div className="health-metric">
-            <span className="health-metric-label">Oldest waiting</span>
+            <span className="health-metric-label">Oldest Waiting</span>
             <strong>{formatAge(queue.oldestWaitingAgeSeconds)}</strong>
           </div>
           <div className="health-metric">
@@ -121,11 +121,11 @@ export default function SystemHealthPanel() {
             </strong>
           </div>
           <div className="health-metric">
-            <span className="health-metric-label">Last DI success</span>
+            <span className="health-metric-label">Last DI Success</span>
             <strong>{formatStamp(queue.lastDiSuccessAt)}</strong>
           </div>
           <div className="health-metric">
-            <span className="health-metric-label">Last DI fail</span>
+            <span className="health-metric-label">Last DI Fail</span>
             <strong>{formatStamp(queue.lastDiFailAt)}</strong>
           </div>
         </div>

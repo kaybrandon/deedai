@@ -150,13 +150,13 @@ export default function UsersPage() {
           <p className="page-kicker">Roles and Client access, grouped by Client. Multi-Client users appear under each assigned Client.</p>
         </div>
         <button className="primary" type="button" onClick={startCreate}>
-          Add user
+          Add User
         </button>
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
       {users.length === 0 ? (
-        <EmptyState title="No users yet" body="Admins can create accounts and map Client access." />
+        <EmptyState title="No Users Yet" body="Admins can create accounts and map Client access." />
       ) : (
         <div className="user-groups">
           {groups.byClient.map((group) => (
@@ -189,7 +189,7 @@ export default function UsersPage() {
 
       {editing && (
         <form className="panel" onSubmit={onSubmit}>
-          <h2>{editing === "new" ? "New user" : "Edit user"}</h2>
+          <h2>{editing === "new" ? "New User" : "Edit User"}</h2>
           {editingUser && (
             <PhotoEditor
               userId={editingUser.id}
@@ -224,11 +224,11 @@ export default function UsersPage() {
           )}
           <div className="form-grid">
             <label>
-              Display name
+              Display Name
               <input value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} required />
             </label>
             <label>
-              Full name
+              Full Name
               <input
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
@@ -249,7 +249,7 @@ export default function UsersPage() {
             </label>
             <PasswordPair
               id="user-password"
-              passwordLabel={editing === "new" ? "Password" : "New password (optional)"}
+              passwordLabel={editing === "new" ? "Password" : "New Password (Optional)"}
               password={form.password}
               confirm={form.confirm}
               required={editing === "new"}
@@ -274,7 +274,7 @@ export default function UsersPage() {
             Active
           </label>
           <fieldset className="access-set">
-            <legend>Client access</legend>
+            <legend>Client Access</legend>
             {clients.map((client) => (
               <label key={client.id} className="remember">
                 <input
@@ -358,7 +358,7 @@ function UserGroup({
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Full name</th>
+                <th>Full Name</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Clients</th>

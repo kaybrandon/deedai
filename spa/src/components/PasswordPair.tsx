@@ -10,7 +10,7 @@ export function passwordPairErrors(password: string, confirm: string, required: 
 export default function PasswordPair({
   id,
   passwordLabel,
-  confirmLabel = "Confirm new password",
+  confirmLabel = "Confirm New Password",
   password,
   confirm,
   passwordError,

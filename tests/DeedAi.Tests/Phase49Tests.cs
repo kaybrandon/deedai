@@ -182,11 +182,11 @@ public sealed class Phase49Tests
         Assert.Contains("Blob", panel);
         Assert.Contains("Document Intelligence", panel);
         Assert.Contains("OCR pipeline", panel);
-        Assert.Contains("Queue depth", panel);
-        Assert.Contains("Oldest waiting", panel);
+        Assert.Contains("Queue Depth", panel);
+        Assert.Contains("Oldest Waiting", panel);
         Assert.Contains("Poison / Failed", panel);
-        Assert.Contains("Last DI success", panel);
-        Assert.Contains("Last DI fail", panel);
+        Assert.Contains("Last DI Success", panel);
+        Assert.Contains("Last DI Fail", panel);
         Assert.Contains("health-refresh", panel);
         Assert.Contains(".health-refresh", css);
         Assert.Contains("min-height: 44px", css);

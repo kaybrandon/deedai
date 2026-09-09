@@ -54,11 +54,11 @@ export default function PhotoEditor({
           onChange={(e) => void pick(e.target.files?.[0])}
         />
         <button className="ghost" type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
-          {hasPhoto ? "Replace photo" : "Upload photo"}
+          {hasPhoto ? "Replace Photo" : "Upload Photo"}
         </button>
         {hasPhoto && (
           <button className="ghost" type="button" disabled={busy} onClick={() => setPendingClear(true)}>
-            Remove photo
+            Remove Photo
           </button>
         )}
         <span className="field-hint">{PHOTO_HINT}</span>
@@ -72,7 +72,7 @@ export default function PhotoEditor({
         <ConfirmSheet
           title="Remove this photo?"
           body="The profile photo will be cleared. A default initials avatar will show until a new photo is uploaded."
-          confirmLabel="Remove photo"
+          confirmLabel="Remove Photo"
           onCancel={() => setPendingClear(false)}
           onConfirm={() => {
             setPendingClear(false);

@@ -166,7 +166,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         var users = Read("spa/src/pages/UsersPage.tsx");
         Assert.Contains("user.clientIds.includes(client.id)", users, StringComparison.Ordinal);
         Assert.Contains("user-group-toggle", users, StringComparison.Ordinal);
-        Assert.Contains("Full name", users, StringComparison.Ordinal);
+        Assert.Contains("Full Name", users, StringComparison.Ordinal);
         Assert.Contains("PasswordPair", users, StringComparison.Ordinal);
         Assert.Contains("PhotoEditor", users, StringComparison.Ordinal);
         Assert.Contains("ConfirmSheet", users, StringComparison.Ordinal);
@@ -177,14 +177,14 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("clients?.length === 1", shell, StringComparison.Ordinal);
         Assert.Contains("${clients[0].name} Deed AI", shell, StringComparison.Ordinal);
         Assert.Contains("return \"Deed AI\"", shell, StringComparison.Ordinal);
-        Assert.Contains("Logged in as", shell, StringComparison.Ordinal);
-        Assert.Contains("My profile", shell, StringComparison.Ordinal);
+        Assert.Contains("Logged In As", shell, StringComparison.Ordinal);
+        Assert.Contains("My Profile", shell, StringComparison.Ordinal);
         Assert.Contains("to=\"/profile\"", shell, StringComparison.Ordinal);
         Assert.Contains("UserAvatar", shell, StringComparison.Ordinal);
 
         var profile = Read("spa/src/pages/ProfilePage.tsx");
-        Assert.Contains("My profile", profile, StringComparison.Ordinal);
-        Assert.Contains("Full name", profile, StringComparison.Ordinal);
+        Assert.Contains("My Profile", profile, StringComparison.Ordinal);
+        Assert.Contains("Full Name", profile, StringComparison.Ordinal);
         Assert.Contains("PasswordPair", profile, StringComparison.Ordinal);
         Assert.Contains("PhotoEditor", profile, StringComparison.Ordinal);
         Assert.Contains("Assigned Client(s)", profile, StringComparison.Ordinal);
@@ -199,7 +199,7 @@ public sealed class Phase45Tests : IClassFixture<TestAppFactory>
         Assert.Contains("Remove this photo?", photo, StringComparison.Ordinal);
 
         var pair = Read("spa/src/components/PasswordPair.tsx");
-        Assert.Contains("Confirm new password", pair, StringComparison.Ordinal);
+        Assert.Contains("Confirm New Password", pair, StringComparison.Ordinal);
         Assert.Contains("confirmPasswordError", pair, StringComparison.Ordinal);
 
         var css = Read("spa/src/styles.css");

@@ -101,7 +101,7 @@ export default function ReportsPage() {
             <option>Processing</option>
             <option>Ready</option>
             <option>Failed</option>
-            <option value="NeedsReview">Needs review</option>
+            <option value="NeedsReview">Needs Review</option>
           </select>
         </label>
         <label>
@@ -153,7 +153,7 @@ export default function ReportsPage() {
       {rows === null ? (
         <p>Loading…</p>
       ) : rows.length === 0 ? (
-        <EmptyState title="No rows for this report" body="Adjust filters or upload deeds. PDF, CSV, and Excel are not exported as a silent blank file." />
+        <EmptyState title="No Rows for This Report" body="Adjust filters or upload deeds. PDF, CSV, and Excel are not exported as a silent blank file." />
       ) : (
         <div className="table-wrap">
           <table>
@@ -162,7 +162,7 @@ export default function ReportsPage() {
                 <th>Name</th>
                 <th>Client</th>
                 <th>Status</th>
-                <th>Deed type</th>
+                <th>Deed Type</th>
                 <th>Assignee</th>
                 <th>Flags</th>
                 <th></th>

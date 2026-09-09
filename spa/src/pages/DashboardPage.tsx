@@ -9,14 +9,7 @@ import {
   type DashboardVolume
 } from "../api";
 import { ByUserChart, StatusMixChart, VolumeChart } from "../components/DashboardCharts";
-
-function documentsPath(status: string | undefined, clientId: string) {
-  const params = new URLSearchParams();
-  if (status) params.set("status", status);
-  if (clientId) params.set("clientId", clientId);
-  const query = params.toString();
-  return query ? `/documents?${query}` : "/documents";
-}
+import { documentsPath } from "../documentsPath";
 
 function defaultBounds() {
   return { from: "2024-08-01", to: toInput(new Date()) };
@@ -136,7 +129,7 @@ export default function DashboardPage() {
   const appliedClient = clients.find((client) => client.id === applied.clientId);
   const printTitle = appliedClient ? `${appliedClient.name} Deed AI` : "Deed AI";
   const printRange = `${applied.from || "all dates"} to ${applied.to || "all dates"}`;
-  const printClient = appliedClient?.name ?? "All clients";
+  const printClient = appliedClient?.name ?? "All Clients";
   const busy = loading || exporting;
 
   return (
@@ -172,7 +165,7 @@ export default function DashboardPage() {
         <label>
           Client
           <select value={clientId} onChange={(e) => setClientId(e.target.value)}>
-            <option value="">All clients</option>
+            <option value="">All Clients</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
@@ -187,24 +180,24 @@ export default function DashboardPage() {
       {error && <div className="denied-box no-print">{error}</div>}
       <div className="dashboard-print-surface">
         <div className="cards">
-          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath(undefined, applied.clientId)} />
-          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath("Queued", applied.clientId)} />
-          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath("Processing", applied.clientId)} />
-          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath("Ready", applied.clientId)} />
-          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath("Failed", applied.clientId)} />
+          <CountCard label="Uploaded" value={counts?.uploaded ?? 0} to={documentsPath({ ...applied })} />
+          <CountCard label="Queued" value={counts?.queued ?? 0} to={documentsPath({ status: "Queued", ...applied })} />
+          <CountCard label="Processing" value={counts?.processing ?? 0} to={documentsPath({ status: "Processing", ...applied })} />
+          <CountCard label="Ready" value={counts?.ready ?? 0} to={documentsPath({ status: "Ready", ...applied })} />
+          <CountCard label="Failed" value={counts?.failed ?? 0} danger to={documentsPath({ status: "Failed", ...applied })} />
         </div>
         <div className="chart-grid">
           <article className="chart-card">
-            <h2>Status mix</h2>
-            <StatusMixChart data={mix} />
+            <h2>Status Mix</h2>
+            <StatusMixChart data={mix} {...applied} />
           </article>
           <article className="chart-card">
-            <h2>By user</h2>
-            <ByUserChart data={byUser} />
+            <h2>By Users</h2>
+            <ByUserChart data={byUser} {...applied} />
           </article>
           <article className="chart-card chart-card-wide">
-            <h2>Volume over time</h2>
-            <VolumeChart data={volume} />
+            <h2>Volume Over Time</h2>
+            <VolumeChart data={volume} {...applied} />
           </article>
         </div>
       </div>

@@ -101,7 +101,7 @@ export default function SalesPage() {
         <p>Loading…</p>
       ) : !page.displaySalesTab ? (
         <EmptyState
-          title="Sales Tab is off"
+          title="Sales Tab Is Off"
           body="An Admin can turn on Display Sales Tab and set a consideration threshold for a Client on the Software page."
         />
       ) : (
@@ -112,7 +112,7 @@ export default function SalesPage() {
             {codes.length === 0 ? "none yet" : codes.map((code) => `${code.code} (${code.label})`).join(", ")}
           </p>
           {page.rows.length === 0 ? (
-            <EmptyState title="No sales match" body="Adjust Client or dates, or review a deed and save consideration at or above the threshold." />
+            <EmptyState title="No Sales Match" body="Adjust Client or dates, or review a deed and save consideration at or above the threshold." />
           ) : (
             <div className="table-wrap">
               <table>
@@ -147,7 +147,7 @@ export default function SalesPage() {
                           value={row.salesTabCode ?? ""}
                           onChange={(e) => void assign(row, e.target.value)}
                         >
-                          <option value="">Assign code</option>
+                          <option value="">Assign Code</option>
                           {codes.map((code) => (
                             <option key={code.id} value={code.code}>
                               {code.code} — {code.label}

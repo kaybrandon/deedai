@@ -23,6 +23,8 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         [FromQuery] Guid? clientId,
         [FromQuery] Guid? assigneeUserId,
         [FromQuery] Guid? flagId,
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
         [FromQuery] bool includeDeleted,
         CancellationToken cancellationToken)
     {
@@ -62,6 +64,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         }
 
         var rows = await query.AsNoTracking().ToListAsync(cancellationToken);
+        rows = DocumentFilters.ApplyDates(rows, from, to).ToList();
         return rows.OrderByDescending(x => x.UpdatedAt).Select(ToListItem).ToList();
     }
 

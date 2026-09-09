@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <form className="login-card" onSubmit={onSubmit}>
-        <h1>Reset password</h1>
+        <h1>Reset Password</h1>
         <p className="subtitle">We will email a reset link if that account exists.</p>
         <label>
           Email
@@ -37,10 +37,10 @@ export default function ForgotPasswordPage() {
           />
         </label>
         <button className="primary" type="submit" disabled={busy}>
-          {busy ? "Sending…" : "Send reset link"}
+          {busy ? "Sending…" : "Send Reset Link"}
         </button>
         <Link className="link-plain" to="/login">
-          Back to sign in
+          Back to Sign In
         </Link>
         {notice && <div className="success-banner">{notice}</div>}
         {error && (

@@ -133,9 +133,9 @@ export default function AppShell() {
           </div>
         </nav>
         <div className="sidebar-identity">
-          <p className="sidebar-logged-in">Logged in as {identity}</p>
+          <p className="sidebar-logged-in">Logged In As {identity}</p>
           <NavLink className="sidebar-profile" to="/profile" onClick={closeNav}>
-            My profile
+            My Profile
           </NavLink>
         </div>
         <button
@@ -146,7 +146,7 @@ export default function AppShell() {
             navigate("/login");
           }}
         >
-          Sign out
+          Sign Out
         </button>
       </aside>
       {navOpen && <button className="nav-backdrop" type="button" aria-label="Close menu" onClick={closeNav} />}

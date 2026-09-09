@@ -182,7 +182,7 @@ export default function SettingsPage() {
             Open Restore
           </button>
           <button className="danger" type="button" onClick={() => setPending({ kind: "purge" })}>
-            Purge deleted deeds
+            Purge Deleted Deeds
           </button>
         </div>
       </section>
@@ -190,7 +190,7 @@ export default function SettingsPage() {
       {session && (
         <section className="panel">
           <h2>
-            Session idle timeout <FieldHelp helpKey="settings.idleTimeout" />
+            Session Idle Timeout <FieldHelp helpKey="settings.idleTimeout" />
           </h2>
           <p className="muted">
             Default is <strong>{session.defaultMinutes} minutes</strong> (App Setting{" "}
@@ -216,7 +216,7 @@ export default function SettingsPage() {
               onChange={(e) => setIdleMinutes(Number(e.target.value))}
             />
             <button className="primary" type="submit">
-              Save timeout
+              Save Timeout
             </button>
           </form>
         </section>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
 
       {software && (
         <section className="panel">
-          <h2>Software defaults</h2>
+          <h2>Software Defaults</h2>
           <p className="muted">
             Enable push and the fallback Software group here. Vendor, API URL, group code, Sales Tab, date/label depth,
             and property resets are typed per Client on the{" "}
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                 setNotice(next.pushEnabled ? "Software push enabled." : "Software push disabled.");
               }}
             />
-            <LabelWithHelp helpKey="software.enablePush">Enable Software push</LabelWithHelp>
+            <LabelWithHelp helpKey="software.enablePush">Enable Software Push</LabelWithHelp>
           </label>
           <form
             className="inline-form"
@@ -275,14 +275,14 @@ export default function SettingsPage() {
               onChange={(e) => setSoftware({ ...software, fieldDefaultsJson: e.target.value })}
             />
             <button className="primary" type="submit">
-              Save defaults
+              Save Defaults
             </button>
           </form>
         </section>
       )}
 
       <SettingsBlock
-        title="OCR trim / discard"
+        title="OCR Trim / Discard"
         helpKey="settings.ocrTrim"
         empty={ocrRules.length === 0}
         emptyBody="Seeded trim characters and discard words clean new extracts. Add more here — never put secrets in this list."
@@ -327,13 +327,13 @@ export default function SettingsPage() {
             required
           />
           <button className="primary" type="submit">
-            Add rule
+            Add Rule
           </button>
         </form>
       </SettingsBlock>
 
       <SettingsBlock
-        title="Property defaults"
+        title="Property Defaults"
         empty={defaults.length === 0}
         emptyBody="Set mapped field defaults per Client or deed type. Reset clears that scope."
       >
@@ -398,7 +398,7 @@ export default function SettingsPage() {
               aria-label="Default deed type"
               required
             >
-              <option value="">Deed type</option>
+              <option value="">Deed Type</option>
               {deedTypes.map((item) => (
                 <option key={item.id} value={item.deedType}>
                   {item.deedType}
@@ -421,7 +421,7 @@ export default function SettingsPage() {
             onChange={(e) => setDefaultForm({ ...defaultForm, defaultValue: e.target.value })}
           />
           <button className="primary" type="submit">
-            Add default
+            Add Default
           </button>
         </form>
         <div className="inline-form">
@@ -431,7 +431,7 @@ export default function SettingsPage() {
           </select>
           {resetScope === "Client" ? (
             <select value={resetClientId} onChange={(e) => setResetClientId(e.target.value)} aria-label="Reset Client">
-              <option value="">Client to reset</option>
+              <option value="">Client to Reset</option>
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {client.name}
@@ -440,7 +440,7 @@ export default function SettingsPage() {
             </select>
           ) : (
             <select value={resetDeedType} onChange={(e) => setResetDeedType(e.target.value)} aria-label="Reset deed type">
-              <option value="">Deed type to reset</option>
+              <option value="">Deed Type to Reset</option>
               {deedTypes.map((item) => (
                 <option key={item.id} value={item.deedType}>
                   {item.deedType}
@@ -461,14 +461,14 @@ export default function SettingsPage() {
               })
             }
           >
-            Reset defaults
+            Reset Defaults
           </button>
         </div>
       </SettingsBlock>
 
       {notifications && (
         <section className="panel">
-          <h2>Notify emails</h2>
+          <h2>Notify Emails</h2>
           <p className="muted">
             SendGrid sends <strong>OCR Failed</strong> and <strong>Ready</strong> mail. Recipients: {notifications.recipientsSummary} Events:{" "}
             {notifications.events.join(" · ")}. API key is <code>SendGridApiKey</code> / <code>SendGrid__ApiKey</code> from App Settings or Key Vault only.
@@ -486,7 +486,7 @@ export default function SettingsPage() {
                 setNotice(next.enabled ? "Notify emails on." : "Notify emails off.");
               }}
             />
-            Send OCR notify emails
+            Send OCR Notify Emails
           </label>
           <label className="remember">
             <input
@@ -590,7 +590,7 @@ export default function SettingsPage() {
             ))}
           </select>
           <button className="primary" type="submit">
-            Add team
+            Add Team
           </button>
         </form>
       </SettingsBlock>
@@ -621,7 +621,7 @@ export default function SettingsPage() {
           <input placeholder="Flag name" value={flagForm.name} onChange={(e) => setFlagForm({ ...flagForm, name: e.target.value })} required />
           <input type="color" value={flagForm.color} onChange={(e) => setFlagForm({ ...flagForm, color: e.target.value })} />
           <button className="primary" type="submit">
-            Add flag
+            Add Flag
           </button>
         </form>
       </SettingsBlock>
@@ -658,12 +658,12 @@ export default function SettingsPage() {
           <input placeholder="Code" value={statusForm.code} onChange={(e) => setStatusForm({ ...statusForm, code: e.target.value })} required />
           <input placeholder="Display name" value={statusForm.displayName} onChange={(e) => setStatusForm({ ...statusForm, displayName: e.target.value })} required />
           <button className="primary" type="submit">
-            Add status
+            Add Status
           </button>
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Deed-type maps" helpKey="settings.deedTypeMaps" empty={deedTypes.length === 0} emptyBody="Map deed types to Software codes used on lookup and push.">
+      <SettingsBlock title="Deed-Type Maps" helpKey="settings.deedTypeMaps" empty={deedTypes.length === 0} emptyBody="Map deed types to Software codes used on lookup and push.">
         <ul className="setting-list">
           {deedTypes.map((map) => (
             <li key={map.id}>
@@ -690,7 +690,7 @@ export default function SettingsPage() {
           <input placeholder="Software code" value={mapForm.softwareCode} onChange={(e) => setMapForm({ ...mapForm, softwareCode: e.target.value })} required />
           <input placeholder="Field map JSON (optional)" value={mapForm.fieldMapJson} onChange={(e) => setMapForm({ ...mapForm, fieldMapJson: e.target.value })} />
           <button className="primary" type="submit">
-            Add map
+            Add Map
           </button>
         </form>
       </SettingsBlock>

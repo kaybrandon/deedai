@@ -54,7 +54,7 @@ export default function ProfilePage() {
     <section className="page">
       <div className="page-head">
         <div>
-          <h1>My profile</h1>
+          <h1>My Profile</h1>
           <p className="page-kicker">Your name, photo, password, and assigned Client(s).</p>
         </div>
       </div>
@@ -96,16 +96,16 @@ export default function ProfilePage() {
         />
         <div className="form-grid">
           <label>
-            Display name
+            Display Name
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
           </label>
           <label>
-            Full name
+            Full Name
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>
           <PasswordPair
             id="profile-password"
-            passwordLabel="New password (optional)"
+            passwordLabel="New Password (Optional)"
             password={password}
             confirm={confirm}
             passwordError={passwordError}

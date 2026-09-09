@@ -175,7 +175,7 @@ export default function ReviewPage() {
       <OcrRibbon current={ribbonStepForDocument(doc.status, shownStatus)} />
       <div className="review-header">
         <div className="title-row">
-          <h1>Deed review</h1>
+          <h1>Deed Review</h1>
           <StatusChip status={shownStatus} title={doc.errorMessage} />
         </div>
         <div className="row-actions">
@@ -225,7 +225,7 @@ export default function ReviewPage() {
               await load(doc.id);
             }}
           >
-            Retry extract
+            Retry Extract
           </button>
         </div>
       )}
@@ -252,7 +252,7 @@ export default function ReviewPage() {
           </select>
         </label>
         <label>
-          Deed type
+          Deed Type
           <select value={deedType} disabled={!canEdit} onChange={(e) => setDeedType(e.target.value)}>
             <option value="">None</option>
             {deedTypes.map((item) => (
@@ -263,7 +263,7 @@ export default function ReviewPage() {
           </select>
         </label>
         <label>
-          Review status
+          Review Status
           <select value={reviewStatus} disabled={!canEdit} onChange={(e) => setReviewStatus(e.target.value)}>
             <option value="">None</option>
             {reviewStatuses.map((item) => (
@@ -278,7 +278,7 @@ export default function ReviewPage() {
       <div className="review-grid">
         <div className="pdf-pane">
           {pdfState === "ready" && pdfUrl ? (
-            <iframe title="PDF preview" src={pdfUrl} />
+            <iframe title="PDF Preview" src={pdfUrl} />
           ) : (
             <div className="pdf-placeholder">
               <span className="pdf-placeholder-mark" aria-hidden="true" />
@@ -293,7 +293,7 @@ export default function ReviewPage() {
           )}
           <Field label="Grantor" value={fields.grantor ?? ""} onChange={(v) => update("grantor", v)} readOnly={!canEdit} incomplete={isFailed && !fields.grantor} />
           <Field label="Grantee" value={fields.grantee ?? ""} onChange={(v) => update("grantee", v)} readOnly={!canEdit} incomplete={isFailed && !fields.grantee} />
-          <Field label="Instrument date" value={fields.instrumentDate ?? ""} onChange={(v) => update("instrumentDate", v)} readOnly={!canEdit} incomplete={isFailed && !fields.instrumentDate} />
+          <Field label="Instrument Date" value={fields.instrumentDate ?? ""} onChange={(v) => update("instrumentDate", v)} readOnly={!canEdit} incomplete={isFailed && !fields.instrumentDate} />
           <Field label="Consideration" value={fields.consideration ?? ""} onChange={(v) => update("consideration", v)} readOnly={!canEdit} incomplete={isFailed && !fields.consideration} />
           <Field label="Parcel ID" value={fields.parcelId ?? ""} onChange={(v) => update("parcelId", v)} readOnly={!canEdit} incomplete={isFailed && !fields.parcelId} />
           <Field label="Client" value={fields.client ?? ""} onChange={(v) => update("client", v)} readOnly={!canEdit} incomplete={isFailed && !fields.client} />
@@ -354,8 +354,8 @@ export default function ReviewPage() {
           </ul>
           {canEdit && (
             <div className="inline-form">
-              <select value={teamUser} onChange={(e) => setTeamUser(e.target.value)} aria-label="Add team member">
-                <option value="">Add teammate</option>
+              <select value={teamUser} onChange={(e) => setTeamUser(e.target.value)} aria-label="Add Team Member">
+                <option value="">Add Teammate</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.displayName}
@@ -379,7 +379,7 @@ export default function ReviewPage() {
         </section>
 
         <section className="panel">
-          <h2>Linked documents</h2>
+          <h2>Linked Documents</h2>
           <ul className="setting-list">
             {doc.linkedDocuments.map((linked) => (
               <li key={linked.id}>
@@ -397,7 +397,7 @@ export default function ReviewPage() {
           {canEdit && (
             <div className="inline-form">
               <select value={linkTarget} onChange={(e) => setLinkTarget(e.target.value)} aria-label="Link document">
-                <option value="">Link a deed</option>
+                <option value="">Link a Deed</option>
                 {docs
                   .filter((item) => item.id !== doc.id)
                   .map((item) => (
@@ -433,7 +433,7 @@ export default function ReviewPage() {
               {doc.softwareRecordId ? ` · ${doc.softwareRecordId}` : ""}
             </p>
           ) : (
-            <EmptyState title="No Software sync yet" body="Lookup or push to record last-sync status and fail reason on this deed." />
+            <EmptyState title="No Software Sync Yet" body="Lookup or push to record last-sync status and fail reason on this deed." />
           )}
           <div className="row-actions">
             <button
@@ -479,7 +479,7 @@ export default function ReviewPage() {
                     void runSoftware("retry");
                   }}
                 >
-                  Retry push
+                  Retry Push
                 </button>
               </>
             ) : (
@@ -508,11 +508,11 @@ export default function ReviewPage() {
       </div>
       {notify && (
         <section className="panel">
-          <h2>Notify emails</h2>
+          <h2>Notify Emails</h2>
           {!notify.enabled ? (
             <p className="muted">Admin turned notify emails off. OCR Failed and Ready mail will not send.</p>
           ) : notify.recipients.length === 0 ? (
-            <EmptyState title="No recipients yet" body="Assign this deed (and optionally turn on uploader notify) so Ready / OCR Failed mail has someone to send to." />
+            <EmptyState title="No Recipients Yet" body="Assign this deed (and optionally turn on uploader notify) so Ready / OCR Failed mail has someone to send to." />
           ) : (
             <p>
               {notify.events.join(" and ")} mail goes to{" "}
