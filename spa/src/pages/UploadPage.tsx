@@ -4,6 +4,7 @@ import { endpoints, uploadWithProgress, type ClientItem } from "../api";
 import { useAuth } from "../auth";
 import EmptyState from "../components/EmptyState";
 import { LabelWithHelp } from "../components/FieldHelp";
+import OcrRibbon from "../components/OcrRibbon";
 import { useProgress } from "../progress";
 
 interface LocalFile {
@@ -95,7 +96,8 @@ export default function UploadPage() {
   }
 
   return (
-    <section className="page">
+    <section className="page has-ocr-ribbon">
+      <OcrRibbon current="Upload" />
       <h1>Upload documents</h1>
       <p className="muted">Upload continues in the progress dock if you leave this page.</p>
       <form onSubmit={onSubmit}>

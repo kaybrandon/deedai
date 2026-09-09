@@ -1,5 +1,9 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 5.0 Mask A theme
+- Mist Slate + Teal tokens on the soft-dense shell (Login, Dashboard, Documents, Upload, Review, Users, Settings, Reports, Software).
+- Sticky OCR ribbon on Documents / Upload / Review. Failed review shows incomplete fields + Retry extract. Soft Failed/Queued chips. No new EF migration.
+
 ## 2026-09-09 — Phase 4.2.1 Authorize hit-target runtime
 - CSS-only `#17` was on the live page and still lost after Swagger paint (~34px top bar, ~30px modal). Runtime JS now wraps `SwaggerUIBundle` `onComplete`, uses `MutationObserver`, re-pins a late stylesheet, and sets inline `!important` 44×44 on Authorize (top bar + modal).
 - QA2 measure (after `/swagger` paints): `window.__deedAiMeasureAuthorize()` — every item `width`/`height` ≥ 44. Pass marker: `document.documentElement.dataset.deedaiAuthorizeHit === "pass"`.

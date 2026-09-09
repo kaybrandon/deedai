@@ -11,12 +11,13 @@ import {
   Tooltip
 } from "chart.js";
 import type { DashboardStackedSeries } from "./api";
+import { maskA } from "./theme";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, Filler, Legend, LineElement, LinearScale, PointElement, Tooltip);
 
 ChartJS.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif";
 ChartJS.defaults.font.size = 12;
-ChartJS.defaults.color = "#64748b";
+ChartJS.defaults.color = "#5A6B76";
 ChartJS.defaults.plugins.legend.labels.boxWidth = 10;
 ChartJS.defaults.plugins.legend.labels.boxHeight = 10;
 ChartJS.defaults.plugins.legend.labels.padding = 12;
@@ -24,20 +25,26 @@ ChartJS.defaults.maintainAspectRatio = false;
 ChartJS.defaults.responsive = true;
 
 const FALLBACK: Record<string, string> = {
-  queued: "#64748b",
-  processing: "#4f46e5",
-  ready: "#15803d",
-  failed: "#dc2626",
-  total: "#2563eb"
+  queued: maskA.queued,
+  processing: maskA.processing,
+  ready: maskA.ready,
+  failed: maskA.failed,
+  needsreview: maskA.review,
+  total: maskA.accent
 };
 
-const PALETTE = ["#2563eb", "#0f766e", "#7c3aed", "#d97706", "#db2777", "#0284c7"];
+const PALETTE = [maskA.accent, maskA.ready, maskA.processing, maskA.review, maskA.failed, maskA.queued];
 
+/** Mask A tokens win for pipeline statuses so charts stay on-theme even if seed colors are older. */
 export function seriesColor(key: string, color: string | null | undefined, index = 0): string {
+  const mapped = FALLBACK[key.toLowerCase()];
+  if (mapped) {
+    return mapped;
+  }
   if (color && color.trim()) {
     return color;
   }
-  return FALLBACK[key.toLowerCase()] ?? PALETTE[index % PALETTE.length];
+  return PALETTE[index % PALETTE.length];
 }
 
 export function hasSeriesData(series: DashboardStackedSeries[] | undefined): boolean {

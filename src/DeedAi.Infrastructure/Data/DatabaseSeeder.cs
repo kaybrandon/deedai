@@ -206,12 +206,12 @@ public sealed class DatabaseSeeder(
         if (!await db.StatusDefinitions.AnyAsync(cancellationToken))
         {
             db.StatusDefinitions.AddRange(
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Code = DocumentStatuses.Queued, DisplayName = "Queued", Color = "#374151", IsSystem = true, SortOrder = 1 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#3730a3", IsSystem = true, SortOrder = 2 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#166534", IsSystem = true, SortOrder = 3 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#b91c1c", IsSystem = true, SortOrder = 4 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#1d4ed8", IsSystem = false, SortOrder = 5 },
-                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#047857", IsSystem = false, SortOrder = 6 });
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000001"), Code = DocumentStatuses.Queued, DisplayName = "Queued", Color = "#C5CED6", IsSystem = true, SortOrder = 1 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000002"), Code = DocumentStatuses.Processing, DisplayName = "Processing", Color = "#E8C96A", IsSystem = true, SortOrder = 2 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000003"), Code = DocumentStatuses.Ready, DisplayName = "Ready", Color = "#A8D5C0", IsSystem = true, SortOrder = 3 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000004"), Code = DocumentStatuses.Failed, DisplayName = "Failed", Color = "#E8B4B0", IsSystem = true, SortOrder = 4 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000005"), Code = ReviewWorkflow.NeedsReview, DisplayName = ReviewWorkflow.NeedsReviewFlagName, Color = "#C5DCE2", IsSystem = false, SortOrder = 5 },
+                new StatusDefinition { Id = Guid.Parse("10000000-0000-0000-0000-000000000006"), Code = ReviewWorkflow.Approved, DisplayName = "Approved", Color = "#A8D5C0", IsSystem = false, SortOrder = 6 });
         }
 
         if (!await db.DeedTypeMaps.AnyAsync(cancellationToken))
