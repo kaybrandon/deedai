@@ -36,6 +36,9 @@ input, select, textarea {
   background: #fff;
 }
 label { display: grid; gap: 6px; font-weight: 700; font-size: 14px; }
+.field-hint { font-size: 12px; font-weight: 500; color: var(--muted); }
+.field-error { font-size: 12px; font-weight: 600; color: var(--danger); }
+input[aria-invalid="true"] { border-color: var(--danger); }
 h1 { margin: 0 0 16px; font-size: 32px; }
 .boot { padding: 48px; text-align: center; }
 

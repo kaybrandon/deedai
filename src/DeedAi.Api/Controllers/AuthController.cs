@@ -115,14 +115,20 @@ public sealed class AuthController(
     [AllowAnonymous]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(request.Token))
         {
             return BadRequest(new { title = "Reset failed", message = "Token and password are required." });
         }
 
-        if (request.Password.Length < 8)
+        if (PasswordRules.Validate(request.Password) is { } passwordError)
         {
-            return BadRequest(new { title = "Reset failed", message = "Password must be at least 8 characters." });
+            return BadRequest(new
+            {
+                title = "Reset failed",
+                message = passwordError,
+                field = "password",
+                errors = new { password = new[] { passwordError } }
+            });
         }
 
         var hash = TokenHasher.Hash(request.Token.Trim());

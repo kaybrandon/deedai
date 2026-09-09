@@ -88,6 +88,20 @@ public sealed class PasswordResetTests : IClassFixture<TestAppFactory>
     }
 
     [Fact]
+    public async Task Reset_rejects_weak_password_before_token_lookup()
+    {
+        var client = _factory.CreateJsonClient();
+        var response = await client.PostAsync(
+            "/api/auth/reset-password",
+            TestAppFactory.Json("""{"token":"not-checked-yet","password":"password"}"""));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("uppercase", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("symbol", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"field\":\"password\"", body);
+    }
+
+    [Fact]
     public async Task Disabled_user_cannot_sign_in()
     {
         using (var scope = _factory.Services.CreateScope())
@@ -149,6 +163,34 @@ public sealed class UsersAuthZTests : IClassFixture<TestAppFactory>
         Assert.Equal("Editor", json.RootElement.GetProperty("role").GetString());
         Assert.Equal(1, json.RootElement.GetProperty("clientIds").GetArrayLength());
         Assert.Equal(DatabaseSeeder.NorthsideId, json.RootElement.GetProperty("clientIds")[0].GetGuid());
+    }
+
+    [Fact]
+    public async Task Admin_cannot_create_user_with_weak_password()
+    {
+        var client = await Authed("admin@bisconsultants.com");
+        var response = await client.PostAsync("/api/admin/users", TestAppFactory.Json(
+            """{"email":"weak@bisconsultants.com","displayName":"Weak","role":"Viewer","password":"password","isActive":true,"clientIds":[]}"""));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("uppercase", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("digit", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("symbol", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"field\":\"password\"", body);
+    }
+
+    [Fact]
+    public async Task Admin_cannot_change_user_to_weak_password()
+    {
+        var client = await Authed("admin@bisconsultants.com");
+        var response = await client.PutAsync(
+            $"/api/admin/users/{DatabaseSeeder.ViewerId}",
+            TestAppFactory.Json(
+                "{\"email\":\"viewer@bisconsultants.com\",\"displayName\":\"Riley\",\"role\":\"Viewer\",\"password\":\"NoSymbol12\",\"isActive\":true,\"clientIds\":[]}"));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("symbol", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("\"field\":\"password\"", body);
     }
 
     [Fact]

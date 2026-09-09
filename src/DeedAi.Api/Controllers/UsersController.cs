@@ -38,7 +38,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         var error = Validate(request, requirePassword: true);
         if (error is not null)
         {
-            return BadRequest(new { message = error });
+            return Invalid(error.Value);
         }
 
         var email = request.Email.Trim();
@@ -69,7 +69,7 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         var error = Validate(request, requirePassword: false);
         if (error is not null)
         {
-            return BadRequest(new { message = error });
+            return Invalid(error.Value);
         }
 
         var user = await db.Users.Include(x => x.ClientAccess).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -155,33 +155,38 @@ public sealed class UsersController(DeedAiDbContext db) : ControllerBase
         new(user.Id, user.Email, user.DisplayName, user.Role, user.IsActive, user.CreatedAt,
             user.ClientAccess.Select(x => x.ClientId).ToList());
 
-    private static string? Validate(UpsertUserRequest request, bool requirePassword)
+    private static ValidationIssue? Validate(UpsertUserRequest request, bool requirePassword)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
         {
-            return "A valid email is required.";
+            return new("A valid email is required.", "email");
         }
 
         if (string.IsNullOrWhiteSpace(request.DisplayName))
         {
-            return "Display name is required.";
+            return new("Display name is required.", "displayName");
         }
 
         if (!AppRoles.All.Contains(request.Role))
         {
-            return "Role must be Admin, Editor, Uploader, or Viewer.";
+            return new("Role must be Admin, Editor, Uploader, or Viewer.", "role");
         }
 
-        if (requirePassword && string.IsNullOrWhiteSpace(request.Password))
+        if (PasswordRules.Validate(request.Password, requirePassword) is { } passwordError)
         {
-            return "Password is required.";
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Password) && request.Password.Length < 8)
-        {
-            return "Password must be at least 8 characters.";
+            return new(passwordError, "password");
         }
 
         return null;
     }
+
+    private static BadRequestObjectResult Invalid(ValidationIssue error) =>
+        new(new
+        {
+            message = error.Message,
+            field = error.Field,
+            errors = new Dictionary<string, string[]> { [error.Field] = [error.Message] }
+        });
+
+    private readonly record struct ValidationIssue(string Message, string Field);
 }

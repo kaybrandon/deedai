@@ -145,6 +145,7 @@ export interface SoftwareLookup {
 export interface ApiError extends Error {
   status: number;
   title?: string;
+  field?: string;
 }
 
 function token(): string | null {
@@ -154,10 +155,12 @@ function token(): string | null {
 async function readError(response: Response): Promise<ApiError> {
   let message = "Request failed.";
   let title = "Error";
+  let field: string | undefined;
   try {
     const body = await response.json();
     message = body.message ?? body.title ?? message;
     title = body.title ?? title;
+    field = typeof body.field === "string" ? body.field : undefined;
   } catch {
     if (response.status === 403) {
       message = "Access denied.";
@@ -167,6 +170,7 @@ async function readError(response: Response): Promise<ApiError> {
   const error = new Error(message) as ApiError;
   error.status = response.status;
   error.title = title;
+  error.field = field;
   return error;
 }
 
