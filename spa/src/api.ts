@@ -153,6 +153,10 @@ export interface NotificationSettings {
   recipientsSummary: string;
 }
 
+export interface SwaggerSetting {
+  enabled: boolean;
+}
+
 export interface SessionConfig {
   idleTimeoutMinutes: number;
   defaultMinutes: number;
@@ -197,8 +201,12 @@ export interface ApiError extends Error {
   field?: string;
 }
 
-function token(): string | null {
+export function sessionToken(): string | null {
   return sessionStorage.getItem("deedai.token");
+}
+
+function token(): string | null {
+  return sessionToken();
 }
 
 async function readError(response: Response): Promise<ApiError> {
@@ -344,6 +352,13 @@ export const endpoints = {
     }),
   retry: (id: string) => api<{ message: string; status?: string }>(`/api/documents/${id}/retry`, { method: "POST" }),
   requeueFailed: () => api<{ message: string; count: number }>("/api/documents/requeue-failed", { method: "POST" }),
+  swaggerSetting: () => api<SwaggerSetting>("/api/settings/swagger"),
+  saveSwaggerSetting: (enabled: boolean) =>
+    api<SwaggerSetting>("/api/settings/swagger", {
+      method: "PUT",
+      body: JSON.stringify({ enabled })
+    }),
+  help: () => api<Record<string, string>>("/api/help"),
   session: () => api<SessionConfig>("/api/settings/session"),
   updateSession: (idleTimeoutMinutes: number) =>
     api<SessionConfig>("/api/settings/session", {

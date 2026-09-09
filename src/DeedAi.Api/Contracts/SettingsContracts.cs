@@ -49,3 +49,7 @@ public sealed record UpdateSessionSettingsRequest(int IdleTimeoutMinutes);
 public sealed record OcrCleanupItem(Guid Id, string Kind, string Value, bool IsActive, int SortOrder);
 
 public sealed record UpsertOcrCleanupRequest(string Kind, string Value, bool IsActive, int SortOrder);
+
+public sealed record SwaggerSettingResponse(bool Enabled);
+
+public sealed record UpdateSwaggerSettingRequest(bool Enabled);

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DeedAi.Api\DeedAi.Api.csproj" />
+    <ProjectReference Include="..\..\src\DeedAi.Domain\DeedAi.Domain.csproj" />
     <ProjectReference Include="..\..\src\DeedAi.Infrastructure\DeedAi.Infrastructure.csproj" />
   </ItemGroup>
 

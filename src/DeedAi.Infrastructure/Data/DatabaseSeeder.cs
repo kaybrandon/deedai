@@ -119,6 +119,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         await SeedSoftwareParityAsync(cancellationToken);
         await SeedSessionAsync(cancellationToken);
         await SeedOcrCleanupAsync(cancellationToken);
+        await SeedSwaggerSettingAsync(cancellationToken);
 
         var seedDemo = string.Equals(configuration["Seed:DemoDocuments"], "true", StringComparison.OrdinalIgnoreCase)
                        || string.Equals(configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
@@ -502,5 +503,34 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         }
 
         return id;
+    }
+
+    private async Task SeedSwaggerSettingAsync(CancellationToken cancellationToken)
+    {
+        if (await db.AppSettings.AnyAsync(x => x.Key == AppSetting.SwaggerEnabledKey, cancellationToken))
+        {
+            return;
+        }
+
+        db.AppSettings.Add(new AppSetting
+        {
+            Key = AppSetting.SwaggerEnabledKey,
+            Value = ShouldSeedSwaggerOn() ? bool.TrueString : bool.FalseString,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private bool ShouldSeedSwaggerOn()
+    {
+        var env = configuration["ASPNETCORE_ENVIRONMENT"]
+                  ?? configuration["DOTNET_ENVIRONMENT"]
+                  ?? string.Empty;
+        if (string.Equals(env, "Production", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return string.Equals(configuration["Swagger:Enabled"], "true", StringComparison.OrdinalIgnoreCase);
     }
 }

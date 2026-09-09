@@ -69,6 +69,9 @@ export default function AppShell() {
               Settings
             </button>
           )}
+          {canAdmin && (
+            <NavLink to="/settings#swagger">API</NavLink>
+          )}
         </nav>
         <button
           className="ghost sidebar-logout"

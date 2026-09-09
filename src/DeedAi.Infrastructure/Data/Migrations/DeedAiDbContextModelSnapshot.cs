@@ -401,6 +401,25 @@ namespace DeedAi.Infrastructure.Data.Migrations
                     b.ToTable("AppPolicies", (string)null);
                 });
 
+            modelBuilder.Entity("DeedAi.Domain.Entities.AppSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("AppSettings", (string)null);
+                });
+
             modelBuilder.Entity("DeedAi.Domain.Entities.PropertyDefault", b =>
                 {
                     b.Property<Guid>("Id")

@@ -31,6 +31,11 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
 
+## Phase 4.1 acceptance
+
+- **Swagger (Admin):** Settings toggle **Enable Swagger UI** is database-persisted (`AppSettings.Swagger.Enabled`) and **off by default**. When on, `/swagger` serves Swagger UI with JWT Authorize and a **Copy Bearer** control. When off, `/swagger` (and the OpenAPI JSON) return **404** — not the SPA. Enabling Swagger does not open anonymous API access. Non-admins cannot see or change the toggle. Optional `Swagger__Enabled=true` seeds ON in non-Production only; Production stays off unless an Admin turns it on.
+- **Field Help:** Static `?` tooltips (44px, dismiss on outside tap) on Upload Client, Software settings, Sales Tab codes/threshold, report filters, Settings flags/statuses/deed-type maps, Restore / hard-delete ConfirmSheet, and the Swagger toggle. Client / Software wording only.
+
 ## Phase 3 acceptance
 
 - **Reports PDF:** reviewed-deed PDF export (QuestPDF-equivalent writer) with the same Client / role gates as CSV and Excel. Empty or failed exports return a clear message — never a silent blank PDF.
@@ -97,7 +102,7 @@ cd src/DeedAi.Api && dotnet run
 cd spa && npm run dev
 ```
 
-Vite proxies `/api` to `http://localhost:5080`.
+Vite proxies `/api` and `/swagger` to `http://localhost:5080`.
 
 Seeded local users (password `ChangeMe!1`):
 

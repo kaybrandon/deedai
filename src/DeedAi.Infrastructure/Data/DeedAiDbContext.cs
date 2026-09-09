@@ -25,6 +25,7 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
     public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
     public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
     public DbSet<AppPolicy> AppPolicies => Set<AppPolicy>();
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<SoftwareFieldMap> SoftwareFieldMaps => Set<SoftwareFieldMap>();
     public DbSet<PropertyDefault> PropertyDefaults => Set<PropertyDefault>();
     public DbSet<SoftwareClientConfig> SoftwareClientConfigs => Set<SoftwareClientConfig>();
@@ -264,6 +265,14 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.HasKey(x => x.Id);
             entity.Property(x => x.SoftwareDefaultGroup).HasMaxLength(64);
             entity.Property(x => x.SoftwareFieldDefaultsJson).HasMaxLength(4000);
+        });
+
+        modelBuilder.Entity<AppSetting>(entity =>
+        {
+            entity.ToTable("AppSettings");
+            entity.HasKey(x => x.Key);
+            entity.Property(x => x.Key).HasMaxLength(128);
+            entity.Property(x => x.Value).HasMaxLength(256).IsRequired();
         });
 
         modelBuilder.Entity<SoftwareFieldMap>(entity =>

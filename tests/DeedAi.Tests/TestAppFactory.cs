@@ -18,11 +18,26 @@ namespace DeedAi.Tests;
 
 public sealed class TestAppFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"deedai-tests-{Guid.NewGuid():N}.db");
+    private readonly string _dbPath;
+    private readonly bool _ownsDb;
+    private readonly Dictionary<string, string?> _extra;
+
+    public TestAppFactory() : this(null, null)
+    {
+    }
+
+    public TestAppFactory(string? dbPath, IReadOnlyDictionary<string, string?>? extraSettings = null)
+    {
+        _ownsDb = dbPath is null;
+        _dbPath = dbPath ?? Path.Combine(Path.GetTempPath(), $"deedai-tests-{Guid.NewGuid():N}.db");
+        _extra = extraSettings is null
+            ? new Dictionary<string, string?>()
+            : new Dictionary<string, string?>(extraSettings);
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment(_extra.GetValueOrDefault("ASPNETCORE_ENVIRONMENT") ?? "Development");
         builder.UseSetting("Database:Provider", "Sqlite");
         builder.UseSetting("ConnectionStrings:Sqlite", $"Data Source={_dbPath}");
         builder.UseSetting("Storage:Mode", "InMemory");
@@ -35,9 +50,13 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("DocumentIntelligence:Endpoint", "");
         builder.UseSetting("DocumentIntelligence:Key", "");
+        foreach (var pair in _extra)
+        {
+            builder.UseSetting(pair.Key, pair.Value ?? "");
+        }
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            var values = new Dictionary<string, string?>
             {
                 ["Database:Provider"] = "Sqlite",
                 ["ConnectionStrings:Sqlite"] = $"Data Source={_dbPath}",
@@ -48,7 +67,12 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
                 ["Jwt:Issuer"] = "deedai",
                 ["Jwt:Audience"] = "deedai-spa",
                 ["Cors:AllowedOrigins:0"] = "http://localhost:5173"
-            });
+            };
+            foreach (var pair in _extra)
+            {
+                values[pair.Key] = pair.Value;
+            }
+            config.AddInMemoryCollection(values);
         });
 
         builder.ConfigureTestServices(services =>
@@ -89,7 +113,7 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (File.Exists(_dbPath))
+        if (_ownsDb && File.Exists(_dbPath))
         {
             try { File.Delete(_dbPath); } catch (IOException) { }
         }

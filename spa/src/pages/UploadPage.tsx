@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { endpoints, uploadWithProgress, type ClientItem } from "../api";
 import { useAuth } from "../auth";
 import EmptyState from "../components/EmptyState";
+import { LabelWithHelp } from "../components/FieldHelp";
 import { useProgress } from "../progress";
 
 interface LocalFile {
@@ -99,7 +100,7 @@ export default function UploadPage() {
       <p className="muted">Upload continues in the progress dock if you leave this page.</p>
       <form onSubmit={onSubmit}>
         <label className="narrow">
-          Client
+          <LabelWithHelp helpKey="upload.client">Client</LabelWithHelp>
           <select value={clientId} onChange={(e) => setClientId(e.target.value)}>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>

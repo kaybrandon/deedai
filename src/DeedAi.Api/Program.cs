@@ -1,4 +1,5 @@
 using DeedAi.Api.Auth;
+using DeedAi.Api.Swagger;
 using DeedAi.Domain;
 using DeedAi.Infrastructure;
 using DeedAi.Infrastructure.Data;
@@ -30,7 +31,9 @@ builder.Services.AddDeedAiInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, RoleDeniedHandler>();
+builder.Services.AddSingleton<ISwaggerEnablement, SwaggerEnablement>();
 builder.Services.AddControllers();
+builder.Services.AddDeedAiSwagger();
 
 var jwtKey = DeedAi.Infrastructure.DependencyInjection.FirstValue(builder.Configuration, "JwtSigningKey", "Jwt:Key");
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
@@ -85,13 +88,20 @@ using (var scope = app.Services.CreateScope())
     await seeder.SeedAsync(CancellationToken.None);
 }
 
+var swaggerEnabled = await app.Services.GetRequiredService<ISwaggerEnablement>().IsEnabledAsync();
+app.Logger.LogInformation(
+    "Swagger UI is {SwaggerState} (database setting, {Environment})",
+    swaggerEnabled ? "enabled" : "disabled",
+    app.Environment.EnvironmentName);
+
+app.UseDeedAiSwagger();
 app.UseCors("DeedAi");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapDeedAiSpaFallback();
 app.Run();
 
 public sealed class InProcessOcrWorker(

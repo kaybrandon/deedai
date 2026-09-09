@@ -18,6 +18,9 @@ import {
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import { FieldHelp, LabelWithHelp } from "../components/FieldHelp";
+import SwaggerAdminPanel from "../components/SwaggerAdminPanel";
+import type { HelpKey } from "../helpCatalog";
 
 type PendingDelete =
   | { kind: "flag"; id: string; name: string }
@@ -160,6 +163,8 @@ export default function SettingsPage() {
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
 
+      <SwaggerAdminPanel />
+
       <section className="panel">
         <h2>Manage Documents</h2>
         <p className="muted">Restore and hard-delete live on the Restore page. Purge permanently removes every soft-deleted deed. Failed and JSON Retry requeue extract from Documents and Review.</p>
@@ -175,7 +180,9 @@ export default function SettingsPage() {
 
       {session && (
         <section className="panel">
-          <h2>Session idle timeout</h2>
+          <h2>
+            Session idle timeout <FieldHelp helpKey="settings.idleTimeout" />
+          </h2>
           <p className="muted">
             Default is <strong>{session.defaultMinutes} minutes</strong> (App Setting{" "}
             <code>Session__IdleTimeoutMinutes</code> / Admin Settings). After idle expiry the SPA signs you out and
@@ -232,7 +239,7 @@ export default function SettingsPage() {
                 setNotice(next.pushEnabled ? "Software push enabled." : "Software push disabled.");
               }}
             />
-            Enable Software push
+            <LabelWithHelp helpKey="software.enablePush">Enable Software push</LabelWithHelp>
           </label>
           <form
             className="inline-form"
@@ -266,6 +273,7 @@ export default function SettingsPage() {
 
       <SettingsBlock
         title="OCR trim / discard"
+        helpKey="settings.ocrTrim"
         empty={ocrRules.length === 0}
         emptyBody="Seeded trim characters and discard words clean new extracts. Add more here — never put secrets in this list."
       >
@@ -571,7 +579,7 @@ export default function SettingsPage() {
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Flags" empty={flags.length === 0} emptyBody="Create review flags the team can apply on a deed.">
+      <SettingsBlock title="Flags" helpKey="settings.flags" empty={flags.length === 0} emptyBody="Create review flags the team can apply on a deed.">
         <ul className="setting-list">
           {flags.map((flag) => (
             <li key={flag.id}>
@@ -602,7 +610,7 @@ export default function SettingsPage() {
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Statuses" empty={statuses.length === 0} emptyBody="Pipeline and review statuses appear in filters and reports.">
+      <SettingsBlock title="Statuses" helpKey="settings.statuses" empty={statuses.length === 0} emptyBody="Pipeline and review statuses appear in filters and reports.">
         <ul className="setting-list">
           {statuses.map((status) => (
             <li key={status.id}>
@@ -639,7 +647,7 @@ export default function SettingsPage() {
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Deed-type maps" empty={deedTypes.length === 0} emptyBody="Map deed types to Software codes used on lookup and push.">
+      <SettingsBlock title="Deed-type maps" helpKey="settings.deedTypeMaps" empty={deedTypes.length === 0} emptyBody="Map deed types to Software codes used on lookup and push.">
         <ul className="setting-list">
           {deedTypes.map((map) => (
             <li key={map.id}>
@@ -698,18 +706,23 @@ export default function SettingsPage() {
 
 function SettingsBlock({
   title,
+  helpKey,
   empty,
   emptyBody,
   children
 }: {
   title: string;
+  helpKey?: HelpKey;
   empty: boolean;
   emptyBody: string;
   children: ReactNode;
 }) {
   return (
     <section className="panel">
-      <h2>{title}</h2>
+      <h2>
+        {title}
+        {helpKey && <FieldHelp helpKey={helpKey} />}
+      </h2>
       {empty && <EmptyState title={`No ${title.toLowerCase()} yet`} body={emptyBody} />}
       {children}
     </section>

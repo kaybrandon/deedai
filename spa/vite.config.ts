@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": "http://localhost:5080"
+      "/api": "http://localhost:5080",
+      "/swagger": "http://localhost:5080"
     }
   },
   build: {

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DeedAi.Api.Contracts;
+using DeedAi.Api.Swagger;
 using DeedAi.Domain;
 using DeedAi.Domain.Entities;
 using DeedAi.Infrastructure;
@@ -15,8 +16,23 @@ namespace DeedAi.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/settings")]
-public sealed class SettingsController(DeedAiDbContext db, IConfiguration configuration) : ControllerBase
+public sealed class SettingsController(DeedAiDbContext db, IConfiguration configuration, ISwaggerEnablement swagger) : ControllerBase
 {
+    [HttpGet("swagger")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<SwaggerSettingResponse>> GetSwagger(CancellationToken cancellationToken) =>
+        new SwaggerSettingResponse(await swagger.IsEnabledAsync(cancellationToken));
+
+    [HttpPut("swagger")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<ActionResult<SwaggerSettingResponse>> SaveSwagger(
+        [FromBody] UpdateSwaggerSettingRequest request,
+        CancellationToken cancellationToken)
+    {
+        await swagger.SetEnabledAsync(request.Enabled, cancellationToken);
+        return new SwaggerSettingResponse(request.Enabled);
+    }
+
     [HttpGet("flags")]
     public async Task<ActionResult<IReadOnlyList<FlagItem>>> Flags(CancellationToken cancellationToken) =>
         await db.FlagDefinitions.AsNoTracking().OrderBy(x => x.SortOrder).ThenBy(x => x.Name)

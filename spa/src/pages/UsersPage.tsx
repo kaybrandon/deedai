@@ -4,6 +4,7 @@ import { endpoints, type ApiError, type ClientItem, type Role, type UserDetail }
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
+import { LabelWithHelp } from "../components/FieldHelp";
 import PasswordField from "../components/PasswordField";
 import { validatePassword } from "../password";
 
@@ -175,7 +176,7 @@ export default function UsersPage() {
               <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
             </label>
             <label>
-              Role
+              <LabelWithHelp helpKey="users.role">Role</LabelWithHelp>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
                 {roles.map((role) => (
                   <option key={role}>{role}</option>
