@@ -42,7 +42,7 @@ Document Intelligence may live in **Central US**. Configure the **explicit endpo
 - **Ready PDF preview:** Seeded Ready demo deeds (`deeds/demo/…`) have a PDF in blob storage. Opening a Ready deed in review shows the iframe preview. `GET /api/documents/{id}/file` returns `application/pdf` when the blob exists or can be seeded for a demo path. The placeholder (“PDF is not available for this deed.”) shows only when there is truly no file.
 - **Status vs Needs review:** Pipeline status is OCR only (Queued / Processing / Ready / Failed). **Needs review** is a flag that implies review workflow and sets `ReviewStatus=NeedsReview`. List/review chips show Needs review — not Ready and Needs review together. Setting the flag, review-status dropdown, and `displayStatus` stay in sync. Approved clears the flag.
 - **System health (Admin):** Settings has a **System health** card (`#system-health`) for `GET /api/health/detail` — SQL / storage / queue status and mode only. No connection strings or keys.
-- **Swagger Authorize:** Authorize button hit target is ≥44px (matches Copy Bearer).
+- **Swagger Authorize:** Authorize (and authorize-modal auth buttons) hit target is ≥44px (matches Copy Bearer). Phase 4.2.1 forces `display: inline-flex` so Swagger's default `display: inline` cannot collapse the box to ~34px.
 - **Hard gates:** Client / Software naming, four roles, KV-only secrets, no new EF migration, no Azure zipdeploy.
 
 ## Phase 4.1 acceptance

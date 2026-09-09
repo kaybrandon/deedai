@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using DeedAi.Api.Swagger;
 using DeedAi.Infrastructure.Data;
 
 namespace DeedAi.Tests;
@@ -57,8 +58,7 @@ public sealed class SwaggerSettingsTests
         Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
         var html = await ui.Content.ReadAsStringAsync();
         Assert.Contains("swagger", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("deedai-swagger-authorize", html, StringComparison.Ordinal);
-        Assert.Contains("min-height: 44px", html, StringComparison.Ordinal);
+        AssertAuthorizeHitTargetCss(html);
 
         var spec = await client.GetAsync("/swagger/v1/swagger.json");
         Assert.Equal(HttpStatusCode.OK, spec.StatusCode);
@@ -148,6 +148,12 @@ public sealed class SwaggerSettingsTests
     }
 
     [Fact]
+    public void Authorize_hit_target_css_beats_swagger_inline_display()
+    {
+        AssertAuthorizeHitTargetCss(SwaggerExtensions.AuthorizeHitTargetCss);
+    }
+
+    [Fact]
     public async Task App_setting_can_seed_swagger_on_in_non_prod_only()
     {
         await using var seeded = TestAppFactory.Create(null, new Dictionary<string, string?>
@@ -177,5 +183,26 @@ public sealed class SwaggerSettingsTests
     {
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.GetProperty("enabled").GetBoolean();
+    }
+
+    /// <summary>
+    /// Phase 4.2.1: min-height alone is ignored because Swagger sets
+    /// <c>.btn.authorize { display: inline }</c>. The injected CSS must
+    /// force a flex box and a 44px min tap target on the top-bar and modal
+    /// auth buttons.
+    /// </summary>
+    private static void AssertAuthorizeHitTargetCss(string css)
+    {
+        Assert.Contains("deedai-swagger-authorize", css, StringComparison.Ordinal);
+        Assert.Contains(".swagger-ui .btn.authorize", css, StringComparison.Ordinal);
+        Assert.Contains(".swagger-ui .auth-wrapper .authorize", css, StringComparison.Ordinal);
+        Assert.Contains(".swagger-ui .auth-btn-wrapper .btn", css, StringComparison.Ordinal);
+        Assert.Contains(".swagger-ui .btn.modal-btn.authorize", css, StringComparison.Ordinal);
+        Assert.Contains("display: inline-flex !important", css, StringComparison.Ordinal);
+        Assert.Contains("min-height: 44px !important", css, StringComparison.Ordinal);
+        Assert.Contains("min-width: 44px !important", css, StringComparison.Ordinal);
+        Assert.Contains("padding: 10px 16px !important", css, StringComparison.Ordinal);
+        Assert.Contains("box-sizing: border-box !important", css, StringComparison.Ordinal);
+        Assert.Contains("float: none !important", css, StringComparison.Ordinal);
     }
 }
