@@ -172,7 +172,7 @@ public sealed class UsersAuthZTests : IClassFixture<TestAppFactory>
     {
         var client = await Authed("admin@bisconsultants.com");
         var response = await client.PostAsync("/api/admin/users", TestAppFactory.Json(
-            """{"email":"weak@bisconsultants.com","displayName":"Weak","role":"Viewer","password":"password","isActive":true,"clientIds":[]}"""));
+            """{"email":"weak@bisconsultants.com","displayName":"Weak","fullName":"Weak Password","role":"Viewer","password":"password","isActive":true,"clientIds":[]}"""));
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("uppercase", body, StringComparison.OrdinalIgnoreCase);
