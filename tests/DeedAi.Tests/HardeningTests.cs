@@ -106,6 +106,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.Contains("20260909190000_Phase491RemovePropertyDefaults", discovered);
         Assert.DoesNotContain("20260909180000_Phase491RemovePropertyDefaults", discovered);
         Assert.DoesNotContain("20260909120000_Phase41SwaggerHelp", discovered);
+        Assert.DoesNotContain("20260909151048_Phase48AdminEmail", discovered);
         Assert.Equal(typeof(Phase4A), assembly.Migrations[Phase4SqlServerSchema.Phase4AId].AsType());
         Assert.Equal(typeof(Phase4AQa), assembly.Migrations[Phase4SqlServerSchema.Phase4AQaId].AsType());
         Assert.Equal(typeof(Phase4AzureRepair), assembly.Migrations[Phase4SqlServerSchema.Phase4AzureRepairId].AsType());
