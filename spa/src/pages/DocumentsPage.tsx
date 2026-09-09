@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { endpoints, type ClientItem, type DeletePolicy, type DocumentListItem, type UserSummary } from "../api";
+import { endpoints, type ClientItem, type DeletePolicy, type DocumentListItem, type StatusItem, type UserSummary } from "../api";
 import { useAuth } from "../auth";
 import ConfirmSheet from "../components/ConfirmSheet";
 import EmptyState from "../components/EmptyState";
@@ -22,15 +22,8 @@ import {
   type DocumentsTableQuery
 } from "../documentsTable";
 import { displayStatus } from "../reviewStatus";
+import { assignableStatuses, assignedCatalogValue, catalogColor, catalogLabel, filterSelectValue, filterStatuses } from "../statusCatalog";
 import { ribbonStepForDocument } from "../theme";
-
-const statuses = [
-  { value: "Queued", label: "Queued" },
-  { value: "Processing", label: "Processing" },
-  { value: "Ready", label: "Ready" },
-  { value: "Failed", label: "Failed" },
-  { value: "NeedsReview", label: "Needs Review" }
-];
 
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
@@ -44,6 +37,9 @@ export default function DocumentsPage() {
   queryRef.current = query;
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [statuses, setStatuses] = useState<StatusItem[]>([]);
+  const statusFilters = filterStatuses(statuses);
+  const assignable = assignableStatuses(statuses);
   const [rows, setRows] = useState<DocumentListItem[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkAssignee, setBulkAssignee] = useState("");
@@ -119,6 +115,7 @@ export default function DocumentsPage() {
   useEffect(() => {
     endpoints.clients().then(setClients).catch(() => undefined);
     endpoints.users().then(setUsers).catch(() => undefined);
+    endpoints.statuses().then(setStatuses).catch(() => undefined);
     endpoints.deletePolicy().then(setDeletePolicy).catch(() => undefined);
   }, []);
   const canDelete = deletePolicy ? deletePolicy.canDelete : canAdmin;
@@ -261,13 +258,13 @@ export default function DocumentsPage() {
                       <select
                         className="th-filter"
                         aria-label="Filter Status"
-                        value={query.status}
+                        value={filterSelectValue(query.status, statusFilters)}
                         onChange={(e) => patchQuery({ status: e.target.value })}
                       >
                         <option value="">All Statuses</option>
-                        {statuses.map((item) => (
-                          <option key={item.value} value={item.value}>
-                            {item.label}
+                        {statusFilters.map((item) => (
+                          <option key={item.id} value={item.code}>
+                            {item.displayName}
                           </option>
                         ))}
                       </select>
@@ -355,7 +352,31 @@ export default function DocumentsPage() {
                     )}
                     <td>{row.name}</td>
                     <td>
-                      <StatusChip status={displayStatus(row)} title={row.errorMessage} />
+                      <div className="documents-status-cell">
+                        <StatusChip
+                          status={displayStatus(row)}
+                          label={catalogLabel(displayStatus(row), statuses)}
+                          color={catalogColor(displayStatus(row), statuses)}
+                          title={row.errorMessage}
+                        />
+                        {canEdit && !row.isDeleted && (
+                          <select
+                            aria-label={`Status for ${row.name}`}
+                            value={assignedCatalogValue(row.reviewStatus, assignable)}
+                            onChange={async (e) => {
+                              await endpoints.setCatalogStatus(row.id, e.target.value || null);
+                              await reload();
+                            }}
+                          >
+                            <option value="">Pipeline</option>
+                            {assignable.map((item) => (
+                              <option key={item.id} value={item.code}>
+                                {item.displayName}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </td>
                     <td>{row.client}</td>
                     <td>{cell(row.volume)}</td>

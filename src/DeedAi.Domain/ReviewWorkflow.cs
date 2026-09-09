@@ -14,10 +14,12 @@ public static class ReviewWorkflow
     public static readonly Guid NeedsReviewFlagId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
 
     public static bool IsNeedsReview(string? reviewStatus) =>
-        string.Equals(reviewStatus, NeedsReview, StringComparison.OrdinalIgnoreCase);
+        string.Equals(reviewStatus, NeedsReview, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(reviewStatus, StatusCatalog.NeedsWork, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsApproved(string? reviewStatus) =>
-        string.Equals(reviewStatus, Approved, StringComparison.OrdinalIgnoreCase);
+        string.Equals(reviewStatus, Approved, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(reviewStatus, StatusCatalog.Complete, StringComparison.OrdinalIgnoreCase);
 
     public static string? NormalizeReviewStatus(string? reviewStatus) =>
         string.IsNullOrWhiteSpace(reviewStatus) ? null : reviewStatus.Trim();
@@ -37,6 +39,11 @@ public static class ReviewWorkflow
         if (IsApproved(reviewStatus))
         {
             return Approved;
+        }
+
+        if (StatusCatalog.IsAssignedCatalog(reviewStatus))
+        {
+            return reviewStatus!;
         }
 
         return pipelineStatus;

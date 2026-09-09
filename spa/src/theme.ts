@@ -21,7 +21,7 @@ export type OcrRibbonStep = (typeof OCR_RIBBON_STEPS)[number];
 
 export function ribbonStepForDocument(status?: string | null, display?: string | null): OcrRibbonStep | null {
   const shown = display || status || "";
-  if (shown === "NeedsReview" || shown === "Needs review") return "Review";
+  if (shown === "NeedsReview" || shown === "Needs review" || shown === "NeedsWork" || shown === "Needs Work") return "Review";
   if (status === "Failed") return "Review";
   if (status === "Queued") return "Queued";
   if (status === "Processing") return "Processing";

@@ -1,13 +1,30 @@
 const LABELS: Record<string, string> = {
-  NeedsReview: "Needs Review",
-  Approved: "Approved"
+  NeedsReview: "Needs Work",
+  Approved: "Complete"
 };
 
-export default function StatusChip({ status, title }: { status: string; title?: string | null }) {
-  const kind = status.replace(/\s+/g, "").toLowerCase();
+export default function StatusChip({
+  status,
+  title,
+  label,
+  color
+}: {
+  status: string;
+  title?: string | null;
+  label?: string | null;
+  color?: string | null;
+}) {
+  const shown = label || LABELS[status] || status;
+  const kind = shown.replace(/\s+/g, "").toLowerCase();
   return (
-    <span className={`chip chip-${kind}`} data-status={status} title={title ?? undefined}>
-      {LABELS[status] ?? status}
+    <span
+      className={`chip chip-${kind}`}
+      data-status={status}
+      data-label={shown}
+      title={title ?? undefined}
+      style={color ? { background: color } : undefined}
+    >
+      {shown}
     </span>
   );
 }

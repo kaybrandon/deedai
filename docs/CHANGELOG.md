@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-10 — Phase 5.2.5 Statuses catalog
+- Settings → System → Statuses is a Client/Software catalog. Seeded Must eight: Complete, In Queue, Needs Work, New, Not Needed, Pending, Research, Upload Error. Each maps to pipeline Queued/Processing/Ready/Failed or a review/extension state.
+- Editors assign catalog status on Documents and Review without changing OCR `Document.Status`. List filters and chips use catalog display names. Ready + OCR-failed stay mutually exclusive. Ribbon unchanged.
+- Admin add/rename/soft-disable. Seed/system rows cannot be hard-deleted (ConfirmSheet on disable/delete, ≥44px). Sort order and Mask F colors.
+- Designer-first EF migration `20260910030000_Phase525StatusesCatalog` adds nullable MapsTo / Kind / IsSeed with NULL backfill + SQL defaults + coalesce (lesson from #35/#36). No County/CAMA. DocumentLog parked.
+
 ## 2026-09-10 — Phase 5.2.4 Delete Policy
 - Admin Settings → System persists **Delete Policy** / **Who Can Delete**: All Editors or Admin only. Uploader and Viewer never soft-delete.
 - Documents hides Delete when the role is below the policy. Unauthorized API delete returns 403 (not 404). ConfirmSheet stays required when allowed (≥44px). Restore stays Admin-gated.

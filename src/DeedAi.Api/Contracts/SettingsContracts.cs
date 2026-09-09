@@ -4,9 +4,26 @@ public sealed record FlagItem(Guid Id, string Name, string Color, int SortOrder,
 
 public sealed record UpsertFlagRequest(string Name, string Color, int SortOrder, bool IsActive);
 
-public sealed record StatusItem(Guid Id, string Code, string DisplayName, string Color, bool IsSystem, int SortOrder, bool IsActive);
+public sealed record StatusItem(
+    Guid Id,
+    string Code,
+    string DisplayName,
+    string Color,
+    bool IsSystem,
+    int SortOrder,
+    bool IsActive,
+    string? MapsTo = null,
+    string? Kind = null,
+    bool IsSeed = false);
 
-public sealed record UpsertStatusRequest(string Code, string DisplayName, string Color, int SortOrder, bool IsActive);
+public sealed record UpsertStatusRequest(
+    string? Code,
+    string DisplayName,
+    string Color,
+    int SortOrder,
+    bool IsActive,
+    string? MapsTo = null,
+    string? Kind = null);
 
 public sealed record DeedTypeItem(Guid Id, string DeedType, string SoftwareCode, string? FieldMapJson, bool IsActive);
 

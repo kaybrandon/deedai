@@ -136,6 +136,9 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.DisplayName).HasMaxLength(64).IsRequired();
             entity.Property(x => x.Color).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.MapsTo).HasMaxLength(32).IsRequired(false).HasDefaultValue("");
+            entity.Property(x => x.Kind).HasMaxLength(16).IsRequired(false).HasDefaultValue("");
+            entity.Property(x => x.IsSeed).IsRequired(false).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<DeedTypeMap>(entity =>

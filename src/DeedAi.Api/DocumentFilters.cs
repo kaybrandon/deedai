@@ -42,7 +42,7 @@ public static class DocumentFilters
 
         if (!string.IsNullOrWhiteSpace(status))
         {
-            query = query.Where(x => x.Status == status || x.ReviewStatus == status);
+            query = StatusCatalog.ApplyFilter(query, status);
         }
 
         if (clientId is not null)

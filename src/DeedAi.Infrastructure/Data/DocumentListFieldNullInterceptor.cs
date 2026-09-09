@@ -24,6 +24,11 @@ internal sealed class DocumentListFieldNullInterceptor : IMaterializationInterce
             policy.CoalesceNulls();
         }
 
+        if (entity is StatusDefinition status)
+        {
+            status.CoalesceNullCatalogFields();
+        }
+
         return entity;
     }
 }

@@ -111,6 +111,9 @@ export interface StatusItem {
   isSystem: boolean;
   sortOrder: number;
   isActive: boolean;
+  mapsTo?: string | null;
+  kind?: string | null;
+  isSeed?: boolean;
 }
 
 export interface DeedTypeItem {
@@ -634,6 +637,11 @@ export const endpoints = {
   updateStatus: (id: string, body: object) =>
     api<StatusItem>(`/api/settings/statuses/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteStatus: (id: string) => api<{ message: string }>(`/api/settings/statuses/${id}`, { method: "DELETE" }),
+  setCatalogStatus: (id: string, catalogStatus: string | null) =>
+    api<{ message: string; status: string; reviewStatus: string | null; displayStatus: string; pipelineUnchanged: boolean }>(
+      `/api/documents/${id}/catalog-status`,
+      { method: "PUT", body: JSON.stringify({ catalogStatus }) }
+    ),
   deedTypes: () => api<DeedTypeItem[]>("/api/settings/deed-types"),
   createDeedType: (body: object) =>
     api<DeedTypeItem>("/api/settings/deed-types", { method: "POST", body: JSON.stringify(body) }),
