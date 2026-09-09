@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
 export default function AppShell() {
-  const { me, logout, canUpload, canAdmin } = useAuth();
+  const { me, logout, canUpload, canAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -24,6 +24,29 @@ export default function AppShell() {
             </button>
           )}
           <NavLink to="/reports">Reports</NavLink>
+          <NavLink to="/software">Software</NavLink>
+          {canEdit ? (
+            <NavLink to="/sales">Sales</NavLink>
+          ) : (
+            <button
+              className="nav-disabled"
+              type="button"
+              onClick={() => navigate("/denied", { state: { action: "open the Sales tab" } })}
+            >
+              Sales
+            </button>
+          )}
+          {canAdmin ? (
+            <NavLink to="/restore">Restore</NavLink>
+          ) : (
+            <button
+              className="nav-disabled"
+              type="button"
+              onClick={() => navigate("/denied", { state: { action: "restore or hard-delete deeds" } })}
+            >
+              Restore
+            </button>
+          )}
           {canAdmin ? (
             <NavLink to="/users">Users</NavLink>
           ) : (

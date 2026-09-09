@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { endpoints, type ClientItem, type UserSummary } from "../api";
+import { endpoints, type ClientItem, type FlagItem, type UserSummary } from "../api";
 import EmptyState from "../components/EmptyState";
 
 interface ReportRow {
@@ -19,8 +19,12 @@ export default function ReportsPage() {
   const [status, setStatus] = useState("");
   const [clientId, setClientId] = useState("");
   const [assignee, setAssignee] = useState("");
+  const [flagId, setFlagId] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [flags, setFlags] = useState<FlagItem[]>([]);
   const [rows, setRows] = useState<ReportRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +34,9 @@ export default function ReportsPage() {
     if (status) params.set("status", status);
     if (clientId) params.set("clientId", clientId);
     if (assignee) params.set("assigneeUserId", assignee);
+    if (flagId) params.set("flagId", flagId);
+    if (from) params.set("from", new Date(from).toISOString());
+    if (to) params.set("to", new Date(`${to}T23:59:59`).toISOString());
     return `?${params}`;
   }
 
@@ -57,6 +64,7 @@ export default function ReportsPage() {
   useEffect(() => {
     endpoints.clients().then(setClients).catch(() => undefined);
     endpoints.users().then(setUsers).catch(() => undefined);
+    endpoints.flags().then(setFlags).catch(() => undefined);
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -102,6 +110,22 @@ export default function ReportsPage() {
             </option>
           ))}
         </select>
+        <select value={flagId} onChange={(e) => setFlagId(e.target.value)} aria-label="Flag">
+          <option value="">Flag</option>
+          {flags.map((flag) => (
+            <option key={flag.id} value={flag.id}>
+              {flag.name}
+            </option>
+          ))}
+        </select>
+        <label>
+          From
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label>
+          To
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        </label>
         <button className="primary" type="submit">
           Search
         </button>

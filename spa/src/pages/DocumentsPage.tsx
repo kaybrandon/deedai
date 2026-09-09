@@ -20,6 +20,8 @@ export default function DocumentsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkAssignee, setBulkAssignee] = useState("");
   const [pendingDelete, setPendingDelete] = useState<DocumentListItem | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<DocumentListItem | null>(null);
+  const [pendingHard, setPendingHard] = useState<DocumentListItem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   async function load(event?: FormEvent) {
@@ -202,17 +204,14 @@ export default function DocumentsPage() {
                       </button>
                     )}
                     {canAdmin && row.isDeleted && (
-                      <button
-                        className="primary"
-                        type="button"
-                        onClick={async () => {
-                          await endpoints.restore(row.id);
-                          setNotice("Restored.");
-                          await load();
-                        }}
-                      >
-                        Restore
-                      </button>
+                      <>
+                        <button className="primary" type="button" onClick={() => setPendingRestore(row)}>
+                          Restore
+                        </button>
+                        <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
+                          Hard delete
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -224,13 +223,42 @@ export default function DocumentsPage() {
       {pendingDelete && (
         <ConfirmSheet
           title="Delete this deed?"
-          body="Soft-delete. You can restore from Admin later."
+          body="Soft-delete. You can restore from Admin later on Restore / Manage Documents."
           confirmLabel="Delete"
           onCancel={() => setPendingDelete(null)}
           onConfirm={async () => {
             await endpoints.remove(pendingDelete.id);
             setPendingDelete(null);
             setNotice("Soft-deleted.");
+            await load();
+          }}
+        />
+      )}
+      {pendingRestore && (
+        <ConfirmSheet
+          title={`Restore ${pendingRestore.name}?`}
+          body="This deed will appear on Documents again for its Client."
+          confirmLabel="Restore"
+          danger={false}
+          onCancel={() => setPendingRestore(null)}
+          onConfirm={async () => {
+            await endpoints.restore(pendingRestore.id);
+            setPendingRestore(null);
+            setNotice("Restored.");
+            await load();
+          }}
+        />
+      )}
+      {pendingHard && (
+        <ConfirmSheet
+          title={`Permanently delete ${pendingHard.name}?`}
+          body="Hard-delete cannot be undone. Soft-delete first if this deed is still active."
+          confirmLabel="Hard delete"
+          onCancel={() => setPendingHard(null)}
+          onConfirm={async () => {
+            await endpoints.hardDelete(pendingHard.id);
+            setPendingHard(null);
+            setNotice("Permanently deleted.");
             await load();
           }}
         />

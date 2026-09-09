@@ -92,6 +92,7 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
         await SeedSettingsAsync(cancellationToken);
         await SeedTeamsAsync(cancellationToken);
         await SeedNotificationsAsync(cancellationToken);
+        await SeedSoftwareParityAsync(cancellationToken);
 
         var seedDemo = string.Equals(configuration["Seed:DemoDocuments"], "true", StringComparison.OrdinalIgnoreCase)
                        || string.Equals(configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
@@ -173,6 +174,58 @@ public sealed class DatabaseSeeder(DeedAiDbContext db, IConfiguration configurat
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    private async Task SeedSoftwareParityAsync(CancellationToken cancellationToken)
+    {
+        if (!await db.AppPolicies.AnyAsync(cancellationToken))
+        {
+            db.AppPolicies.Add(new AppPolicy
+            {
+                Id = AppPolicy.SingletonId,
+                SoftwarePushEnabled = true,
+                SoftwareDefaultGroup = "Property",
+                SoftwareFieldDefaultsJson = """{"consideration":"0"}""",
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+        }
+
+        if (!await db.SoftwareFieldMaps.AnyAsync(cancellationToken))
+        {
+            db.SoftwareFieldMaps.AddRange(
+                Map(DeedFields.Grantor, "GrantorName", "Parties", 1),
+                Map(DeedFields.Grantee, "GranteeName", "Parties", 2),
+                Map(DeedFields.ParcelId, "ParcelNumber", "Property", 3),
+                Map(DeedFields.InstrumentDate, "InstrumentDate", "Property", 4),
+                Map(DeedFields.Consideration, "Consideration", "Consideration", 5),
+                Map(DeedFields.Client, "ClientName", "Property", 6),
+                Map(DeedFields.Notes, "Notes", "Notes", 7));
+        }
+
+        if (!await db.PropertyDefaults.AnyAsync(cancellationToken))
+        {
+            db.PropertyDefaults.Add(new PropertyDefault
+            {
+                Id = Guid.Parse("40000000-0000-0000-0000-000000000001"),
+                Scope = PropertyDefaultScopes.Client,
+                ClientId = AcmeId,
+                FieldKey = DeedFields.Client,
+                DefaultValue = "Acme"
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static SoftwareFieldMap Map(string deedField, string softwareField, string group, int sort) =>
+        new()
+        {
+            Id = Guid.Parse($"41000000-0000-0000-0000-00000000000{sort}"),
+            DeedField = deedField,
+            SoftwareField = softwareField,
+            SoftwareGroup = group,
+            IsActive = true,
+            SortOrder = sort
+        };
 
     private async Task SeedTeamsAsync(CancellationToken cancellationToken)
     {

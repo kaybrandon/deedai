@@ -397,42 +397,44 @@ export default function ReviewPage() {
             >
               Lookup
             </button>
-            <button
-              className="primary"
-              type="button"
-              disabled={!canEdit}
-              onClick={async () => {
-                if (!canEdit) {
-                  navigate("/denied", { state: { action: "push to Software" } });
-                  return;
-                }
-                const result = await endpoints.softwarePush(doc.id);
-                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
-                if (!result.succeeded) setError(result.failReason ?? result.message);
-                else setError(null);
-                await load(doc.id);
-              }}
-            >
-              Push
-            </button>
-            <button
-              className="ghost"
-              type="button"
-              disabled={!canEdit}
-              onClick={async () => {
-                if (!canEdit) {
-                  navigate("/denied", { state: { action: "retry Software push" } });
-                  return;
-                }
-                const result = await endpoints.softwareRetry(doc.id);
-                setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
-                if (!result.succeeded) setError(result.failReason ?? result.message);
-                else setError(null);
-                await load(doc.id);
-              }}
-            >
-              Retry push
-            </button>
+            {canEdit ? (
+              <>
+                <button
+                  className="primary"
+                  type="button"
+                  onClick={async () => {
+                    const result = await endpoints.softwarePush(doc.id);
+                    setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
+                    if (!result.succeeded) setError(result.failReason ?? result.message);
+                    else setError(null);
+                    await load(doc.id);
+                  }}
+                >
+                  Push
+                </button>
+                <button
+                  className="ghost"
+                  type="button"
+                  onClick={async () => {
+                    const result = await endpoints.softwareRetry(doc.id);
+                    setNotice(result.succeeded ? result.message : result.failReason ?? result.message);
+                    if (!result.succeeded) setError(result.failReason ?? result.message);
+                    else setError(null);
+                    await load(doc.id);
+                  }}
+                >
+                  Retry push
+                </button>
+              </>
+            ) : (
+              <button
+                className="nav-disabled"
+                type="button"
+                onClick={() => navigate("/denied", { state: { action: "push to Software" } })}
+              >
+                Push
+              </button>
+            )}
           </div>
           {lookup ? (
             <dl className="lookup-dl">

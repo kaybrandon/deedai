@@ -26,6 +26,18 @@ public sealed class LocalBlobStorage(string rootPath) : IBlobStorage
         return Task.FromResult(File.Exists(FullPath(path)));
     }
 
+    public Task DeleteAsync(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var full = FullPath(path);
+        if (File.Exists(full))
+        {
+            File.Delete(full);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private string FullPath(string path)
     {
         var sanitized = path.Replace('\\', '/').TrimStart('/');

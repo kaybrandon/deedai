@@ -414,5 +414,89 @@ export const endpoints = {
       lastSyncAt: string | null;
       lastSyncStatus: string | null;
       failReason: string | null;
-    }>(`/api/documents/${id}/software/retry`, { method: "POST" })
+    }>(`/api/documents/${id}/software/retry`, { method: "POST" }),
+  softwareLookupKeys: (query: string) => api<SoftwareLookup>(`/api/software/lookup${query}`),
+  softwareStatus: () => api<SoftwareStatus>("/api/software/status"),
+  softwareSettings: () => api<SoftwareSettings>("/api/software/settings"),
+  updateSoftwareSettings: (body: object) =>
+    api<SoftwareSettings>("/api/software/settings", { method: "PUT", body: JSON.stringify(body) }),
+  softwareFieldMaps: () => api<SoftwareFieldMapItem[]>("/api/software/field-maps"),
+  createSoftwareFieldMap: (body: object) =>
+    api<SoftwareFieldMapItem>("/api/software/field-maps", { method: "POST", body: JSON.stringify(body) }),
+  updateSoftwareFieldMap: (id: string, body: object) =>
+    api<SoftwareFieldMapItem>(`/api/software/field-maps/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteSoftwareFieldMap: (id: string) =>
+    api<{ message: string }>(`/api/software/field-maps/${id}`, { method: "DELETE" }),
+  propertyDefaults: () => api<PropertyDefaultItem[]>("/api/settings/property-defaults"),
+  createPropertyDefault: (body: object) =>
+    api<PropertyDefaultItem>("/api/settings/property-defaults", { method: "POST", body: JSON.stringify(body) }),
+  deletePropertyDefault: (id: string) =>
+    api<{ message: string }>(`/api/settings/property-defaults/${id}`, { method: "DELETE" }),
+  resetPropertyDefaults: (body: object) =>
+    api<{ message: string; count: number }>("/api/settings/property-defaults/reset", {
+      method: "POST",
+      body: JSON.stringify(body)
+    }),
+  deletedDocuments: (query: string) => api<DocumentListItem[]>(`/api/admin/documents/deleted${query}`),
+  hardDelete: (id: string) => api<{ message: string }>(`/api/admin/documents/${id}`, { method: "DELETE" }),
+  purgeDeleted: (query: string) =>
+    api<{ count: number; message: string }>(`/api/admin/documents/purge-deleted${query}`, { method: "POST" }),
+  sales: (query: string) => api<SaleRow[]>(`/api/sales${query}`)
 };
+
+export interface SoftwareStatus {
+  mode: string;
+  connected: boolean;
+  pushEnabled: boolean;
+  defaultGroup: string | null;
+  lastSyncAt: string | null;
+  lastSyncStatus: string | null;
+  lastFailReason: string | null;
+  lastDocumentId: string | null;
+  lastDocumentName: string | null;
+}
+
+export interface SoftwareSettings {
+  pushEnabled: boolean;
+  defaultGroup: string | null;
+  fieldDefaultsJson: string | null;
+}
+
+export interface SoftwareFieldMapItem {
+  id: string;
+  deedField: string;
+  softwareField: string;
+  softwareGroup: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  deedType: string | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface PropertyDefaultItem {
+  id: string;
+  scope: string;
+  clientId: string | null;
+  clientName: string | null;
+  deedType: string | null;
+  fieldKey: string;
+  defaultValue: string | null;
+}
+
+export interface SaleRow {
+  id: string;
+  name: string;
+  client: string;
+  clientId: string;
+  grantor: string | null;
+  grantee: string | null;
+  instrumentDate: string | null;
+  consideration: string | null;
+  parcelId: string | null;
+  status: string;
+  reviewStatus: string | null;
+  updatedAt: string;
+}
+
+export const DEED_FIELDS = ["grantor", "grantee", "instrumentDate", "consideration", "parcelId", "client", "notes"];

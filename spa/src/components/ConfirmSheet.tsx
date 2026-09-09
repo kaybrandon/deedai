@@ -3,13 +3,15 @@ export default function ConfirmSheet({
   body,
   confirmLabel,
   onCancel,
-  onConfirm
+  onConfirm,
+  danger = true
 }: {
   title: string;
   body: string;
   confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
+  danger?: boolean;
 }) {
   return (
     <div className="sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -20,7 +22,7 @@ export default function ConfirmSheet({
           <button className="ghost" type="button" onClick={onCancel}>
             Cancel
           </button>
-          <button className="danger" type="button" onClick={onConfirm}>
+          <button className={danger ? "danger" : "primary"} type="button" onClick={onConfirm}>
             {confirmLabel}
           </button>
         </div>

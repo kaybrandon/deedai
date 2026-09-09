@@ -1,0 +1,25 @@
+namespace DeedAi.Domain;
+
+public static class DeedFields
+{
+    public const string Grantor = "grantor";
+    public const string Grantee = "grantee";
+    public const string InstrumentDate = "instrumentDate";
+    public const string Consideration = "consideration";
+    public const string ParcelId = "parcelId";
+    public const string Client = "client";
+    public const string Notes = "notes";
+
+    public static readonly string[] All =
+    [
+        Grantor, Grantee, InstrumentDate, Consideration, ParcelId, Client, Notes
+    ];
+}
+
+public static class PropertyDefaultScopes
+{
+    public const string Client = "Client";
+    public const string DeedType = "DeedType";
+
+    public static readonly string[] All = [Client, DeedType];
+}
