@@ -1,5 +1,9 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-09 — Phase 4.7 Dashboard print + export PDF
+- Dashboard **Print** uses print CSS (no sidebar / top bar / footer) and prints the filtered count cards plus visible Chart.js charts.
+- **Export PDF** uses the same date + Client filters as `GET /api/dashboard/counts` and `/api/dashboard/charts/*`. Filename includes the date range. Role / ClientAccess gated. Empty or failed export is a clear error, not a blank file. `{Client} Deed AI` title when a single Client is in scope; page numbers and generated timestamp. No secrets; Client / Software only.
+
 ## 2026-09-09 — Phase 4.2.3 Authorize pin-last-only
 - Live QA2: `window.__deedAiMeasureAuthorize` was undefined and rects stayed ~34 / ~30 even though `/swagger/deedai-swagger-authorize.js` 200'd. Root cause: custom `index.html` plus HeadContent / InjectJavascript triple-loaded the runtime; the helper is assigned late and pin-last early-returned on a messy `__deedAiAuthorizeRuntime` flag.
 - Single load only: CSS link in head, authorize JS once after `index.js`. No inline full-runtime dump. No `InjectJavascript` / `InjectStylesheet`. Helper is always assigned (even on re-entry); init is try/catch and sets `document.documentElement.dataset.deedaiAuthorizeError` on failure. Version `4.2.3`.

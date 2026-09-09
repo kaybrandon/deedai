@@ -62,6 +62,109 @@ public static class DeedPdfWriter
         return Render("Deed AI documents report", lines);
     }
 
+    public static string DashboardFileName(DateTimeOffset from, DateTimeOffset to) =>
+        $"deedai-dashboard-{from.UtcDateTime:yyyy-MM-dd}-to-{to.UtcDateTime:yyyy-MM-dd}.pdf";
+
+    public static byte[] Dashboard(
+        string title,
+        string clientFilter,
+        DateTimeOffset rangeFrom,
+        DateTimeOffset rangeTo,
+        DateTimeOffset generatedAt,
+        int uploaded,
+        int queued,
+        int processing,
+        int ready,
+        int failed,
+        IReadOnlyList<(string Label, int Count)> statusMix,
+        IReadOnlyList<string> userLabels,
+        IReadOnlyList<(string Label, IReadOnlyList<int> Data)> byUserSeries,
+        IReadOnlyList<string> volumeLabels,
+        IReadOnlyList<(string Label, IReadOnlyList<int> Data)> volumeSeries)
+    {
+        var lines = new List<string>
+        {
+            title,
+            "Dashboard",
+            $"Range: {rangeFrom.UtcDateTime:yyyy-MM-dd} to {rangeTo.UtcDateTime:yyyy-MM-dd}",
+            $"Client: {clientFilter}",
+            $"Generated {generatedAt.UtcDateTime:yyyy-MM-dd HH:mm:ss} UTC",
+            "",
+            "Counts",
+            $"Uploaded: {uploaded}",
+            $"Queued: {queued}",
+            $"Processing: {processing}",
+            $"Ready: {ready}",
+            $"Failed: {failed}",
+            "",
+            "Status mix"
+        };
+
+        if (statusMix.Count == 0 || uploaded == 0)
+        {
+            lines.Add("No status mix for this range.");
+        }
+        else
+        {
+            foreach (var slice in statusMix)
+            {
+                var pct = uploaded == 0 ? 0 : (int)Math.Round(slice.Count * 100d / uploaded);
+                lines.Add($"{slice.Label}: {slice.Count} ({pct}%) {Bar(slice.Count, uploaded)}");
+            }
+        }
+
+        lines.Add("");
+        lines.Add("By user");
+        if (userLabels.Count == 0)
+        {
+            lines.Add("No by-user activity for this range.");
+        }
+        else
+        {
+            var userHeaders = new List<string> { "User" };
+            userHeaders.AddRange(byUserSeries.Select(s => s.Label));
+            lines.Add(string.Join(" | ", userHeaders));
+            for (var i = 0; i < userLabels.Count; i++)
+            {
+                var cells = new List<string> { userLabels[i] };
+                cells.AddRange(byUserSeries.Select(s => i < s.Data.Count ? s.Data[i].ToString() : "0"));
+                lines.Add(string.Join(" | ", cells));
+            }
+        }
+
+        lines.Add("");
+        lines.Add("Volume over time");
+        if (volumeLabels.Count == 0)
+        {
+            lines.Add("No volume for this range.");
+        }
+        else
+        {
+            var volumeHeaders = new List<string> { "Day" };
+            volumeHeaders.AddRange(volumeSeries.Select(s => s.Label));
+            lines.Add(string.Join(" | ", volumeHeaders));
+            for (var i = 0; i < volumeLabels.Count; i++)
+            {
+                var cells = new List<string> { volumeLabels[i] };
+                cells.AddRange(volumeSeries.Select(s => i < s.Data.Count ? s.Data[i].ToString() : "0"));
+                lines.Add(string.Join(" | ", cells));
+            }
+        }
+
+        return Render(title, lines);
+    }
+
+    private static string Bar(int value, int max)
+    {
+        if (max <= 0)
+        {
+            return "[----------]";
+        }
+
+        var filled = Math.Clamp((int)Math.Round(value * 10d / max), 0, 10);
+        return "[" + new string('#', filled) + new string('-', 10 - filled) + "]";
+    }
+
     private static string Display(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Replace('\r', ' ').Replace('\n', ' ');
 
@@ -101,6 +204,13 @@ public static class DeedPdfWriter
 
         builder.Append("ET\n");
         pages.Add(builder.ToString());
+
+        for (var i = 0; i < pages.Count; i++)
+        {
+            pages[i] += "BT /F1 9 Tf 48 32 Td ("
+                + PdfEscape($"Page {i + 1} of {pages.Count}")
+                + ") Tj ET\n";
+        }
 
         return Assemble(pages, width, height);
     }

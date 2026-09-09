@@ -8,6 +8,11 @@
 2. Sign in with the account your Admin created (seed Admin email is `admin@bisconsultants.com` — password from KV/ops only)
 3. Role-denied screens show a clear empty/disabled state (not a silent failure)
 
+## Dashboard print / export (Phase 4.7)
+1. Open **Dashboard** and **Apply** the date range and Client filter you want
+2. **Print** sends the filtered count cards and visible charts (status mix, by user, volume) — not the sidebar
+3. **Export PDF** downloads those same filtered counts and chart series. The file name includes the date range. If nothing matches the filters, you get a clear message instead of a blank PDF
+
 ## Documents (Phase 1)
 1. Open **Documents** — status chips: Queued / Processing / Ready / Failed. A Ready deed with the **Needs review** flag shows **Needs review** (not both).
 2. **Retry** on Failed when available

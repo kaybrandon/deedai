@@ -425,6 +425,7 @@ export const endpoints = {
   statusMix: (query: string) => api<DashboardStatusMix>(`/api/dashboard/charts/status-mix${query}`),
   byUser: (query: string) => api<DashboardByUser>(`/api/dashboard/charts/by-user${query}`),
   volume: (query: string) => api<DashboardVolume>(`/api/dashboard/charts/volume${query}`),
+  exportDashboard: (query: string, name: string) => download(`/api/dashboard/export${query}`, name),
   documents: (query: string) => api<DocumentListItem[]>(`/api/documents${query}`),
   document: (id: string) => api<DocumentDetail>(`/api/documents/${id}`),
   saveFields: (id: string, fields: FieldDraft & { deedType?: string | null; reviewStatus?: string | null }) =>

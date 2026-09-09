@@ -989,3 +989,62 @@ input.is-incomplete, textarea.is-incomplete {
 @media (max-width: 768px) {
   .ocr-ribbon { top: var(--topbar-h); }
 }
+
+.print-only { display: none; }
+
+.dashboard-export-actions button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media print {
+  @page {
+    margin: 14mm 12mm 16mm;
+  }
+
+  html, body, #root, .app-frame, .app-frame-body, .shell, .main, .main-body, .page {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .print-only { display: block; }
+  .no-print,
+  .sidebar,
+  .topbar,
+  .site-footer,
+  .nav-backdrop,
+  .nav-toggle,
+  .progress-dock,
+  .ocr-ribbon,
+  .filter-row {
+    display: none !important;
+  }
+
+  .shell {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .main, .main-body, .app-frame, .app-frame-body {
+    display: block;
+  }
+
+  .page { padding: 0; }
+  .page-head { margin-bottom: 12px; }
+  .dashboard-print-head h1 { font-size: 20px; }
+  .dashboard-print-head p { margin: 4px 0 0; color: var(--text); font-size: 12px; }
+  .dashboard-print-surface { display: block; }
+  .cards { break-inside: avoid; }
+  .chart-card, .chart-card-wide {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+  a.count-card {
+    box-shadow: none;
+    color: inherit;
+    text-decoration: none;
+  }
+  .chart-canvas, .chart-canvas-wide { break-inside: avoid; }
+}
