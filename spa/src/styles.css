@@ -535,7 +535,21 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   color: var(--muted);
 }
 .users-pager { margin-top: 4px; }
-.documents-filter-row { align-items: end; }
+.page.documents-page { padding-bottom: var(--space-3); }
+.documents-page-head { margin-bottom: var(--space-2); gap: var(--space-2); }
+.documents-page-head .page-kicker { margin: var(--space-1) 0 0; }
+.documents-page-head .delete-policy-hint { margin: var(--space-1) 0 0; }
+.documents-filter-row {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--ribbon-h));
+  z-index: 13;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) 0;
+  background: var(--bg);
+}
 .filter-row > .documents-search-field,
 .filter-row > input.documents-search {
   flex: 0 1 360px;
@@ -548,6 +562,12 @@ input.documents-search {
   width: 100%;
   max-width: 360px;
 }
+.documents-filter-row > label:not(.documents-search-field):not(.remember) {
+  flex: 0 1 160px;
+  width: 160px;
+  min-width: 120px;
+  max-width: 200px;
+}
 .documents-filter-row input,
 .documents-filter-row select,
 .documents-table .th-filter,
@@ -556,13 +576,16 @@ input.documents-search {
   min-width: 44px;
 }
 .documents-table-wrap {
+  --documents-visible-rows: 10;
   overflow: auto;
-  max-height: calc(100vh - var(--topbar-h) - var(--ribbon-h) - 180px);
+  max-width: 100%;
+  max-height: calc(var(--table-row-h) * (var(--documents-visible-rows) + 1));
 }
 .documents-table {
   --row-h: var(--table-row-h, var(--action-h));
   --cell-pad-y: var(--table-cell-pad-y, 6px);
   --cell-pad-x: var(--table-cell-pad-x, 12px);
+  min-width: 1100px;
 }
 .documents-table th,
 .documents-table td {
@@ -798,8 +821,25 @@ input.documents-search {
   border-radius: 999px;
   border: 1px solid var(--border);
 }
-.documents-status-cell { display: grid; gap: 6px; justify-items: start; }
-.documents-status-cell select { min-height: var(--action-h); max-width: 180px; }
+.documents-status-assign {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--action-h);
+  min-width: var(--action-h);
+}
+.documents-status-assign .chip { pointer-events: none; }
+.documents-status-assign select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  min-height: var(--action-h);
+  min-width: var(--action-h);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
 .token-row {
   display: flex;
   flex-wrap: wrap;

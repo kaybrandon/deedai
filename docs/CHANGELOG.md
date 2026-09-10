@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-10 — Phase 6.1 Documents list UX delta
+- Documents list matches Mask F density: hug rows, sticky thead, 4/8/12 spacing, no sparse canvas around the grid.
+- Table pane shows ~8–12 hug rows with internal vertical scroll and horizontal scroll so Actions stay reachable. Filters and the OCR ribbon stay fixed.
+- Status chrome is unified. Ribbon is pipeline stage only (`stage=`). One catalog Status control in the toolbar uses the 5.2.5 values. Row shows a single catalog chip (assign still works). Chart `status=Ready|Queued|…` deep links still parse.
+- Carry 5.2.2 columns, ≤360px search, ConfirmSheet soft-delete, Settings → System nest. No AI extract / Azure OpenAI / DI changes. No County / CAMA.
+
 ## 2026-09-10 — Phase 6 AI extract
 - Azure OpenAI (same subscription, `gpt-4o-mini` default) fills locked Review fields from the PDF. Document Intelligence field-fill is removed (no dual path, no flag leaving both). Fail closed if KV keys are missing.
 - Human edit loop stays. Re-extract (single + batch) uses ConfirmSheet. Confidence chips and raw AI blob audit (`ai-raw/{id}.json`) are Should.
