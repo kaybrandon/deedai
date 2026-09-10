@@ -28,3 +28,12 @@ export function ribbonStepForDocument(status?: string | null, display?: string |
   if (status === "Ready" || shown === "Approved") return "Ready";
   return null;
 }
+
+/** Documents list ribbon highlight — pipeline stage only, never catalog labels. */
+export function ribbonStepForStage(stage?: string | null): OcrRibbonStep | null {
+  if (stage === "Queued") return "Queued";
+  if (stage === "Processing") return "Processing";
+  if (stage === "Review") return "Review";
+  if (stage === "Ready") return "Ready";
+  return null;
+}

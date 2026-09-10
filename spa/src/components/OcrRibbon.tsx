@@ -4,10 +4,10 @@ import { OCR_RIBBON_STEPS, type OcrRibbonStep } from "../theme";
 
 const STEP_HREF: Record<OcrRibbonStep, string> = {
   Upload: "/upload",
-  Queued: "/documents?status=Queued",
-  Processing: "/documents?status=Processing",
-  Review: "/documents?status=NeedsReview",
-  Ready: "/documents?status=Ready"
+  Queued: "/documents?stage=Queued",
+  Processing: "/documents?stage=Processing",
+  Review: "/documents?stage=Review",
+  Ready: "/documents?stage=Ready"
 };
 
 export default function OcrRibbon({ current }: { current?: OcrRibbonStep | null }) {

@@ -18,9 +18,15 @@ export const DOCUMENTS_SORT_KEYS = [
 export type DocumentsSortKey = (typeof DOCUMENTS_SORT_KEYS)[number];
 export type DocumentsSortDir = "asc" | "desc";
 
+export const DOCUMENTS_PIPELINE_STATUSES = ["Queued", "Processing", "Ready", "Failed", "NeedsReview", "Review"] as const;
+export const DOCUMENTS_STAGES = ["Queued", "Processing", "Review", "Ready", "Failed"] as const;
+
+export type DocumentsStage = (typeof DOCUMENTS_STAGES)[number] | "";
+
 export type DocumentsTableQuery = {
   search: string;
   status: string;
+  stage: DocumentsStage;
   clientId: string;
   assigneeUserId: string;
   from: string;
@@ -35,6 +41,7 @@ export type DocumentsTableQuery = {
 export const defaultDocumentsTableQuery: DocumentsTableQuery = {
   search: "",
   status: "",
+  stage: "",
   clientId: "",
   assigneeUserId: "",
   from: "",
@@ -49,6 +56,7 @@ export const defaultDocumentsTableQuery: DocumentsTableQuery = {
 const DOCUMENTS_PARAM_KEYS = [
   "search",
   "status",
+  "stage",
   "clientId",
   "assigneeUserId",
   "from",
@@ -59,6 +67,53 @@ const DOCUMENTS_PARAM_KEYS = [
   "dir",
   "page"
 ] as const;
+
+export function isDocumentsPipelineStatus(value: string): boolean {
+  return DOCUMENTS_PIPELINE_STATUSES.some((item) => item.toLowerCase() === value.toLowerCase());
+}
+
+export function normalizeDocumentsStage(value: string | null | undefined): DocumentsStage {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (/^queued$/i.test(trimmed)) return "Queued";
+  if (/^processing$/i.test(trimmed)) return "Processing";
+  if (/^ready$/i.test(trimmed)) return "Ready";
+  if (/^failed$/i.test(trimmed)) return "Failed";
+  if (/^review$/i.test(trimmed) || /^needsreview$/i.test(trimmed)) return "Review";
+  return "";
+}
+
+export function splitDocumentsStatusAndStage(status: string, stage: string): { status: string; stage: DocumentsStage } {
+  const normalizedStage = normalizeDocumentsStage(stage);
+  if (normalizedStage) {
+    return {
+      stage: normalizedStage,
+      status: isDocumentsPipelineStatus(status) ? "" : status
+    };
+  }
+  if (isDocumentsPipelineStatus(status)) {
+    return { stage: normalizeDocumentsStage(status), status: "" };
+  }
+  return { stage: "", status };
+}
+
+export function stageToApiStatus(stage: DocumentsStage): string {
+  if (stage === "Review") return "NeedsReview";
+  return stage;
+}
+
+export function matchesDocumentsStage(row: DocumentListItem, stage: DocumentsStage): boolean {
+  if (!stage) return true;
+  if (stage === "Queued") return row.status === "Queued";
+  if (stage === "Processing") return row.status === "Processing";
+  if (stage === "Ready") return row.status === "Ready";
+  if (stage === "Failed") return row.status === "Failed";
+  const shown = `${row.displayStatus ?? ""} ${row.reviewStatus ?? ""}`;
+  return (
+    row.status === "Failed"
+    || /needsreview|needs work|needswork/i.test(shown)
+  );
+}
 
 export function dateInput(value: string | null) {
   if (!value) {
@@ -75,9 +130,11 @@ export function parseDocumentsTableQuery(params: URLSearchParams): DocumentsTabl
   const sort = params.get("sort");
   const dir = params.get("dir");
   const page = Number(params.get("page") ?? "1");
+  const split = splitDocumentsStatusAndStage(params.get("status") ?? "", params.get("stage") ?? "");
   return {
     search: params.get("search") ?? "",
-    status: params.get("status") ?? "",
+    status: split.status,
+    stage: split.stage,
     clientId: params.get("clientId") ?? "",
     assigneeUserId: params.get("assigneeUserId") ?? "",
     from: dateInput(params.get("from")),
@@ -94,6 +151,7 @@ export function serializeDocumentsTableQuery(query: DocumentsTableQuery): URLSea
   const params = new URLSearchParams();
   if (query.search) params.set("search", query.search);
   if (query.status) params.set("status", query.status);
+  if (query.stage) params.set("stage", query.stage);
   if (query.clientId) params.set("clientId", query.clientId);
   if (query.assigneeUserId) params.set("assigneeUserId", query.assigneeUserId);
   if (query.from) params.set("from", query.from);
@@ -108,7 +166,8 @@ export function serializeDocumentsTableQuery(query: DocumentsTableQuery): URLSea
 
 export function documentsApiQuery(query: DocumentsTableQuery): string {
   const params = new URLSearchParams();
-  if (query.status) params.set("status", query.status);
+  const status = query.status || stageToApiStatus(query.stage);
+  if (status) params.set("status", status);
   if (query.clientId) params.set("clientId", query.clientId);
   if (query.assigneeUserId) params.set("assigneeUserId", query.assigneeUserId);
   if (query.from) params.set("from", new Date(query.from).toISOString());
@@ -126,6 +185,7 @@ export function patchDocumentsTableQuery(
   const resetsPage =
     partial.search !== undefined
     || partial.status !== undefined
+    || partial.stage !== undefined
     || partial.clientId !== undefined
     || partial.assigneeUserId !== undefined
     || partial.from !== undefined
@@ -153,10 +213,15 @@ export function readStoredDocumentsTableQuery(): DocumentsTableQuery | null {
     const raw = sessionStorage.getItem(DOCUMENTS_TABLE_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<DocumentsTableQuery>;
+    const split = splitDocumentsStatusAndStage(
+      typeof parsed.status === "string" ? parsed.status : "",
+      typeof parsed.stage === "string" ? parsed.stage : ""
+    );
     return {
       ...defaultDocumentsTableQuery,
       search: typeof parsed.search === "string" ? parsed.search : "",
-      status: typeof parsed.status === "string" ? parsed.status : "",
+      status: split.status,
+      stage: split.stage,
       clientId: typeof parsed.clientId === "string" ? parsed.clientId : "",
       assigneeUserId: typeof parsed.assigneeUserId === "string" ? parsed.assigneeUserId : "",
       from: typeof parsed.from === "string" ? dateInput(parsed.from) : "",
@@ -180,6 +245,7 @@ export function hasActiveDocumentsTableState(query: DocumentsTableQuery) {
   return (
     query.search !== ""
     || query.status !== ""
+    || query.stage !== ""
     || query.clientId !== ""
     || query.assigneeUserId !== ""
     || query.from !== ""
@@ -196,6 +262,7 @@ export function hasDocumentsListFilters(query: DocumentsTableQuery) {
   return (
     query.search !== ""
     || query.status !== ""
+    || query.stage !== ""
     || query.clientId !== ""
     || query.assigneeUserId !== ""
     || query.from !== ""
@@ -236,6 +303,7 @@ export function applyDocumentsTable(rows: DocumentListItem[], query: DocumentsTa
   const filtered = rows.filter((row) => {
     if (!matchesDocumentsSearch(row, query.search)) return false;
     if (query.type && row.deedType !== query.type) return false;
+    if (query.status && query.stage && !matchesDocumentsStage(row, query.stage)) return false;
     return true;
   });
   const sorted = [...filtered].sort((a, b) => compareDocuments(a, b, query.sort, query.dir));

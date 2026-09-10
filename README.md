@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-6.1-DOCUMENTS-UX-DELTA-AC.md](docs/PHASE-6.1-DOCUMENTS-UX-DELTA-AC.md) — Phase 6.1 Documents list UX delta
 - [PHASE-6-AI-EXTRACT-AC.md](docs/PHASE-6-AI-EXTRACT-AC.md) — Phase 6 AI extract
 - [PHASE-5.2.3-SOFTWARE-DEPTH-AC.md](docs/PHASE-5.2.3-SOFTWARE-DEPTH-AC.md) — Phase 5.2.3 Software settings depth
 - [PHASE-5.2.4-DELETE-POLICY-AC.md](docs/PHASE-5.2.4-DELETE-POLICY-AC.md) — Phase 5.2.4 Delete Policy
@@ -33,6 +34,14 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
 **Brandon lock:** Azure OpenAI in the **same subscription** as `appdeedai`, cheapest capable chat model (`gpt-4o-mini` class). KV-only keys via App Setting references: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before any spend bump or pricier model. Document Intelligence field-fill is **removed** — leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` are ignored.
+
+## Phase 6.1 acceptance
+
+- **Mask F Documents density:** hug 44px rows, sticky header, 4/8/12 spacing, no sparse empty canvas around the table.
+- **Constrained pane:** sticky thead + ~8–12 visible hug rows in a scrolling tbody pane. Ribbon and filters stay fixed. Horizontal scroll keeps Actions reachable.
+- **Unified status chrome:** OCR ribbon is pipeline stage only (Upload → Queued → Processing → Review → Ready). One catalog Status control in the toolbar (Complete · In Queue · Needs Work · New · Not Needed · Pending · Research · Upload Error). Row chip is catalog-only — no pipeline pill + catalog dropdown fight.
+- **Carry:** 5.2.2 Volume · Page · Type · PID · Doc # sort · ≤360px search · ConfirmSheet soft-delete · chart deep links · Settings → System nest · catalog assign/filter. Client/Software only.
+- **Won’t:** drop Statuses catalog · use ribbon as catalog status · reopen Phase 6 AI extract · glass/gradients · full-width search · County/CAMA.
 
 ## Phase 6 acceptance
 

@@ -23,7 +23,7 @@ import {
 } from "../documentsTable";
 import { displayStatus } from "../reviewStatus";
 import { assignableStatuses, assignedCatalogValue, catalogColor, catalogLabel, filterSelectValue, filterStatuses } from "../statusCatalog";
-import { ribbonStepForDocument } from "../theme";
+import { ribbonStepForStage } from "../theme";
 
 export default function DocumentsPage() {
   const { canEdit, canAdmin } = useAuth();
@@ -50,6 +50,7 @@ export default function DocumentsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const fetchKey = [
     query.status,
+    query.stage,
     query.clientId,
     query.assigneeUserId,
     query.from,
@@ -139,9 +140,9 @@ export default function DocumentsPage() {
   }
 
   return (
-    <section className="page has-ocr-ribbon">
-      <OcrRibbon current={ribbonStepForDocument(query.status || undefined, query.status === "NeedsReview" ? "NeedsReview" : query.status || undefined)} />
-      <header className="page-head">
+    <section className="page has-ocr-ribbon documents-page">
+      <OcrRibbon current={ribbonStepForStage(query.stage)} />
+      <header className="page-head documents-page-head">
         <div>
           <h1>Documents</h1>
           <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
@@ -167,6 +168,67 @@ export default function DocumentsPage() {
             }}
             aria-label="Search deeds"
           />
+        </label>
+        <label>
+          Status
+          <select
+            data-status-chrome="catalog"
+            aria-label="Filter Status"
+            value={filterSelectValue(query.status, statusFilters)}
+            onChange={(e) => patchQuery({ status: e.target.value })}
+          >
+            <option value="">All Statuses</option>
+            {statusFilters.map((item) => (
+              <option key={item.id} value={item.code}>
+                {item.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Client
+          <select
+            aria-label="Filter Client"
+            value={query.clientId}
+            onChange={(e) => patchQuery({ clientId: e.target.value })}
+          >
+            <option value="">All Clients</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Assignee
+          <select
+            aria-label="Filter Assignee"
+            value={query.assigneeUserId}
+            onChange={(e) => patchQuery({ assigneeUserId: e.target.value })}
+          >
+            <option value="">Anyone</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Type
+          <select
+            aria-label="Filter Type"
+            value={query.type}
+            onChange={(e) => patchQuery({ type: e.target.value })}
+          >
+            <option value="">All Types</option>
+            {deedTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           From
@@ -239,206 +301,109 @@ export default function DocumentsPage() {
         <EmptyState title="No Documents Match" body="Try another Client, status, or upload a PDF to get started." />
       ) : (
         <>
-          <div className="table-wrap documents-table-wrap">
+          <div className="table-wrap documents-table-wrap" data-documents-pane="hug">
             <table className="documents-table" data-table="documents" aria-label="Documents">
               <thead>
                 <tr>
                   {canEdit && <th />}
                   <th>Name</th>
-                  <SortFilterTh
-                    label="Status"
-                    sortKey="status"
-                    query={query}
-                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
-                    filter={
-                      <select
-                        className="th-filter"
-                        aria-label="Filter Status"
-                        value={filterSelectValue(query.status, statusFilters)}
-                        onChange={(e) => patchQuery({ status: e.target.value })}
-                      >
-                        <option value="">All Statuses</option>
-                        {statusFilters.map((item) => (
-                          <option key={item.id} value={item.code}>
-                            {item.displayName}
-                          </option>
-                        ))}
-                      </select>
-                    }
-                  />
-                  <SortFilterTh
-                    label="Client"
-                    sortKey="client"
-                    query={query}
-                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
-                    filter={
-                      <select
-                        className="th-filter"
-                        aria-label="Filter Client"
-                        value={query.clientId}
-                        onChange={(e) => patchQuery({ clientId: e.target.value })}
-                      >
-                        <option value="">All Clients</option>
-                        {clients.map((client) => (
-                          <option key={client.id} value={client.id}>
-                            {client.name}
-                          </option>
-                        ))}
-                      </select>
-                    }
-                  />
                   <SortFilterTh label="Volume" sortKey="volume" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="Page" sortKey="page" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
-                  <SortFilterTh
-                    label="Type"
-                    sortKey="type"
-                    query={query}
-                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
-                    filter={
-                      <select
-                        className="th-filter"
-                        aria-label="Filter Type"
-                        value={query.type}
-                        onChange={(e) => patchQuery({ type: e.target.value })}
-                      >
-                        <option value="">All Types</option>
-                        {deedTypes.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-                    }
-                  />
+                  <SortFilterTh label="Type" sortKey="type" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="PID" sortKey="pid" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="Doc #" sortKey="documentNumber" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
-                  <SortFilterTh
-                    label="Assignee"
-                    sortKey="assignee"
-                    query={query}
-                    onSort={(key) => applyQuery(nextDocumentsSort(query, key))}
-                    filter={
-                      <select
-                        className="th-filter"
-                        aria-label="Filter Assignee"
-                        value={query.assigneeUserId}
-                        onChange={(e) => patchQuery({ assigneeUserId: e.target.value })}
-                      >
-                        <option value="">All Assignees</option>
-                        {users.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.displayName}
-                          </option>
-                        ))}
-                      </select>
-                    }
-                  />
+                  <SortFilterTh label="Client" sortKey="client" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
+                  <SortFilterTh label="Status" sortKey="status" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="Updated" sortKey="updated" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
-                  <th>Flags</th>
+                  <SortFilterTh label="Assignee" sortKey="assignee" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {table.rows.map((row) => (
-                  <tr key={row.id} className={row.isDeleted ? "deleted-row" : undefined}>
-                    {canEdit && (
+                {table.rows.map((row) => {
+                  const shown = displayStatus(row);
+                  const label = catalogLabel(shown, statuses);
+                  const color = catalogColor(shown, statuses);
+                  return (
+                    <tr key={row.id} className={row.isDeleted ? "deleted-row" : undefined}>
+                      {canEdit && (
+                        <td>
+                          <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />
+                        </td>
+                      )}
+                      <td>{row.name}</td>
+                      <td>{cell(row.volume)}</td>
+                      <td>{cell(row.page)}</td>
+                      <td>{cell(row.deedType)}</td>
+                      <td>{cell(row.pid)}</td>
+                      <td>{cell(row.documentNumber)}</td>
+                      <td>{row.client}</td>
                       <td>
-                        <input type="checkbox" checked={selected.includes(row.id)} onChange={() => toggle(row.id)} />
-                      </td>
-                    )}
-                    <td>{row.name}</td>
-                    <td>
-                      <div className="documents-status-cell">
-                        <StatusChip
-                          status={displayStatus(row)}
-                          label={catalogLabel(displayStatus(row), statuses)}
-                          color={catalogColor(displayStatus(row), statuses)}
-                          title={row.errorMessage}
+                        <CatalogStatusCell
+                          row={row}
+                          label={label}
+                          color={color}
+                          shown={shown}
+                          canAssign={canEdit && !row.isDeleted}
+                          assignable={assignable}
+                          onAssign={async (code) => {
+                            await endpoints.setCatalogStatus(row.id, code || null);
+                            await reload();
+                          }}
                         />
-                        {canEdit && !row.isDeleted && (
+                      </td>
+                      <td>
+                        {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </td>
+                      <td>
+                        {canEdit ? (
                           <select
-                            aria-label={`Status for ${row.name}`}
-                            value={assignedCatalogValue(row.reviewStatus, assignable)}
+                            value={row.assigneeUserId ?? ""}
+                            aria-label={`Assignee for ${row.name}`}
                             onChange={async (e) => {
-                              await endpoints.setCatalogStatus(row.id, e.target.value || null);
+                              await endpoints.assign(row.id, e.target.value || null);
                               await reload();
                             }}
                           >
-                            <option value="">Pipeline</option>
-                            {assignable.map((item) => (
-                              <option key={item.id} value={item.code}>
-                                {item.displayName}
+                            <option value="">Unassigned</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.displayName}
                               </option>
                             ))}
                           </select>
+                        ) : (
+                          row.assignee ?? "—"
                         )}
-                      </div>
-                    </td>
-                    <td>{row.client}</td>
-                    <td>{cell(row.volume)}</td>
-                    <td>{cell(row.page)}</td>
-                    <td>{cell(row.deedType)}</td>
-                    <td>{cell(row.pid)}</td>
-                    <td>{cell(row.documentNumber)}</td>
-                    <td>
-                      {canEdit ? (
-                        <select
-                          value={row.assigneeUserId ?? ""}
-                          aria-label={`Assignee for ${row.name}`}
-                          onChange={async (e) => {
-                            await endpoints.assign(row.id, e.target.value || null);
-                            await reload();
-                          }}
-                        >
-                          <option value="">Unassigned</option>
-                          {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.displayName}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        row.assignee ?? "—"
-                      )}
-                    </td>
-                    <td>
-                      {new Date(row.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                    </td>
-                    <td>
-                      {row.flags.map((flag) => (
-                        <span key={flag.id} className="flag-pill" style={{ background: flag.color }}>
-                          {flag.name}
-                        </span>
-                      ))}
-                      {row.flags.length === 0 && "—"}
-                    </td>
-                    <td className="actions-cell">
-                      <button className="ghost" type="button" onClick={() => navigate(`/documents/${row.id}`)}>
-                        Open
-                      </button>
-                      {row.canRetry && canEdit && (
-                        <button className="primary" type="button" onClick={() => setPendingReExtract(row)}>
-                          Retry
+                      </td>
+                      <td className="actions-cell">
+                        <button className="ghost" type="button" onClick={() => navigate(`/documents/${row.id}`)}>
+                          Open
                         </button>
-                      )}
-                      {canDelete && !row.isDeleted && (
-                        <button className="ghost" type="button" onClick={() => setPendingDelete(row)}>
-                          Delete
-                        </button>
-                      )}
-                      {canAdmin && row.isDeleted && (
-                        <>
-                          <button className="primary" type="button" onClick={() => setPendingRestore(row)}>
-                            Restore
+                        {row.canRetry && canEdit && (
+                          <button className="primary" type="button" onClick={() => setPendingReExtract(row)}>
+                            Retry
                           </button>
-                          <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
-                            Hard Delete
+                        )}
+                        {canDelete && !row.isDeleted && (
+                          <button className="ghost" type="button" onClick={() => setPendingDelete(row)}>
+                            Delete
                           </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        )}
+                        {canAdmin && row.isDeleted && (
+                          <>
+                            <button className="primary" type="button" onClick={() => setPendingRestore(row)}>
+                              Restore
+                            </button>
+                            <button className="ghost" type="button" onClick={() => setPendingHard(row)}>
+                              Hard Delete
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -468,7 +433,7 @@ export default function DocumentsPage() {
       {pendingDelete && (
         <ConfirmSheet
           title="Delete this deed?"
-          body="Soft-delete. You can restore from Admin later on Restore / Manage Documents."
+          body="Soft-delete. You can restore from Settings later."
           confirmLabel="Delete"
           onCancel={() => setPendingDelete(null)}
           onConfirm={async () => {
@@ -551,6 +516,47 @@ export default function DocumentsPage() {
         />
       )}
     </section>
+  );
+}
+
+function CatalogStatusCell({
+  row,
+  shown,
+  label,
+  color,
+  canAssign,
+  assignable,
+  onAssign
+}: {
+  row: DocumentListItem;
+  shown: string;
+  label: string;
+  color?: string;
+  canAssign: boolean;
+  assignable: StatusItem[];
+  onAssign: (code: string) => Promise<void>;
+}) {
+  const assigned = assignedCatalogValue(row.reviewStatus, assignable);
+  return (
+    <div className="documents-status-assign" data-status-chrome="catalog-chip">
+      <StatusChip status={shown} label={label} color={color} title={row.errorMessage} />
+      {canAssign && (
+        <select
+          aria-label={`Status for ${row.name}`}
+          value={assigned}
+          onChange={(e) => void onAssign(e.target.value)}
+        >
+          <option value="" hidden>
+            {label}
+          </option>
+          {assignable.map((item) => (
+            <option key={item.id} value={item.code}>
+              {item.displayName}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
   );
 }
 
