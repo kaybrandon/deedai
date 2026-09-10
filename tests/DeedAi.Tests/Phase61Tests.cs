@@ -30,6 +30,12 @@ public sealed class Phase61Tests
         Assert.DoesNotContain("<option value=\"Failed\">", documents, StringComparison.Ordinal);
         Assert.DoesNotContain("<option value=\"NeedsReview\">", documents, StringComparison.Ordinal);
         Assert.DoesNotContain("<option value=\"Review\">", documents, StringComparison.Ordinal);
+        Assert.DoesNotContain(">Flags<", documents, StringComparison.Ordinal);
+        Assert.DoesNotContain("flag-pill", documents, StringComparison.Ordinal);
+        Assert.Contains("catalogCodeForStatus", catalog, StringComparison.Ordinal);
+        Assert.Contains("Queued: \"InQueue\"", catalog, StringComparison.Ordinal);
+        Assert.Contains("Failed: \"UploadError\"", catalog, StringComparison.Ordinal);
+        Assert.Contains("NeedsReview: \"NeedsWork\"", catalog, StringComparison.Ordinal);
 
         Assert.Contains("stage=Queued", ribbon, StringComparison.Ordinal);
         Assert.Contains("stage=Processing", ribbon, StringComparison.Ordinal);

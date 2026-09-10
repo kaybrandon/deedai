@@ -316,7 +316,6 @@ export default function DocumentsPage() {
                   <SortFilterTh label="Status" sortKey="status" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="Updated" sortKey="updated" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
                   <SortFilterTh label="Assignee" sortKey="assignee" query={query} onSort={(key) => applyQuery(nextDocumentsSort(query, key))} />
-                  <th>Flags</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -376,14 +375,6 @@ export default function DocumentsPage() {
                         ) : (
                           row.assignee ?? "—"
                         )}
-                      </td>
-                      <td>
-                        {row.flags.map((flag) => (
-                          <span key={flag.id} className="flag-pill" style={{ background: flag.color }}>
-                            {flag.name}
-                          </span>
-                        ))}
-                        {row.flags.length === 0 && "—"}
                       </td>
                       <td className="actions-cell">
                         <button className="ghost" type="button" onClick={() => navigate(`/documents/${row.id}`)}>

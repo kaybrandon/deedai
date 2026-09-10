@@ -11,41 +11,66 @@ export const MUST_STATUS_LABELS = [
   "Upload Error"
 ] as const;
 
+const PIPELINE_TO_CATALOG: Record<string, string> = {
+  Queued: "InQueue",
+  Processing: "Pending",
+  Ready: "Complete",
+  Failed: "UploadError",
+  NeedsReview: "NeedsWork",
+  "Needs review": "NeedsWork",
+  Approved: "Complete"
+};
+
+export function catalogCodeForStatus(status: string): string {
+  return PIPELINE_TO_CATALOG[status] ?? status;
+}
+
 export function catalogLabel(status: string, statuses: StatusItem[]): string {
   if (!status) {
     return status;
   }
-  if (status === "Approved") {
-    const complete = statuses.find((item) => item.code === "Complete");
-    if (complete) {
-      return complete.displayName;
-    }
-  }
-  const byCode = statuses.find((item) => item.code === status);
-  if (byCode) {
-    return byCode.displayName;
-  }
-  const seed = statuses.find((item) => item.isSeed && item.mapsTo === status);
+  const catalogCode = catalogCodeForStatus(status);
+  const seed =
+    statuses.find((item) => item.isSeed && (item.code === catalogCode || item.code === status || item.mapsTo === status))
+    ?? statuses.find((item) => item.code === catalogCode && !item.isSystem);
   if (seed) {
     return seed.displayName;
   }
-  const mapped = statuses.find((item) => item.mapsTo === status);
-  if (mapped) {
-    return mapped.displayName;
+  const named = MUST_STATUS_LABELS.find((label) => label === status || label.replace(/\s+/g, "") === catalogCode);
+  if (named) {
+    return named;
   }
-  if (status === "NeedsReview") {
+  if (catalogCode === "NeedsWork") {
     return "Needs Work";
+  }
+  if (catalogCode === "Complete") {
+    return "Complete";
+  }
+  if (catalogCode === "InQueue") {
+    return "In Queue";
+  }
+  if (catalogCode === "Pending") {
+    return "Pending";
+  }
+  if (catalogCode === "UploadError") {
+    return "Upload Error";
+  }
+  const byCode = statuses.find((item) => item.code === status && !item.isSystem);
+  if (byCode) {
+    return byCode.displayName;
   }
   return status;
 }
 
 export function catalogColor(status: string, statuses: StatusItem[]): string | undefined {
-  const byCode = statuses.find((item) => item.code === status);
-  if (byCode) {
-    return byCode.color;
+  const catalogCode = catalogCodeForStatus(status);
+  const seed =
+    statuses.find((item) => item.isSeed && (item.code === catalogCode || item.code === status || item.mapsTo === status))
+    ?? statuses.find((item) => item.code === catalogCode && !item.isSystem);
+  if (seed) {
+    return seed.color;
   }
-  const seed = statuses.find((item) => item.isSeed && item.mapsTo === status);
-  return seed?.color ?? statuses.find((item) => item.mapsTo === status)?.color;
+  return statuses.find((item) => item.mapsTo === status && !item.isSystem)?.color;
 }
 
 export function assignableStatuses(statuses: StatusItem[]): StatusItem[] {
