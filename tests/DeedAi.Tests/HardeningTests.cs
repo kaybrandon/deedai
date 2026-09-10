@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using DeedAi.Domain;
-using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure;
@@ -575,41 +574,6 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("AzureOpenAIEndpoint", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("JwtSigningKey", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ChangeMe", body, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private sealed class DirtyFieldIntelligenceClient : IDocumentIntelligenceClient
-    {
-        public Task<DocumentIntelligenceResult> AnalyzeAsync(string documentName, Stream pdf, CancellationToken cancellationToken)
-        {
-            _ = documentName;
-            _ = pdf;
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new DocumentIntelligenceResult
-            {
-                RawJson = """{"ok":true}""",
-                Fields = new ExtractedDeedFields
-                {
-                    Grantor = "\"Jane Example\"",
-                    Grantee = "Acme Holdings LLC",
-                    ParcelId = "N/A"
-                }
-            });
-        }
-    }
-
-    private sealed class BrokenJsonIntelligenceClient : IDocumentIntelligenceClient
-    {
-        public Task<DocumentIntelligenceResult> AnalyzeAsync(string documentName, Stream pdf, CancellationToken cancellationToken)
-        {
-            _ = documentName;
-            _ = pdf;
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new DocumentIntelligenceResult
-            {
-                RawJson = "not-json{",
-                Fields = new ExtractedDeedFields()
-            });
-        }
     }
 
     private sealed class RecordingLogger : Microsoft.Extensions.Logging.ILogger<DatabaseSeeder>

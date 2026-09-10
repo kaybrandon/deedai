@@ -58,15 +58,28 @@ public sealed class Phase6Tests
         Assert.Contains("extract-raw", api, StringComparison.Ordinal);
 
         Assert.Contains("IAiExtractClient", processor, StringComparison.Ordinal);
-        Assert.DoesNotContain("IDocumentIntelligenceClient", processor, StringComparison.Ordinal);
-        Assert.DoesNotContain("documentIntelligence.AnalyzeAsync", processor, StringComparison.Ordinal);
         Assert.Contains("FailClosedAiExtractClient", di, StringComparison.Ordinal);
         Assert.Contains("AzureOpenAIExtractClient", di, StringComparison.Ordinal);
+        AssertNoDualFieldFillPath();
 
         Assert.DoesNotContain("County", review, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", review, StringComparison.Ordinal);
         Assert.DoesNotContain("docNo", review, StringComparison.Ordinal);
         Assert.Contains("Phase 6", Read("docs/PHASE-6-AI-EXTRACT-AC.md"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Di_field_fill_is_removed_with_no_dual_path_or_flag()
+    {
+        AssertNoDualFieldFillPath();
+
+        using var factory = TestAppFactory.Create();
+        Assert.IsAssignableFrom<IAiExtractClient>(factory.Services.GetRequiredService<IAiExtractClient>());
+        Assert.Null(typeof(OcrJobMessage).Assembly.GetType("DeedAi.Domain.Abstractions.IDocumentIntelligenceClient"));
+        Assert.Null(typeof(OcrProcessor).Assembly.GetType("DeedAi.Infrastructure.Ocr.AzureDocumentIntelligenceClient"));
+        Assert.Null(typeof(OcrProcessor).Assembly.GetType("DeedAi.Infrastructure.Ocr.MockDocumentIntelligenceClient"));
+        Assert.Null(typeof(OcrJobMessage).Assembly.GetType("DeedAi.Domain.Ocr.ExtractedDeedFields"));
+        Assert.Null(typeof(OcrJobMessage).Assembly.GetType("DeedAi.Domain.Ocr.DocumentIntelligenceResult"));
     }
 
     [Fact]
@@ -232,6 +245,11 @@ public sealed class Phase6Tests
         Assert.False(azure.GetProperty("configured").GetBoolean());
         Assert.Equal("Unconfigured", azure.GetProperty("mode").GetString());
         Assert.Equal("ok", json.RootElement.GetProperty("checks").GetProperty("sql").GetProperty("status").GetString());
+        var di = json.RootElement.GetProperty("checks").GetProperty("documentIntelligence");
+        Assert.Equal("ok", di.GetProperty("status").GetString());
+        Assert.Equal("Removed", di.GetProperty("mode").GetString());
+        Assert.False(di.GetProperty("configured").GetBoolean());
+        Assert.Contains("AI extract only", di.GetProperty("detail").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -336,6 +354,39 @@ public sealed class Phase6Tests
             Assert.NotNull(document.AiRawBlobPath);
             Assert.NotNull(document.ExtractConfidenceJson);
         }
+    }
+
+    private static void AssertNoDualFieldFillPath()
+    {
+        var processor = Read("src/DeedAi.Infrastructure/Ocr/OcrProcessor.cs");
+        var di = Read("src/DeedAi.Infrastructure/DependencyInjection.cs");
+        var health = Read("src/DeedAi.Infrastructure/Health/RuntimeHealth.cs");
+        var job = Read("src/DeedAi.Domain/Ocr/OcrJobMessage.cs");
+        var csproj = Read("src/DeedAi.Infrastructure/DeedAi.Infrastructure.csproj");
+        var root = RepoRoot();
+
+        Assert.False(File.Exists(Path.Combine(root, "src/DeedAi.Domain/Abstractions/IDocumentIntelligenceClient.cs")));
+        Assert.False(File.Exists(Path.Combine(root, "src/DeedAi.Infrastructure/Ocr/AzureDocumentIntelligenceClient.cs")));
+        Assert.False(File.Exists(Path.Combine(root, "src/DeedAi.Infrastructure/Ocr/MockDocumentIntelligenceClient.cs")));
+
+        foreach (var source in new[] { processor, di, health, job })
+        {
+            Assert.DoesNotContain("IDocumentIntelligenceClient", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("AzureDocumentIntelligenceClient", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("MockDocumentIntelligenceClient", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("ExtractedDeedFields", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("UseDocumentIntelligence", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("EnableDiFieldFill", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("DualExtract", source, StringComparison.Ordinal);
+            Assert.DoesNotContain("UseAiExtract", source, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotContain("AddDocumentIntelligence", di, StringComparison.Ordinal);
+        Assert.DoesNotContain("Azure.AI.DocumentIntelligence", di, StringComparison.Ordinal);
+        Assert.DoesNotContain("Azure.AI.DocumentIntelligence", csproj, StringComparison.Ordinal);
+        Assert.DoesNotContain("documentIntelligence.AnalyzeAsync", processor, StringComparison.Ordinal);
+        Assert.Contains("IAiExtractClient", processor, StringComparison.Ordinal);
+        Assert.Contains("DocumentIntelligenceRemoved", health, StringComparison.Ordinal);
     }
 
     private static OcrQueueDelivery Delivery(Document document) =>

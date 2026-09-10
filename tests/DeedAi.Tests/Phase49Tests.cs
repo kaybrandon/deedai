@@ -48,7 +48,8 @@ public sealed class Phase49Tests
         Assert.Equal("ok", di.GetProperty("status").GetString());
         Assert.True(di.GetProperty("reachable").GetBoolean());
         Assert.False(di.GetProperty("configured").GetBoolean());
-        Assert.Equal("Mock", di.GetProperty("mode").GetString());
+        Assert.Equal("Removed", di.GetProperty("mode").GetString());
+        Assert.Contains("AI extract only", di.GetProperty("detail").GetString(), StringComparison.OrdinalIgnoreCase);
 
         var azureOpenAi = checks.GetProperty("azureOpenAI");
         Assert.Equal("ok", azureOpenAi.GetProperty("status").GetString());
@@ -72,7 +73,7 @@ public sealed class Phase49Tests
     }
 
     [Fact]
-    public async Task Document_intelligence_fail_is_distinct_from_blob_pass_and_hides_secrets()
+    public async Task Leftover_document_intelligence_keys_are_ignored_and_hide_secrets()
     {
         await using var factory = TestAppFactory.Create(extraSettings: new Dictionary<string, string?>
         {
@@ -92,10 +93,11 @@ public sealed class Phase49Tests
         Assert.Equal("Pass", checks.GetProperty("blob").GetProperty("detail").GetString());
         Assert.True(checks.GetProperty("blob").GetProperty("reachable").GetBoolean());
         var di = checks.GetProperty("documentIntelligence");
-        Assert.True(di.GetProperty("configured").GetBoolean());
-        Assert.Equal("Azure", di.GetProperty("mode").GetString());
-        Assert.Equal("fail", di.GetProperty("status").GetString());
-        Assert.False(di.GetProperty("reachable").GetBoolean());
+        Assert.False(di.GetProperty("configured").GetBoolean());
+        Assert.Equal("Removed", di.GetProperty("mode").GetString());
+        Assert.Equal("ok", di.GetProperty("status").GetString());
+        Assert.True(di.GetProperty("reachable").GetBoolean());
+        Assert.Contains("AI extract only", di.GetProperty("detail").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -192,8 +194,8 @@ public sealed class Phase49Tests
         Assert.Contains("Queue Depth", panel);
         Assert.Contains("Oldest Waiting", panel);
         Assert.Contains("Poison / Failed", panel);
-        Assert.Contains("Last DI Success", panel);
-        Assert.Contains("Last DI Fail", panel);
+        Assert.Contains("Last AI Success", panel);
+        Assert.Contains("Last AI Fail", panel);
         Assert.Contains("health-refresh", panel);
         Assert.Contains(".health-refresh", css);
         Assert.Contains("min-height: 44px", css);

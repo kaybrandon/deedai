@@ -1,5 +1,3 @@
-using Azure;
-using Azure.AI.DocumentIntelligence;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using DeedAi.Domain;
@@ -53,7 +51,6 @@ public static class DependencyInjection
         AddSoftware(services, configuration);
         AddStorage(services, configuration);
         AddQueue(services, configuration);
-        AddDocumentIntelligence(services, configuration);
         AddAzureOpenAI(services, configuration);
         return services;
     }
@@ -141,23 +138,6 @@ public static class DependencyInjection
         }
 
         services.AddSingleton<IOcrJobQueue, InMemoryOcrJobQueue>();
-    }
-
-    private static void AddDocumentIntelligence(IServiceCollection services, IConfiguration configuration)
-    {
-        // App Setting / Key Vault names. Ignore leftover DocumentIntelligenceEndpoint.
-        var endpoint = FirstValue(configuration, "BISDocumentIntelligenceEndpoint", "DocumentIntelligence:Endpoint");
-        var key = FirstValue(configuration, "DocumentIntelligenceKey", "DocumentIntelligence:Key");
-        if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(key))
-        {
-            services.AddSingleton<IDocumentIntelligenceClient, MockDocumentIntelligenceClient>();
-            return;
-        }
-
-        var endpointUri = new Uri(endpoint);
-        services.AddSingleton(_ => new DocumentIntelligenceClient(endpointUri, new AzureKeyCredential(key)));
-        services.AddSingleton<IDocumentIntelligenceClient>(sp =>
-            new AzureDocumentIntelligenceClient(sp.GetRequiredService<DocumentIntelligenceClient>(), endpointUri));
     }
 
     private static void AddAzureOpenAI(IServiceCollection services, IConfiguration configuration)

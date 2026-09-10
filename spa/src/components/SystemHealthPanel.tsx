@@ -88,7 +88,7 @@ export default function SystemHealthPanel() {
       </h2>
       <p className="muted">
         Admin-only view of <code>GET /api/health/detail</code>. SQL, Storage, and Queue stay as reachability.
-        Blob is a write/read/delete canary. Azure OpenAI fills Review fields. Document Intelligence is not used for field fill.
+        Blob is a write/read/delete canary. Azure OpenAI is the only Review field-fill path. Document Intelligence field-fill is removed.
         OCR queue metrics are visibility on the existing buffer — never connection strings or keys.
       </p>
       {error && <div className="denied-box">{error}</div>}
@@ -122,11 +122,11 @@ export default function SystemHealthPanel() {
             </strong>
           </div>
           <div className="health-metric">
-            <span className="health-metric-label">Last DI Success</span>
+            <span className="health-metric-label">Last AI Success</span>
             <strong>{formatStamp(queue.lastDiSuccessAt)}</strong>
           </div>
           <div className="health-metric">
-            <span className="health-metric-label">Last DI Fail</span>
+            <span className="health-metric-label">Last AI Fail</span>
             <strong>{formatStamp(queue.lastDiFailAt)}</strong>
           </div>
         </div>
