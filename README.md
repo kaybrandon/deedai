@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-6-AI-EXTRACT-AC.md](docs/PHASE-6-AI-EXTRACT-AC.md) — Phase 6 AI extract
 - [PHASE-5.2.3-SOFTWARE-DEPTH-AC.md](docs/PHASE-5.2.3-SOFTWARE-DEPTH-AC.md) — Phase 5.2.3 Software settings depth
 - [PHASE-5.2.4-DELETE-POLICY-AC.md](docs/PHASE-5.2.4-DELETE-POLICY-AC.md) — Phase 5.2.4 Delete Policy
 - Phase 1 wires: [login](docs/wires/01-login.png) · [dashboard](docs/wires/02-dashboard.png) · [documents](docs/wires/03-documents.png) · [upload](docs/wires/04-upload.png) · [review](docs/wires/05-review.png)
@@ -28,10 +29,21 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | OCR worker | .NET 10 worker on Azure Storage Queue `ocr-jobs` (long-poll, not a 1s loop) |
 | Layout | **A** — one Windows App Service host serves API + SPA |
 | SQL | Azure SQL `deedaihost01` / `dbdeedai` (SQLite for local/dev) |
-| Storage | `stbisdeedai` container `deeds`; Document Intelligence raw JSON stored in blob with a pointer |
+| Storage | `stbisdeedai` container `deeds`; AI extract raw JSON stored in blob (`ai-raw/`) with a pointer |
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
-Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
+Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app. Phase 6 does **not** use Document Intelligence to fill Review fields.
+
+Azure OpenAI extract uses the **same subscription** as `appdeedai` by default. Key Vault names: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before a pricier model.
+
+## Phase 6 acceptance
+
+- **AI PDF → locked Review fields:** Azure OpenAI fills `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. Human edit loop stays on Review. Re-extract uses ConfirmSheet.
+- **One path:** Document Intelligence no longer field-fills after cutover. Queue / worker / ribbon remain. Unconfigured Azure OpenAI fails closed (no silent mock in Azure).
+- **KV model keys** on the same subscription. Default model `gpt-4o-mini`. Do not raise quotas. Escalate spend to CoS before a pricier model.
+- **Carry:** Mask F Review · Client/Software · no CAMA · Designer-first `20260910040000_Phase6AiExtract` · health 200.
+- **Should:** Confidence chips · batch re-extract · raw AI blob audit (`ai-raw/{id}.json`).
+- **Won’t:** Azure deploy · County/CAMA · Super Admin · quota increase.
 
 ## Phase 5.2.5 acceptance
 

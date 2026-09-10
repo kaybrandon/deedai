@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-10 — Phase 6 AI extract
+- Azure OpenAI (same subscription, `gpt-4o-mini` default) fills locked Review fields from the PDF. Document Intelligence no longer field-fills. Fail closed if KV keys are missing.
+- Human edit loop stays. Re-extract (single + batch) uses ConfirmSheet. Confidence chips and raw AI blob audit (`ai-raw/{id}.json`) are Should.
+- KV names: AzureOpenAIEndpoint · AzureOpenAIKey · AzureOpenAIDeployment · AzureOpenAIModel. Do not raise quotas. Escalate spend to CoS before a pricier model.
+- Designer-first EF migration `20260910040000_Phase6AiExtract` adds null-safe AiRawBlobPath / ExtractConfidenceJson. Client/Software only. Health 200. No Azure deploy.
+
 ## 2026-09-10 — Phase 5.2.5 Statuses catalog
 - Settings → System → Statuses is a Client/Software catalog. Seeded Must eight: Complete, In Queue, Needs Work, New, Not Needed, Pending, Research, Upload Error. Each maps to pipeline Queued/Processing/Ready/Failed or a review/extension state.
 - Editors assign catalog status on Documents and Review without changing OCR `Document.Status`. List filters and chips use catalog display names. Ready + OCR-failed stay mutually exclusive. Ribbon unchanged.

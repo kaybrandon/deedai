@@ -58,6 +58,7 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("DocumentIntelligence:Endpoint", "");
         builder.UseSetting("DocumentIntelligence:Key", "");
+        builder.UseSetting("AzureOpenAI:Mode", "Mock");
         builder.UseSetting("SendGridApiKey", "sg-test-configured-0000");
         foreach (var pair in _extra)
         {
@@ -76,7 +77,8 @@ public sealed class TestAppFactory : WebApplicationFactory<Program>
                 ["Jwt:Issuer"] = "deedai",
                 ["Jwt:Audience"] = "deedai-spa",
                 ["Cors:AllowedOrigins:0"] = "http://localhost:5173",
-                ["SendGridApiKey"] = "sg-test-configured-0000"
+                ["SendGridApiKey"] = "sg-test-configured-0000",
+                ["AzureOpenAI:Mode"] = "Mock"
             };
             foreach (var pair in _extra)
             {

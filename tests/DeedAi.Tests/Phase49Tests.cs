@@ -50,6 +50,12 @@ public sealed class Phase49Tests
         Assert.False(di.GetProperty("configured").GetBoolean());
         Assert.Equal("Mock", di.GetProperty("mode").GetString());
 
+        var azureOpenAi = checks.GetProperty("azureOpenAI");
+        Assert.Equal("ok", azureOpenAi.GetProperty("status").GetString());
+        Assert.True(azureOpenAi.GetProperty("reachable").GetBoolean());
+        Assert.True(azureOpenAi.GetProperty("configured").GetBoolean());
+        Assert.Equal("Mock", azureOpenAi.GetProperty("mode").GetString());
+
         var pipeline = checks.GetProperty("ocrPipeline");
         Assert.Equal("fail", pipeline.GetProperty("status").GetString());
         Assert.False(pipeline.GetProperty("reachable").GetBoolean());
@@ -141,7 +147,7 @@ public sealed class Phase49Tests
         var processor = new OcrProcessor(
             db,
             blobs,
-            new MockDocumentIntelligenceClient(),
+            new MockAiExtractClient(),
             Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
             new NullOcrNotifier(),
@@ -181,6 +187,7 @@ public sealed class Phase49Tests
         Assert.Contains("Queue", panel);
         Assert.Contains("Blob", panel);
         Assert.Contains("Document Intelligence", panel);
+        Assert.Contains("Azure OpenAI", panel);
         Assert.Contains("OCR pipeline", panel);
         Assert.Contains("Queue Depth", panel);
         Assert.Contains("Oldest Waiting", panel);
@@ -230,6 +237,7 @@ public sealed class Phase49Tests
                  {
                      "AccountKey", "DefaultEndpoints", "Password=", "Server=", "SqlConnection",
                      "StorageConnection", "DocumentIntelligenceKey", "BISDocumentIntelligenceEndpoint",
+                     "AzureOpenAIKey", "AzureOpenAIEndpoint",
                      "JwtSigningKey", "ChangeMe", "connectionString", "SharedAccessSignature"
                  })
         {

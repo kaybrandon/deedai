@@ -63,6 +63,8 @@ export interface OcrQueueVisibility {
   failedCount: number;
   lastDiSuccessAt: string | null;
   lastDiFailAt: string | null;
+  lastAiSuccessAt?: string | null;
+  lastAiFailAt?: string | null;
 }
 
 export interface EmailSettings {
@@ -225,6 +227,8 @@ export interface DocumentDetail {
   mailingZip?: string | null;
   grantors?: string[] | null;
   grantees?: string[] | null;
+  aiRawBlobPath?: string | null;
+  extractConfidence?: Record<string, number> | null;
 }
 
 export interface TeamMemberItem {
@@ -554,6 +558,12 @@ export const endpoints = {
       body: JSON.stringify(fields)
     }),
   retry: (id: string) => api<{ message: string; status?: string }>(`/api/documents/${id}/retry`, { method: "POST" }),
+  reExtract: (documentIds: string[]) =>
+    api<{ message: string; count: number }>("/api/documents/re-extract", {
+      method: "POST",
+      body: JSON.stringify({ documentIds })
+    }),
+  extractRaw: (id: string, name: string) => download(`/api/documents/${id}/extract-raw`, name),
   requeueFailed: () => api<{ message: string; count: number }>("/api/documents/requeue-failed", { method: "POST" }),
   swaggerSetting: () => api<SwaggerSetting>("/api/settings/swagger"),
   saveSwaggerSetting: (enabled: boolean) =>
@@ -591,6 +601,7 @@ export const endpoints = {
         queue: HealthCheck;
         blob: HealthCheck;
         documentIntelligence: HealthCheck;
+        azureOpenAI: HealthCheck;
         ocrPipeline: HealthCheck;
       };
       ocrQueue: OcrQueueVisibility;

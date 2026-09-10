@@ -2,6 +2,7 @@ using Azure;
 using Azure.AI.DocumentIntelligence;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
+using DeedAi.Domain;
 using DeedAi.Domain.Abstractions;
 using DeedAi.Infrastructure.Data;
 using DeedAi.Infrastructure.Email;
@@ -53,6 +54,7 @@ public static class DependencyInjection
         AddStorage(services, configuration);
         AddQueue(services, configuration);
         AddDocumentIntelligence(services, configuration);
+        AddAzureOpenAI(services, configuration);
         return services;
     }
 
@@ -157,6 +159,55 @@ public static class DependencyInjection
         services.AddSingleton<IDocumentIntelligenceClient>(sp =>
             new AzureDocumentIntelligenceClient(sp.GetRequiredService<DocumentIntelligenceClient>(), endpointUri));
     }
+
+    private static void AddAzureOpenAI(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHttpClient(AzureOpenAIExtractClient.HttpClientName);
+        var options = BindAzureOpenAI(configuration);
+        services.Configure<AzureOpenAIOptions>(_ =>
+        {
+            _.Endpoint = options.Endpoint;
+            _.Key = options.Key;
+            _.Deployment = options.Deployment;
+            _.Model = options.Model;
+            _.ApiVersion = options.ApiVersion;
+            _.Mode = options.Mode;
+            _.AllowPricierModel = options.AllowPricierModel;
+        });
+
+        if (string.Equals(options.Mode, "Mock", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<IAiExtractClient, MockAiExtractClient>();
+            return;
+        }
+
+        if (HasRealValue(options.Endpoint) && HasRealValue(options.Key) && HasRealValue(options.Deployment))
+        {
+            services.AddSingleton<IAiExtractClient, AzureOpenAIExtractClient>();
+            return;
+        }
+
+        services.AddSingleton<IAiExtractClient, FailClosedAiExtractClient>();
+    }
+
+    internal static AzureOpenAIOptions BindAzureOpenAI(IConfiguration configuration)
+    {
+        var model = FirstValue(configuration, "AzureOpenAIModel", "AzureOpenAI:Model") ?? AiExtractModels.Default;
+        return new AzureOpenAIOptions
+        {
+            Endpoint = FirstValue(configuration, "AzureOpenAIEndpoint", "BISAzureOpenAIEndpoint", "AzureOpenAI:Endpoint"),
+            Key = FirstValue(configuration, "AzureOpenAIKey", "AzureOpenAI:Key"),
+            Deployment = FirstValue(configuration, "AzureOpenAIDeployment", "AzureOpenAI:Deployment"),
+            Model = string.IsNullOrWhiteSpace(model) ? AiExtractModels.Default : model,
+            ApiVersion = FirstValue(configuration, "AzureOpenAIApiVersion", "AzureOpenAI:ApiVersion") ?? "2024-10-21",
+            Mode = configuration["AzureOpenAI:Mode"] ?? "",
+            AllowPricierModel = string.Equals(configuration["AzureOpenAI:AllowPricierModel"], "true", StringComparison.OrdinalIgnoreCase)
+        };
+    }
+
+    internal static bool HasRealValue(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && !value.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase);
 
     public static string? FirstValue(IConfiguration configuration, params string[] keys)
     {

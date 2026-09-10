@@ -46,6 +46,7 @@ export default function SystemHealthPanel() {
         { name: "Queue", check: detail.checks.queue },
         { name: "Blob", check: detail.checks.blob },
         { name: "Document Intelligence", check: detail.checks.documentIntelligence },
+        { name: "Azure OpenAI", check: detail.checks.azureOpenAI },
         { name: "OCR pipeline", check: detail.checks.ocrPipeline }
       ];
       setChecks(
@@ -87,8 +88,8 @@ export default function SystemHealthPanel() {
       </h2>
       <p className="muted">
         Admin-only view of <code>GET /api/health/detail</code>. SQL, Storage, and Queue stay as reachability.
-        Blob is a write/read/delete canary. Document Intelligence and OCR pipeline are separate. OCR queue
-        metrics are visibility on the existing buffer — never connection strings or keys.
+        Blob is a write/read/delete canary. Azure OpenAI fills Review fields. Document Intelligence is not used for field fill.
+        OCR queue metrics are visibility on the existing buffer — never connection strings or keys.
       </p>
       {error && <div className="denied-box">{error}</div>}
       {status && (

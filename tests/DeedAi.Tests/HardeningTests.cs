@@ -408,7 +408,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         var processor = new OcrProcessor(
             db,
             blobs,
-            new DirtyFieldIntelligenceClient(),
+            new MockAiExtractClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
             new NullOcrNotifier(),
@@ -503,7 +503,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         var processor = new OcrProcessor(
             db,
             blobs,
-            new BrokenJsonIntelligenceClient(),
+            new MockAiExtractClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
             new NullOcrNotifier(),
@@ -571,6 +571,8 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("StorageConnection", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("DocumentIntelligenceKey", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("BISDocumentIntelligenceEndpoint", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AzureOpenAIKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AzureOpenAIEndpoint", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("JwtSigningKey", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ChangeMe", body, StringComparison.OrdinalIgnoreCase);
     }

@@ -46,6 +46,7 @@ export default function DocumentsPage() {
   const [pendingDelete, setPendingDelete] = useState<DocumentListItem | null>(null);
   const [pendingRestore, setPendingRestore] = useState<DocumentListItem | null>(null);
   const [pendingHard, setPendingHard] = useState<DocumentListItem | null>(null);
+  const [pendingReExtract, setPendingReExtract] = useState<null | "failed" | "selected" | DocumentListItem>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fetchKey = [
     query.status,
@@ -198,16 +199,8 @@ export default function DocumentsPage() {
       </div>
       {canAdmin && rows.some((row) => row.canRetry) && (
         <div className="bulk-bar">
-          <span>Failed deeds can be requeued to processing.</span>
-          <button
-            className="primary"
-            type="button"
-            onClick={async () => {
-              const result = await endpoints.requeueFailed();
-              setNotice(result.message);
-              await reload();
-            }}
-          >
+          <span>Failed deeds can be requeued for AI extract.</span>
+          <button className="primary" type="button" onClick={() => setPendingReExtract("failed")}>
             Retry Failed
           </button>
         </div>
@@ -233,6 +226,9 @@ export default function DocumentsPage() {
             }}
           >
             Bulk Assign
+          </button>
+          <button className="ghost" type="button" onClick={() => setPendingReExtract("selected")}>
+            Re-extract Selected
           </button>
         </div>
       )}
@@ -421,15 +417,7 @@ export default function DocumentsPage() {
                         Open
                       </button>
                       {row.canRetry && canEdit && (
-                        <button
-                          className="primary"
-                          type="button"
-                          onClick={async () => {
-                            await endpoints.retry(row.id);
-                            setNotice("Queued for OCR");
-                            await reload();
-                          }}
-                        >
+                        <button className="primary" type="button" onClick={() => setPendingReExtract(row)}>
                           Retry
                         </button>
                       )}
@@ -516,6 +504,48 @@ export default function DocumentsPage() {
             await endpoints.hardDelete(pendingHard.id);
             setPendingHard(null);
             setNotice("Permanently deleted.");
+            await reload();
+          }}
+        />
+      )}
+      {pendingReExtract === "failed" && (
+        <ConfirmSheet
+          title="Re-extract failed deeds?"
+          body="AI will overwrite locked Review fields on every failed deed in scope."
+          confirmLabel="Re-extract"
+          onCancel={() => setPendingReExtract(null)}
+          onConfirm={async () => {
+            const result = await endpoints.requeueFailed();
+            setPendingReExtract(null);
+            setNotice(result.message);
+            await reload();
+          }}
+        />
+      )}
+      {pendingReExtract === "selected" && (
+        <ConfirmSheet
+          title={`Re-extract ${selected.length} selected deed(s)?`}
+          body="AI will overwrite locked Review fields from each PDF. Human edits on those deeds will be replaced."
+          confirmLabel="Re-extract"
+          onCancel={() => setPendingReExtract(null)}
+          onConfirm={async () => {
+            const result = await endpoints.reExtract(selected);
+            setPendingReExtract(null);
+            setNotice(result.message);
+            await reload();
+          }}
+        />
+      )}
+      {pendingReExtract && typeof pendingReExtract === "object" && (
+        <ConfirmSheet
+          title={`Re-extract ${pendingReExtract.name}?`}
+          body="AI will overwrite locked Review fields from the PDF. Human edits on this deed will be replaced."
+          confirmLabel="Re-extract"
+          onCancel={() => setPendingReExtract(null)}
+          onConfirm={async () => {
+            await endpoints.retry(pendingReExtract.id);
+            setPendingReExtract(null);
+            setNotice("Queued for AI extract");
             await reload();
           }}
         />

@@ -29,6 +29,7 @@ public sealed class HealthController(RuntimeHealth health) : ControllerBase
                 queue = Check(detail.Queue),
                 blob = Check(detail.Blob),
                 documentIntelligence = Check(detail.DocumentIntelligence),
+                azureOpenAI = Check(detail.AzureOpenAI),
                 ocrPipeline = Check(detail.OcrPipeline)
             },
             ocrQueue = new
@@ -38,7 +39,9 @@ public sealed class HealthController(RuntimeHealth health) : ControllerBase
                 poisonCount = detail.OcrQueue.PoisonCount,
                 failedCount = detail.OcrQueue.FailedCount,
                 lastDiSuccessAt = detail.OcrQueue.LastDiSuccessAt,
-                lastDiFailAt = detail.OcrQueue.LastDiFailAt
+                lastDiFailAt = detail.OcrQueue.LastDiFailAt,
+                lastAiSuccessAt = detail.OcrQueue.LastDiSuccessAt,
+                lastAiFailAt = detail.OcrQueue.LastDiFailAt
             }
         });
     }

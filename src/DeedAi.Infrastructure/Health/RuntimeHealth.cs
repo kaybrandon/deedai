@@ -35,6 +35,7 @@ public sealed record DetailedHealth(
     HealthCheckStatus Queue,
     HealthCheckStatus Blob,
     HealthCheckStatus DocumentIntelligence,
+    HealthCheckStatus AzureOpenAI,
     HealthCheckStatus OcrPipeline,
     OcrQueueVisibility OcrQueue);
 
@@ -43,6 +44,7 @@ public sealed class RuntimeHealth(
     IBlobStorage storage,
     IOcrJobQueue queue,
     IDocumentIntelligenceClient documentIntelligence,
+    IAiExtractClient extract,
     OcrHealthRecorder ocrHealth,
     IOptions<OcrOptions> ocrOptions,
     IConfiguration configuration)
@@ -60,6 +62,7 @@ public sealed class RuntimeHealth(
         var queueCheck = await CheckQueueAsync(cancellationToken);
         var blob = await CheckBlobReadWriteAsync(cancellationToken);
         var di = await CheckDocumentIntelligenceAsync(cancellationToken);
+        var azureOpenAi = await CheckAzureOpenAIAsync(cancellationToken);
         var signals = await ocrHealth.ReadAsync(cancellationToken);
         var pipeline = CheckOcrPipeline(queueCheck, signals);
         var visibility = await ReadQueueVisibilityAsync(signals, cancellationToken);
@@ -68,6 +71,7 @@ public sealed class RuntimeHealth(
                       && queueCheck.Reachable
                       && blob.Reachable
                       && di.Reachable
+                      && azureOpenAi.Reachable
                       && pipeline.Reachable
             ? "ok"
             : "degraded";
@@ -79,6 +83,7 @@ public sealed class RuntimeHealth(
             queueCheck,
             blob,
             di,
+            azureOpenAi,
             pipeline,
             visibility);
     }
@@ -174,11 +179,34 @@ public sealed class RuntimeHealth(
         try
         {
             var reachable = await documentIntelligence.CanReachAsync(cancellationToken);
-            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, null, configured);
+            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, "Not used for field fill", configured);
         }
         catch
         {
-            return new HealthCheckStatus("fail", false, mode, null, configured);
+            return new HealthCheckStatus("fail", false, mode, "Not used for field fill", configured);
+        }
+    }
+
+    private async Task<HealthCheckStatus> CheckAzureOpenAIAsync(CancellationToken cancellationToken)
+    {
+        var options = DependencyInjection.BindAzureOpenAI(configuration);
+        var mock = string.Equals(options.Mode, "Mock", StringComparison.OrdinalIgnoreCase);
+        var configured = mock
+                         || (HasRealValue(options.Endpoint) && HasRealValue(options.Key) && HasRealValue(options.Deployment));
+        var mode = SanitizeMode(mock ? "Mock" : configured ? "Azure" : "Unconfigured");
+        try
+        {
+            var reachable = await extract.CanReachAsync(cancellationToken);
+            var detail = mock
+                ? "Mock extract"
+                : configured
+                    ? "Field fill"
+                    : "Fail closed";
+            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, detail, configured);
+        }
+        catch
+        {
+            return new HealthCheckStatus("fail", false, mode, "Fail closed", configured);
         }
     }
 
@@ -278,6 +306,7 @@ public sealed class RuntimeHealth(
         if (string.Equals(mode, "Local", StringComparison.OrdinalIgnoreCase)) return "Local";
         if (string.Equals(mode, "Http", StringComparison.OrdinalIgnoreCase)) return "Http";
         if (string.Equals(mode, "Mock", StringComparison.OrdinalIgnoreCase)) return "Mock";
+        if (string.Equals(mode, "Unconfigured", StringComparison.OrdinalIgnoreCase)) return "Unconfigured";
         return "unknown";
     }
 }

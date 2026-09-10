@@ -22,7 +22,7 @@ public sealed class OcrOptions
 public sealed class OcrProcessor(
     DeedAiDbContext db,
     IBlobStorage blobs,
-    IDocumentIntelligenceClient documentIntelligence,
+    IAiExtractClient extract,
     IOptions<OcrOptions> options,
     ILogger<OcrProcessor> logger,
     IOcrNotifier notifier,
@@ -38,14 +38,14 @@ public sealed class OcrProcessor(
 
         if (document is null || document.DeletedAt is not null)
         {
-            logger.LogWarning("Skipping OCR job for missing or deleted document {DocumentId}", delivery.Job.DocumentId);
+            logger.LogWarning("Skipping extract job for missing or deleted document {DocumentId}", delivery.Job.DocumentId);
             return;
         }
 
         if (delivery.DequeueCount >= options.Value.PoisonDequeueCount)
         {
             document.Status = DocumentStatuses.Failed;
-            document.ErrorMessage = "OCR poison: max attempts exceeded. Use Retry.";
+            document.ErrorMessage = "Extract poison: max attempts exceeded. Use Retry.";
             document.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             logger.LogWarning("Marked document {DocumentId} Failed after poison dequeue count {Count}", document.Id, delivery.DequeueCount);
@@ -61,14 +61,15 @@ public sealed class OcrProcessor(
         try
         {
             await using var pdf = await blobs.OpenReadAsync(document.BlobPath, cancellationToken);
-            var result = await documentIntelligence.AnalyzeAsync(document.Name, pdf, cancellationToken);
+            var result = await extract.ExtractAsync(document.Name, pdf, cancellationToken);
             EnsureValidExtractJson(result.RawJson);
             await ocrHealth.RecordDiOutcomeAsync(true, cancellationToken);
 
-            var rawPath = $"di-raw/{document.Id:N}.json";
+            var rawPath = $"ai-raw/{document.Id:N}.json";
             await using var rawStream = new MemoryStream(Encoding.UTF8.GetBytes(result.RawJson));
             await blobs.UploadAsync(rawPath, rawStream, "application/json", cancellationToken);
-            document.DiRawBlobPath = rawPath;
+            document.AiRawBlobPath = rawPath;
+            document.ExtractConfidenceJson = ExtractConfidence.ToJson(result.Confidence);
 
             var rules = await db.OcrCleanupRules.AsNoTracking()
                 .Where(x => x.IsActive)
@@ -83,27 +84,7 @@ public sealed class OcrProcessor(
                 DocumentId = document.Id
             };
 
-            fields.Grantor = OcrFieldCleaner.Clean(result.Fields.Grantor, trim, discard);
-            fields.Grantee = OcrFieldCleaner.Clean(result.Fields.Grantee, trim, discard);
-            fields.InstrumentDate = OcrFieldCleaner.Clean(result.Fields.InstrumentDate, trim, discard);
-            fields.Consideration = OcrFieldCleaner.Clean(result.Fields.Consideration, trim, discard);
-            fields.ParcelId = OcrFieldCleaner.Clean(result.Fields.ParcelId, trim, discard);
-            if (string.IsNullOrWhiteSpace(document.Pid) && !string.IsNullOrWhiteSpace(fields.ParcelId))
-            {
-                document.Pid = fields.ParcelId;
-            }
-
-            if ((document.Grantors?.Count ?? 0) == 0 && !string.IsNullOrWhiteSpace(fields.Grantor))
-            {
-                document.Grantors = [fields.Grantor];
-            }
-
-            if ((document.Grantees?.Count ?? 0) == 0 && !string.IsNullOrWhiteSpace(fields.Grantee))
-            {
-                document.Grantees = [fields.Grantee];
-            }
-            fields.Client = OcrFieldCleaner.Clean(result.Fields.Client, trim, discard) ?? document.Client.Name;
-            fields.Notes = OcrFieldCleaner.Clean(result.Fields.Notes, trim, discard);
+            ApplyLockedFields(document, fields, result.Fields, trim, discard);
             fields.IsDraft = false;
             fields.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -120,7 +101,7 @@ public sealed class OcrProcessor(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "OCR failed for document {DocumentId}", document.Id);
+            logger.LogError(ex, "AI extract failed for document {DocumentId}", document.Id);
             await ocrHealth.RecordDiOutcomeAsync(false, cancellationToken);
             document.Status = DocumentStatuses.Failed;
             document.ErrorMessage = FormatFailReason(ex);
@@ -131,11 +112,57 @@ public sealed class OcrProcessor(
         }
     }
 
+    internal static void ApplyLockedFields(
+        Document document,
+        DocumentFields fields,
+        ExtractedReviewFields extracted,
+        IEnumerable<string> trim,
+        IEnumerable<string> discard)
+    {
+        document.DocumentNumber = OcrFieldCleaner.Clean(extracted.DocumentNumber, trim, discard);
+        document.Volume = OcrFieldCleaner.Clean(extracted.Volume, trim, discard);
+        document.Page = OcrFieldCleaner.Clean(extracted.Page, trim, discard);
+        document.DeedType = OcrFieldCleaner.Clean(extracted.DeedType, trim, discard);
+        document.Pid = OcrFieldCleaner.Clean(extracted.Pid, trim, discard);
+        document.MailingStreet = OcrFieldCleaner.Clean(extracted.MailingStreet, trim, discard);
+        document.MailingCity = OcrFieldCleaner.Clean(extracted.MailingCity, trim, discard);
+        document.MailingState = OcrFieldCleaner.Clean(extracted.MailingState, trim, discard);
+        document.MailingZip = OcrFieldCleaner.Clean(extracted.MailingZip, trim, discard);
+
+        var grantors = CleanNames(extracted.Grantors, trim, discard);
+        var grantees = CleanNames(extracted.Grantees, trim, discard);
+        document.Grantors = grantors;
+        document.Grantees = grantees;
+
+        fields.Grantor = PartyNames.Primary(grantors);
+        fields.Grantee = PartyNames.Primary(grantees);
+        fields.ParcelId = document.Pid;
+        fields.InstrumentDate = OcrFieldCleaner.Clean(extracted.InstrumentDate, trim, discard);
+        fields.Consideration = OcrFieldCleaner.Clean(extracted.Consideration, trim, discard);
+        fields.Client = OcrFieldCleaner.Clean(extracted.Client, trim, discard) ?? document.Client.Name;
+        fields.Notes = OcrFieldCleaner.Clean(extracted.Notes, trim, discard);
+    }
+
+    private static List<string> CleanNames(IReadOnlyList<string>? names, IEnumerable<string> trim, IEnumerable<string> discard)
+    {
+        var cleaned = new List<string>();
+        foreach (var name in names ?? [])
+        {
+            var value = OcrFieldCleaner.Clean(name, trim, discard);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                cleaned.Add(value);
+            }
+        }
+
+        return cleaned;
+    }
+
     private static void EnsureValidExtractJson(string? rawJson)
     {
         if (string.IsNullOrWhiteSpace(rawJson))
         {
-            throw new InvalidOperationException("OCR failed — empty JSON. Use Retry.");
+            throw new InvalidOperationException("AI extract failed — empty JSON. Use Retry.");
         }
 
         try
@@ -144,7 +171,7 @@ public sealed class OcrProcessor(
         }
         catch (JsonException)
         {
-            throw new InvalidOperationException("OCR failed — invalid JSON. Use Retry.");
+            throw new InvalidOperationException("AI extract failed — invalid JSON. Use Retry.");
         }
     }
 
