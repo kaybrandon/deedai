@@ -20,9 +20,9 @@
 | Key Vault | `kv-bis-deed-ai` |
 
 ## Key Vault secret names (values never in docs/chat)
-`SqlConnection` · `StorageConnection` · `BISDocumentIntelligenceEndpoint` · `DocumentIntelligenceKey` · `JwtSigningKey` · `AdminSeedPassword`
+`SqlConnection` · `StorageConnection` · `AzureOpenAIEndpoint` · `AzureOpenAIKey` · `AzureOpenAIDeployment` · `JwtSigningKey` · `AdminSeedPassword`
 
-Ignore leftover `DocumentIntelligenceEndpoint` if present. Phase 2+ also uses `SendGridApiKey` / `SoftwareApiKey` when those features are on. Phase 4.8 SMTP uses `SmtpHost` / `SmtpPort` / `SmtpTls` / `SmtpUsername` / `SmtpPassword` (KV names only).
+Phase 6 extract uses Azure OpenAI. Leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` / `DocumentIntelligenceEndpoint` are ignored and are not a field-fill path. Phase 2+ also uses `SendGridApiKey` / `SoftwareApiKey` when those features are on. Phase 4.8 SMTP uses `SmtpHost` / `SmtpPort` / `SmtpTls` / `SmtpUsername` / `SmtpPassword` (KV names only).
 
 ## Naming & roles
 - **Client** (not County) · **Software** (not CAMA)

@@ -123,7 +123,9 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
             document.MailingState,
             document.MailingZip,
             PartyNames.Normalize(document.Grantors, fields?.Grantor),
-            PartyNames.Normalize(document.Grantees, fields?.Grantee));
+            PartyNames.Normalize(document.Grantees, fields?.Grantee),
+            document.AiRawBlobPath,
+            ExtractConfidence.Parse(document.ExtractConfidenceJson));
     }
 
     [HttpGet("{id:guid}/file")]
@@ -310,9 +312,57 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         await db.SaveChangesAsync(cancellationToken);
         await queue.EnqueueAsync(new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath }, cancellationToken);
         var message = hadFailedJson
-            ? "Requeued failed JSON extract for OCR."
-            : "Queued for OCR";
+            ? "Requeued failed JSON extract."
+            : "Queued for AI extract";
         return Ok(new { message, status = document.Status, previousError = previous });
+    }
+
+    [HttpPost("re-extract")]
+    [Authorize(Policy = RolePolicies.CanEdit)]
+    public async Task<IActionResult> ReExtract([FromBody] ReExtractRequest request, CancellationToken cancellationToken)
+    {
+        if (request.DocumentIds.Count == 0)
+        {
+            return BadRequest(new { message = "Select at least one document." });
+        }
+
+        var allowed = await ClientAccess.AllowedClientIdsAsync(db, User, cancellationToken);
+        var docs = await ClientAccess.VisibleDocuments(db.Documents, allowed)
+            .Where(x => request.DocumentIds.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+        foreach (var document in docs)
+        {
+            document.Status = DocumentStatuses.Queued;
+            document.ErrorMessage = null;
+            document.UpdatedAt = DateTimeOffset.UtcNow;
+            await queue.EnqueueAsync(new OcrJobMessage { DocumentId = document.Id, BlobPath = document.BlobPath }, cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = $"Queued {docs.Count} deed(s) for AI extract.", count = docs.Count });
+    }
+
+    [HttpGet("{id:guid}/extract-raw")]
+    [Authorize(Policy = RolePolicies.CanAdmin)]
+    public async Task<IActionResult> ExtractRaw(Guid id, CancellationToken cancellationToken)
+    {
+        var document = await LoadVisible(id, includeDeleted: false, cancellationToken);
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        var path = string.IsNullOrWhiteSpace(document.AiRawBlobPath) ? document.DiRawBlobPath : document.AiRawBlobPath;
+        if (string.IsNullOrWhiteSpace(path) || !await blobs.ExistsAsync(path, cancellationToken))
+        {
+            return NotFound(new { message = "Raw AI extract is not available for this deed." });
+        }
+
+        var stream = await blobs.OpenReadAsync(path, cancellationToken);
+        return new FileStreamResult(stream, "application/json")
+        {
+            FileDownloadName = $"{document.Id:N}-extract.json"
+        };
     }
 
     [HttpPost("requeue-failed")]
@@ -332,7 +382,7 @@ public sealed class DocumentsController(DeedAiDbContext db, IBlobStorage blobs, 
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return Ok(new { message = $"Requeued {failed.Count} failed deed(s).", count = failed.Count });
+        return Ok(new { message = $"Requeued {failed.Count} failed deed(s) for AI extract.", count = failed.Count });
     }
 
     [HttpPut("{id:guid}/assignee")]

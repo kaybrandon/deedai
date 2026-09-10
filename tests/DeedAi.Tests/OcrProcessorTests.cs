@@ -22,7 +22,7 @@ public sealed class OcrProcessorTests
         await using var ctx = await CreateDb();
         var blobs = new InMemoryBlobStorage();
         var document = await SeedDocument(ctx, blobs, "Deed_ok.pdf");
-        var processor = CreateProcessor(ctx, blobs, new MockDocumentIntelligenceClient());
+        var processor = CreateProcessor(ctx, blobs, new MockAiExtractClient());
 
         var delivery = new OcrQueueDelivery
         {
@@ -36,9 +36,16 @@ public sealed class OcrProcessorTests
 
         var updated = await ctx.Documents.Include(x => x.Fields).SingleAsync(x => x.Id == document.Id);
         Assert.Equal(DocumentStatuses.Ready, updated.Status);
-        Assert.False(string.IsNullOrWhiteSpace(updated.DiRawBlobPath));
-        Assert.True(await blobs.ExistsAsync(updated.DiRawBlobPath!, CancellationToken.None));
+        Assert.False(string.IsNullOrWhiteSpace(updated.AiRawBlobPath));
+        Assert.True(await blobs.ExistsAsync(updated.AiRawBlobPath!, CancellationToken.None));
         Assert.Equal("Jane Example", updated.Fields?.Grantor);
+        Assert.Equal("2024-0812", updated.DocumentNumber);
+        Assert.Equal("184", updated.Volume);
+        Assert.Equal("12", updated.Page);
+        Assert.Equal("Warranty Deed", updated.DeedType);
+        Assert.Equal("12-345-678", updated.Pid);
+        Assert.Equal(["Jane Example"], updated.Grantors);
+        Assert.Equal(["Acme Holdings LLC"], updated.Grantees);
         Assert.False(updated.Fields!.IsDraft);
     }
 
@@ -49,7 +56,7 @@ public sealed class OcrProcessorTests
         var blobs = new InMemoryBlobStorage();
         var document = await SeedDocument(ctx, blobs, "Scan_bad.pdf");
         var queue = new InMemoryOcrJobQueue();
-        var processor = CreateProcessor(ctx, blobs, new MockDocumentIntelligenceClient());
+        var processor = CreateProcessor(ctx, blobs, new MockAiExtractClient());
 
         var delivery = new OcrQueueDelivery
         {
@@ -63,7 +70,7 @@ public sealed class OcrProcessorTests
 
         var updated = await ctx.Documents.SingleAsync(x => x.Id == document.Id);
         Assert.Equal(DocumentStatuses.Failed, updated.Status);
-        Assert.Contains("OCR failed", updated.ErrorMessage);
+        Assert.Contains("AI extract failed", updated.ErrorMessage);
 
         updated.Status = DocumentStatuses.Queued;
         updated.ErrorMessage = null;
@@ -80,7 +87,7 @@ public sealed class OcrProcessorTests
         await using var ctx = await CreateDb();
         var blobs = new InMemoryBlobStorage();
         var document = await SeedDocument(ctx, blobs, "Deed_ok.pdf");
-        var processor = CreateProcessor(ctx, blobs, new MockDocumentIntelligenceClient(), poisonCount: 5);
+        var processor = CreateProcessor(ctx, blobs, new MockAiExtractClient(), poisonCount: 5);
 
         var delivery = new OcrQueueDelivery
         {
@@ -101,9 +108,9 @@ public sealed class OcrProcessorTests
     private static OcrProcessor CreateProcessor(
         DeedAiDbContext db,
         IBlobStorage blobs,
-        IDocumentIntelligenceClient di,
+        IAiExtractClient extract,
         int poisonCount = 5) =>
-        new(db, blobs, di, Options.Create(new OcrOptions { PoisonDequeueCount = poisonCount }), NullLogger<OcrProcessor>.Instance, new NullOcrNotifier(), new OcrHealthRecorder(db, new OcrHealthSignal()));
+        new(db, blobs, extract, Options.Create(new OcrOptions { PoisonDequeueCount = poisonCount }), NullLogger<OcrProcessor>.Instance, new NullOcrNotifier(), new OcrHealthRecorder(db, new OcrHealthSignal()));
 
     private static async Task<DeedAiDbContext> CreateDb()
     {

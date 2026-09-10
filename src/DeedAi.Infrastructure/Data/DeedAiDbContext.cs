@@ -159,6 +159,8 @@ public sealed class DeedAiDbContext(DbContextOptions<DeedAiDbContext> options) :
             entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
             entity.Property(x => x.BlobPath).HasMaxLength(512).IsRequired();
             entity.Property(x => x.DiRawBlobPath).HasMaxLength(512);
+            entity.Property(x => x.AiRawBlobPath).HasMaxLength(512);
+            entity.Property(x => x.ExtractConfidenceJson).HasMaxLength(4000);
             entity.Property(x => x.ErrorMessage).HasMaxLength(1024);
             entity.Property(x => x.DeedType).HasMaxLength(64);
             entity.Property(x => x.DocumentNumber).HasMaxLength(64);

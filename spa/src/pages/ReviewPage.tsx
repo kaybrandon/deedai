@@ -67,7 +67,7 @@ function inReviewQueue(item: DocumentListItem, currentId: string): boolean {
 
 export default function ReviewPage() {
   const { id } = useParams<{ id: string }>();
-  const { canEdit } = useAuth();
+  const { canEdit, canAdmin } = useAuth();
   const navigate = useNavigate();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [fields, setFields] = useState<FieldDraft>(emptyFields);
@@ -103,6 +103,9 @@ export default function ReviewPage() {
   const [clientConfig, setClientConfig] = useState<SoftwareClientConfig | null>(null);
   const [pendingPush, setPendingPush] = useState(false);
   const [pendingRemove, setPendingRemove] = useState<{ kind: PartyKind; index: number } | null>(null);
+  const [pendingReExtract, setPendingReExtract] = useState(false);
+  const [extractConfidence, setExtractConfidence] = useState<Record<string, number>>({});
+  const [extractedValues, setExtractedValues] = useState<Record<string, string>>({});
 
   function hydrate(detail: DocumentDetail) {
     setDoc(detail);
@@ -119,7 +122,36 @@ export default function ReviewPage() {
     setGrantees(partiesFrom(detail, "grantee"));
     setDeedType(detail.deedType ?? "");
     setReviewStatus(detail.reviewStatus ?? "");
+    setExtractConfidence(detail.extractConfidence ?? {});
+    const nextGrantors = partiesFrom(detail, "grantor");
+    const nextGrantees = partiesFrom(detail, "grantee");
+    setExtractedValues({
+      documentNumber: detail.documentNumber || "",
+      volume: detail.volume || "",
+      page: detail.page || "",
+      deedType: detail.deedType ?? "",
+      pid: detail.pid || detail.fields.parcelId || "",
+      mailingStreet: detail.mailingStreet || "",
+      mailingCity: detail.mailingCity || "",
+      mailingState: detail.mailingState || "",
+      mailingZip: detail.mailingZip || "",
+      grantors: nextGrantors.join("\n"),
+      grantees: nextGrantees.join("\n")
+    });
     setSaved(!detail.fields.isDraft && Boolean(detail.fields.grantor || detail.grantors?.length));
+  }
+
+  function confidenceChip(key: string, current: string): string | undefined {
+    if (extractedValues[key] !== undefined && current !== extractedValues[key]) {
+      return "Edited";
+    }
+    const score = extractConfidence[key];
+    if (score == null) {
+      return undefined;
+    }
+    if (score >= 0.85) return "High";
+    if (score >= 0.6) return "Med";
+    return "Low";
   }
 
   async function load(documentId: string) {
@@ -372,15 +404,7 @@ export default function ReviewPage() {
           <button className="ghost" type="button" disabled={!doc.nextId} onClick={() => doc.nextId && navigate(`/documents/${doc.nextId}`)}>
             Next
           </button>
-          <button
-            className="ghost"
-            type="button"
-            disabled={!canEdit}
-            onClick={async () => {
-              await endpoints.retry(doc.id);
-              await load(doc.id);
-            }}
-          >
+          <button className="ghost" type="button" disabled={!canEdit} onClick={() => setPendingReExtract(true)}>
             Retry
           </button>
           <button
@@ -402,16 +426,8 @@ export default function ReviewPage() {
 
       {showFailedBanner && (
         <div className="alert-bar" data-testid="ocr-failed-banner">
-          <span>{doc.errorMessage ?? "OCR failed — incomplete fields. Retry extract."}</span>
-          <button
-            className="primary"
-            type="button"
-            disabled={!canEdit}
-            onClick={async () => {
-              await endpoints.retry(doc.id);
-              await load(doc.id);
-            }}
-          >
+          <span>{doc.errorMessage ?? "AI extract failed — incomplete fields. Retry extract."}</span>
+          <button className="primary" type="button" disabled={!canEdit} onClick={() => setPendingReExtract(true)}>
             Retry Extract
           </button>
         </div>
@@ -515,7 +531,7 @@ export default function ReviewPage() {
               <h2>Extracted Fields</h2>
               {isFailed && <span className="field-incomplete-tag">Incomplete</span>}
             </div>
-            {isFailed && <p className="muted">Incomplete fields — Retry extract to fill from OCR.</p>}
+            {isFailed && <p className="muted">Incomplete fields — Retry extract to fill from AI.</p>}
 
             <PartyList
               label="Grantors"
@@ -526,6 +542,7 @@ export default function ReviewPage() {
               onChange={(index, value) => setParty("grantor", index, value)}
               onAdd={() => addParty("grantor")}
               onRemove={(index, value) => requestRemove("grantor", index, value)}
+              confidence={confidenceChip("grantors", grantors.join("\n"))}
             />
             <PartyList
               label="Grantees"
@@ -536,6 +553,7 @@ export default function ReviewPage() {
               onChange={(index, value) => setParty("grantee", index, value)}
               onAdd={() => addParty("grantee")}
               onRemove={(index, value) => requestRemove("grantee", index, value)}
+              confidence={confidenceChip("grantees", grantees.join("\n"))}
             />
 
             <Field
@@ -548,6 +566,7 @@ export default function ReviewPage() {
               }}
               readOnly={!canEdit}
               incomplete={isFailed && !documentNumber}
+              confidence={confidenceChip("documentNumber", documentNumber)}
             />
             <div className="field-pair">
               <Field
@@ -559,6 +578,7 @@ export default function ReviewPage() {
                   markDirty();
                 }}
                 readOnly={!canEdit}
+                confidence={confidenceChip("volume", volume)}
               />
               <Field
                 label="Page"
@@ -569,10 +589,14 @@ export default function ReviewPage() {
                   markDirty();
                 }}
                 readOnly={!canEdit}
+                confidence={confidenceChip("page", page)}
               />
             </div>
             <label>
-              <LabelWithHelp helpKey="review.deedType">Deed Type</LabelWithHelp>
+              <span className="field-label-text">
+                <LabelWithHelp helpKey="review.deedType">Deed Type</LabelWithHelp>
+                <ConfidenceChip value={confidenceChip("deedType", deedType)} />
+              </span>
               <select
                 value={deedType}
                 disabled={!canEdit}
@@ -614,6 +638,7 @@ export default function ReviewPage() {
               }}
               readOnly={!canEdit}
               incomplete={isFailed && !pid}
+              confidence={confidenceChip("pid", pid)}
             />
 
             <fieldset className="mailing-fields">
@@ -628,6 +653,7 @@ export default function ReviewPage() {
                   markDirty();
                 }}
                 readOnly={!canEdit}
+                confidence={confidenceChip("mailingStreet", mailingStreet)}
               />
               <div className="field-triple">
                 <Field
@@ -638,6 +664,7 @@ export default function ReviewPage() {
                     markDirty();
                   }}
                   readOnly={!canEdit}
+                  confidence={confidenceChip("mailingCity", mailingCity)}
                 />
                 <Field
                   label="Mailing State"
@@ -647,6 +674,7 @@ export default function ReviewPage() {
                     markDirty();
                   }}
                   readOnly={!canEdit}
+                  confidence={confidenceChip("mailingState", mailingState)}
                 />
                 <Field
                   label="Mailing ZIP"
@@ -656,6 +684,7 @@ export default function ReviewPage() {
                     markDirty();
                   }}
                   readOnly={!canEdit}
+                  confidence={confidenceChip("mailingZip", mailingZip)}
                 />
               </div>
             </fieldset>
@@ -707,17 +736,22 @@ export default function ReviewPage() {
 
             {fields.isDraft && canEdit && <p className="muted">Draft — press Save to confirm field edits.</p>}
             <div className="row-actions">
-              <button
-                className="primary"
-                type="button"
-                disabled={!canEdit}
-                onClick={async () => {
-                  await endpoints.retry(doc.id);
-                  await load(doc.id);
-                }}
-              >
+              <button className="primary" type="button" disabled={!canEdit} onClick={() => setPendingReExtract(true)}>
                 Retry Extract
               </button>
+              {canAdmin && doc.aiRawBlobPath ? (
+                <button
+                  className="ghost"
+                  type="button"
+                  onClick={() =>
+                    endpoints.extractRaw(doc.id, `${doc.name}-extract.json`).catch((err) =>
+                      setError(err instanceof Error ? err.message : "Raw extract download failed.")
+                    )
+                  }
+                >
+                  Raw AI Extract
+                </button>
+              ) : null}
               <button className="ghost" type="button" disabled={!canEdit} onClick={(e) => void save(e, true)}>
                 Save Draft
               </button>
@@ -944,6 +978,20 @@ export default function ReviewPage() {
           }}
         />
       )}
+      {pendingReExtract && (
+        <ConfirmSheet
+          title="Re-extract this deed?"
+          body="AI will overwrite locked Review fields from the PDF. Human edits on this deed will be replaced."
+          confirmLabel="Re-extract"
+          onCancel={() => setPendingReExtract(false)}
+          onConfirm={async () => {
+            setPendingReExtract(false);
+            await endpoints.retry(doc.id);
+            await load(doc.id);
+            setNotice("Queued for AI extract");
+          }}
+        />
+      )}
     </section>
   );
 }
@@ -956,7 +1004,8 @@ function PartyList({
   incomplete,
   onChange,
   onAdd,
-  onRemove
+  onRemove,
+  confidence
 }: {
   label: string;
   helpKey: "review.grantors" | "review.grantees";
@@ -966,6 +1015,7 @@ function PartyList({
   onChange: (index: number, value: string) => void;
   onAdd: () => void;
   onRemove: (index: number, value: string) => void;
+  confidence?: string;
 }) {
   const kind = label === "Grantors" ? "Grantor" : "Grantee";
   return (
@@ -973,6 +1023,7 @@ function PartyList({
       <legend>
         <span className="field-label-text">
           <LabelWithHelp helpKey={helpKey}>{label}</LabelWithHelp>
+          <ConfidenceChip value={confidence} />
           {incomplete && <span className="field-incomplete-tag">Incomplete</span>}
         </span>
       </legend>
@@ -1006,13 +1057,21 @@ function PartyList({
   );
 }
 
+function ConfidenceChip({ value }: { value?: string }) {
+  if (!value) {
+    return null;
+  }
+  return <span className={`confidence-chip is-${value.toLowerCase()}`}>{value}</span>;
+}
+
 function Field({
   label,
   helpKey,
   value,
   onChange,
   readOnly,
-  incomplete
+  incomplete,
+  confidence
 }: {
   label: string;
   helpKey?: "review.documentNumber" | "review.volume" | "review.page" | "review.pid";
@@ -1020,11 +1079,13 @@ function Field({
   onChange: (value: string) => void;
   readOnly: boolean;
   incomplete?: boolean;
+  confidence?: string;
 }) {
   return (
     <label>
       <span className="field-label-text">
         {helpKey ? <LabelWithHelp helpKey={helpKey}>{label}</LabelWithHelp> : label}
+        <ConfidenceChip value={confidence} />
         {incomplete && <span className="field-incomplete-tag">Incomplete</span>}
       </span>
       <input

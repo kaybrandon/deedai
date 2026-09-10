@@ -9,6 +9,8 @@ public sealed class Document
     public required string Status { get; set; }
     public required string BlobPath { get; set; }
     public string? DiRawBlobPath { get; set; }
+    public string? AiRawBlobPath { get; set; }
+    public string? ExtractConfidenceJson { get; set; }
     public Guid? AssigneeUserId { get; set; }
     public UserAccount? Assignee { get; set; }
     public Guid? UploadedByUserId { get; set; }
@@ -42,6 +44,8 @@ public sealed class Document
         MailingZip ??= "";
         Grantors ??= [];
         Grantees ??= [];
+        AiRawBlobPath ??= "";
+        ExtractConfidenceJson ??= "";
     }
 
     public string? EffectivePid => string.IsNullOrWhiteSpace(Pid) ? Fields?.ParcelId : Pid;

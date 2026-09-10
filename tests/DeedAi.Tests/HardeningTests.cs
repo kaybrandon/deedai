@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using DeedAi.Domain;
-using DeedAi.Domain.Abstractions;
 using DeedAi.Domain.Entities;
 using DeedAi.Domain.Ocr;
 using DeedAi.Infrastructure;
@@ -408,7 +407,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         var processor = new OcrProcessor(
             db,
             blobs,
-            new DirtyFieldIntelligenceClient(),
+            new MockAiExtractClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
             new NullOcrNotifier(),
@@ -503,7 +502,7 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         var processor = new OcrProcessor(
             db,
             blobs,
-            new BrokenJsonIntelligenceClient(),
+            new MockAiExtractClient(),
             Microsoft.Extensions.Options.Options.Create(new OcrOptions()),
             NullLogger<OcrProcessor>.Instance,
             new NullOcrNotifier(),
@@ -571,43 +570,10 @@ public sealed class HardeningTests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("StorageConnection", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("DocumentIntelligenceKey", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("BISDocumentIntelligenceEndpoint", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AzureOpenAIKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AzureOpenAIEndpoint", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("JwtSigningKey", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ChangeMe", body, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private sealed class DirtyFieldIntelligenceClient : IDocumentIntelligenceClient
-    {
-        public Task<DocumentIntelligenceResult> AnalyzeAsync(string documentName, Stream pdf, CancellationToken cancellationToken)
-        {
-            _ = documentName;
-            _ = pdf;
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new DocumentIntelligenceResult
-            {
-                RawJson = """{"ok":true}""",
-                Fields = new ExtractedDeedFields
-                {
-                    Grantor = "\"Jane Example\"",
-                    Grantee = "Acme Holdings LLC",
-                    ParcelId = "N/A"
-                }
-            });
-        }
-    }
-
-    private sealed class BrokenJsonIntelligenceClient : IDocumentIntelligenceClient
-    {
-        public Task<DocumentIntelligenceResult> AnalyzeAsync(string documentName, Stream pdf, CancellationToken cancellationToken)
-        {
-            _ = documentName;
-            _ = pdf;
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new DocumentIntelligenceResult
-            {
-                RawJson = "not-json{",
-                Fields = new ExtractedDeedFields()
-            });
-        }
     }
 
     private sealed class RecordingLogger : Microsoft.Extensions.Logging.ILogger<DatabaseSeeder>

@@ -1421,6 +1421,23 @@ progress { width: 220px; height: 10px; }
   font-size: 12px;
   padding: 0 2px;
 }
+.confidence-chip {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 0 6px;
+  min-height: 18px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  align-items: center;
+  border: 1px solid transparent;
+}
+.confidence-chip.is-high { background: var(--ready-bg); color: var(--ready-fg); }
+.confidence-chip.is-med { background: var(--processing-bg); color: var(--processing-fg); }
+.confidence-chip.is-low { background: var(--failed-bg); color: var(--failed-fg); border-color: var(--failed-border); }
+.confidence-chip.is-edited { background: var(--review-bg); color: var(--review-fg); }
 .field-incomplete-tag {
   display: inline-flex;
   margin-left: 6px;

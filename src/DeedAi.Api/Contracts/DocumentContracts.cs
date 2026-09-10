@@ -71,7 +71,9 @@ public sealed record DocumentDetail(
     string? MailingState = null,
     string? MailingZip = null,
     IReadOnlyList<string>? Grantors = null,
-    IReadOnlyList<string>? Grantees = null);
+    IReadOnlyList<string>? Grantees = null,
+    string? AiRawBlobPath = null,
+    IReadOnlyDictionary<string, double>? ExtractConfidence = null);
 
 public sealed record FieldDraft(
     string? Grantor,
@@ -154,6 +156,8 @@ public sealed record CatalogStatusRequest(string? CatalogStatus);
 public sealed record AssignRequest(Guid? AssigneeUserId);
 
 public sealed record BulkAssignRequest(IReadOnlyList<Guid> DocumentIds, Guid? AssigneeUserId);
+
+public sealed record ReExtractRequest(IReadOnlyList<Guid> DocumentIds);
 
 public sealed record SetFlagsRequest(IReadOnlyList<Guid> FlagIds);
 

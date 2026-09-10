@@ -35,6 +35,7 @@ public sealed record DetailedHealth(
     HealthCheckStatus Queue,
     HealthCheckStatus Blob,
     HealthCheckStatus DocumentIntelligence,
+    HealthCheckStatus AzureOpenAI,
     HealthCheckStatus OcrPipeline,
     OcrQueueVisibility OcrQueue);
 
@@ -42,7 +43,7 @@ public sealed class RuntimeHealth(
     DeedAiDbContext db,
     IBlobStorage storage,
     IOcrJobQueue queue,
-    IDocumentIntelligenceClient documentIntelligence,
+    IAiExtractClient extract,
     OcrHealthRecorder ocrHealth,
     IOptions<OcrOptions> ocrOptions,
     IConfiguration configuration)
@@ -59,7 +60,8 @@ public sealed class RuntimeHealth(
         var storageCheck = await CheckStorageAsync(cancellationToken);
         var queueCheck = await CheckQueueAsync(cancellationToken);
         var blob = await CheckBlobReadWriteAsync(cancellationToken);
-        var di = await CheckDocumentIntelligenceAsync(cancellationToken);
+        var di = DocumentIntelligenceRemoved();
+        var azureOpenAi = await CheckAzureOpenAIAsync(cancellationToken);
         var signals = await ocrHealth.ReadAsync(cancellationToken);
         var pipeline = CheckOcrPipeline(queueCheck, signals);
         var visibility = await ReadQueueVisibilityAsync(signals, cancellationToken);
@@ -67,7 +69,7 @@ public sealed class RuntimeHealth(
                       && storageCheck.Reachable
                       && queueCheck.Reachable
                       && blob.Reachable
-                      && di.Reachable
+                      && azureOpenAi.Reachable
                       && pipeline.Reachable
             ? "ok"
             : "degraded";
@@ -79,6 +81,7 @@ public sealed class RuntimeHealth(
             queueCheck,
             blob,
             di,
+            azureOpenAi,
             pipeline,
             visibility);
     }
@@ -167,18 +170,29 @@ public sealed class RuntimeHealth(
         }
     }
 
-    private async Task<HealthCheckStatus> CheckDocumentIntelligenceAsync(CancellationToken cancellationToken)
+    private static HealthCheckStatus DocumentIntelligenceRemoved() =>
+        new("ok", true, "Removed", "Removed — AI extract only", false);
+
+    private async Task<HealthCheckStatus> CheckAzureOpenAIAsync(CancellationToken cancellationToken)
     {
-        var configured = IsDocumentIntelligenceConfigured(configuration);
-        var mode = SanitizeMode(configured ? "Azure" : "Mock");
+        var options = DependencyInjection.BindAzureOpenAI(configuration);
+        var mock = string.Equals(options.Mode, "Mock", StringComparison.OrdinalIgnoreCase);
+        var configured = mock
+                         || (HasRealValue(options.Endpoint) && HasRealValue(options.Key) && HasRealValue(options.Deployment));
+        var mode = SanitizeMode(mock ? "Mock" : configured ? "Azure" : "Unconfigured");
         try
         {
-            var reachable = await documentIntelligence.CanReachAsync(cancellationToken);
-            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, null, configured);
+            var reachable = await extract.CanReachAsync(cancellationToken);
+            var detail = mock
+                ? "Mock extract"
+                : configured
+                    ? "Field fill"
+                    : "Fail closed";
+            return new HealthCheckStatus(reachable ? "ok" : "fail", reachable, mode, detail, configured);
         }
         catch
         {
-            return new HealthCheckStatus("fail", false, mode, null, configured);
+            return new HealthCheckStatus("fail", false, mode, "Fail closed", configured);
         }
     }
 
@@ -250,15 +264,6 @@ public sealed class RuntimeHealth(
             FormatTimestamp(signals.LastDiFailAt));
     }
 
-    internal static bool IsDocumentIntelligenceConfigured(IConfiguration configuration)
-    {
-        var endpoint = DependencyInjection.FirstValue(
-            configuration, "BISDocumentIntelligenceEndpoint", "DocumentIntelligence:Endpoint");
-        var key = DependencyInjection.FirstValue(
-            configuration, "DocumentIntelligenceKey", "DocumentIntelligence:Key");
-        return HasRealValue(endpoint) && HasRealValue(key);
-    }
-
     private static bool HasRealValue(string? value) =>
         !string.IsNullOrWhiteSpace(value)
         && !value.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase);
@@ -278,6 +283,8 @@ public sealed class RuntimeHealth(
         if (string.Equals(mode, "Local", StringComparison.OrdinalIgnoreCase)) return "Local";
         if (string.Equals(mode, "Http", StringComparison.OrdinalIgnoreCase)) return "Http";
         if (string.Equals(mode, "Mock", StringComparison.OrdinalIgnoreCase)) return "Mock";
+        if (string.Equals(mode, "Unconfigured", StringComparison.OrdinalIgnoreCase)) return "Unconfigured";
+        if (string.Equals(mode, "Removed", StringComparison.OrdinalIgnoreCase)) return "Removed";
         return "unknown";
     }
 }

@@ -87,6 +87,11 @@ public sealed class AdminDocumentsController(DeedAiDbContext db, IBlobStorage bl
             {
                 await blobs.DeleteAsync(document.DiRawBlobPath, cancellationToken);
             }
+
+            if (!string.IsNullOrWhiteSpace(document.AiRawBlobPath))
+            {
+                await blobs.DeleteAsync(document.AiRawBlobPath, cancellationToken);
+            }
         }
         catch (IOException)
         {

@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-6-AI-EXTRACT-AC.md](docs/PHASE-6-AI-EXTRACT-AC.md) — Phase 6 AI extract
 - [PHASE-5.2.3-SOFTWARE-DEPTH-AC.md](docs/PHASE-5.2.3-SOFTWARE-DEPTH-AC.md) — Phase 5.2.3 Software settings depth
 - [PHASE-5.2.4-DELETE-POLICY-AC.md](docs/PHASE-5.2.4-DELETE-POLICY-AC.md) — Phase 5.2.4 Delete Policy
 - Phase 1 wires: [login](docs/wires/01-login.png) · [dashboard](docs/wires/02-dashboard.png) · [documents](docs/wires/03-documents.png) · [upload](docs/wires/04-upload.png) · [review](docs/wires/05-review.png)
@@ -28,10 +29,19 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | OCR worker | .NET 10 worker on Azure Storage Queue `ocr-jobs` (long-poll, not a 1s loop) |
 | Layout | **A** — one Windows App Service host serves API + SPA |
 | SQL | Azure SQL `deedaihost01` / `dbdeedai` (SQLite for local/dev) |
-| Storage | `stbisdeedai` container `deeds`; Document Intelligence raw JSON stored in blob with a pointer |
+| Storage | `stbisdeedai` container `deeds`; AI extract raw JSON stored in blob (`ai-raw/`) with a pointer |
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
-Document Intelligence may live in **Central US**. Configure the **explicit endpoint**; do not assume it is in the same region as the app.
+**Brandon lock:** Azure OpenAI in the **same subscription** as `appdeedai`, cheapest capable chat model (`gpt-4o-mini` class). KV-only keys via App Setting references: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before any spend bump or pricier model. Document Intelligence field-fill is **removed** — leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` are ignored.
+
+## Phase 6 acceptance
+
+- **AI PDF → locked Review fields:** Azure OpenAI fills `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. Human edit loop stays on Review. Re-extract uses ConfirmSheet.
+- **One path:** Document Intelligence field-fill is removed after cutover. No dual path and no feature flag that leaves both. Human edit / ConfirmSheet stay. Queue / worker / ribbon remain. Unconfigured Azure OpenAI fails closed (no silent mock in Azure).
+- **Brandon lock:** same-subscription Azure OpenAI · `gpt-4o-mini` class · KV App Setting names · do not raise quotas · escalate spend to CoS before a pricier model.
+- **Carry:** Mask F Review · Client/Software · no CAMA · Designer-first `20260910040000_Phase6AiExtract` · health 200.
+- **Should:** Confidence chips · batch re-extract · raw AI blob audit (`ai-raw/{id}.json`).
+- **Won’t:** Azure deploy · County/CAMA · Super Admin · quota increase.
 
 ## Phase 5.2.5 acceptance
 
@@ -252,7 +262,7 @@ Seeded local users (password `ChangeMe!1`):
 | uploader@bisconsultants.com | Uploader |
 | viewer@bisconsultants.com | Viewer |
 
-Copy `.env.example` and set placeholders. Empty Document Intelligence endpoint/key uses the **mock** extractor (`Scan_bad.pdf` / names containing `fail` go to Failed).
+Copy `.env.example` and set placeholders. Local extract uses `AzureOpenAI:Mode=Mock` (`Scan_bad.pdf` / names containing `fail` go to Failed). Unconfigured Azure OpenAI fails closed.
 
 With `Queue__Mode=InMemory` and `Ocr__RunInProcess=true` the API hosts the worker in-process so local uploads complete without Azure. In Azure, set `Queue__Mode=Azure` and run `DeedAi.Worker` (or the WebJob packed by the publish script).
 
@@ -284,8 +294,10 @@ Suggested production App Settings / Key Vault names (placeholders only):
 ```
 AdminSeedPassword
 JwtSigningKey
-DocumentIntelligenceKey
-BISDocumentIntelligenceEndpoint
+AzureOpenAIEndpoint
+AzureOpenAIKey
+AzureOpenAIDeployment
+AzureOpenAIModel
 StorageConnection
 SqlConnection
 SendGridApiKey
@@ -305,7 +317,7 @@ Ocr__RunInProcess=false
 Session__IdleTimeoutMinutes=30
 ```
 
-Document Intelligence uses **BISDocumentIntelligenceEndpoint** + **DocumentIntelligenceKey**. Leftover `DocumentIntelligenceEndpoint` is ignored. The DI resource may be Central US — set the explicit endpoint.
+Phase 6 extract uses **AzureOpenAIEndpoint** + **AzureOpenAIKey** + **AzureOpenAIDeployment**. Leftover Document Intelligence App Setting names are ignored and are not a field-fill path.
 
 ## RBAC
 
