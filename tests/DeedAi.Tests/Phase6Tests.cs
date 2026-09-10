@@ -201,13 +201,23 @@ public sealed class Phase6Tests
     [Fact]
     public void Pricier_model_is_rejected_without_cos_override()
     {
+        Assert.Equal("gpt-4o-mini", AiExtractModels.Default);
         var settings = new AzureOpenAIOptions { Model = "gpt-4o", AllowPricierModel = false };
         var thrown = Assert.Throws<InvalidOperationException>(() => AzureOpenAIExtractClient.EnsureCheapModel(settings));
         Assert.Contains("Chief of Staff", thrown.Message, StringComparison.Ordinal);
         Assert.Contains("gpt-4o", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains("Do not raise quotas", thrown.Message, StringComparison.Ordinal);
 
-        AzureOpenAIExtractClient.EnsureCheapModel(new AzureOpenAIOptions { Model = "gpt-4o-mini" });
-        AzureOpenAIExtractClient.EnsureCheapModel(new AzureOpenAIOptions { Model = "gpt-4o", AllowPricierModel = true });
+        var viaDeployment = Assert.Throws<InvalidOperationException>(() =>
+            AzureOpenAIExtractClient.EnsureCheapModel(new AzureOpenAIOptions
+            {
+                Model = "gpt-4o-mini",
+                Deployment = "gpt-4o"
+            }));
+        Assert.Contains("Chief of Staff", viaDeployment.Message, StringComparison.Ordinal);
+
+        AzureOpenAIExtractClient.EnsureCheapModel(new AzureOpenAIOptions { Model = "gpt-4o-mini", Deployment = "deed-extract" });
+        AzureOpenAIExtractClient.EnsureCheapModel(new AzureOpenAIOptions { Model = "gpt-4o", Deployment = "gpt-4o", AllowPricierModel = true });
         Assert.True(AiExtractModels.IsCheap("gpt-4o-mini"));
         Assert.True(AiExtractModels.IsPricier("o1"));
     }
@@ -260,13 +270,27 @@ public sealed class Phase6Tests
             ["AzureOpenAIEndpoint"] = "https://example.openai.azure.com/",
             ["AzureOpenAIKey"] = "secret",
             ["AzureOpenAIDeployment"] = "gpt-4o-mini",
-            ["AzureOpenAIModel"] = "gpt-4o-mini"
+            ["AzureOpenAIModel"] = "gpt-4o-mini",
+            ["ConnectionStrings:AzureOpenAIKey"] = "connection-string-must-not-bind"
         }).Build();
         var options = DependencyInjection.BindAzureOpenAI(config);
         Assert.Equal("https://example.openai.azure.com/", options.Endpoint);
         Assert.Equal("secret", options.Key);
         Assert.Equal("gpt-4o-mini", options.Deployment);
+        Assert.Equal("gpt-4o-mini", options.Model);
         Assert.False(options.AllowPricierModel);
+
+        var empty = DependencyInjection.BindAzureOpenAI(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        Assert.Equal("gpt-4o-mini", empty.Model);
+        Assert.Null(empty.Key);
+        Assert.False(empty.AllowPricierModel);
+
+        var bind = Read("src/DeedAi.Infrastructure/DependencyInjection.cs");
+        Assert.Contains("AzureOpenAIEndpoint", bind, StringComparison.Ordinal);
+        Assert.Contains("AzureOpenAIKey", bind, StringComparison.Ordinal);
+        Assert.Contains("AzureOpenAIDeployment", bind, StringComparison.Ordinal);
+        Assert.DoesNotContain("ConnectionStrings:AzureOpenAI", bind, StringComparison.Ordinal);
+        Assert.DoesNotContain("quota", Read("src/DeedAi.Infrastructure/Ocr/AzureOpenAIExtractClient.cs"), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

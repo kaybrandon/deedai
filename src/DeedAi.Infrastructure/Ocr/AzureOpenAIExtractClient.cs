@@ -83,7 +83,8 @@ public sealed class AzureOpenAIExtractClient(
             throw new InvalidOperationException(AiExtractModels.EscalateMessage(model));
         }
 
-        if (string.IsNullOrWhiteSpace(settings.Model)
+        // Azure calls the deployment. A pricier deployment name must not slip past a cheap Model default.
+        if (!string.IsNullOrWhiteSpace(settings.Deployment)
             && AiExtractModels.IsPricier(settings.Deployment))
         {
             throw new InvalidOperationException(AiExtractModels.EscalateMessage(settings.Deployment));

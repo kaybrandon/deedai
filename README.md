@@ -32,13 +32,13 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | Storage | `stbisdeedai` container `deeds`; AI extract raw JSON stored in blob (`ai-raw/`) with a pointer |
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
-Azure OpenAI extract uses the **same subscription** as `appdeedai`. Key Vault names: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before a pricier model. Document Intelligence field-fill is **removed** — leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` are ignored.
+**Brandon lock:** Azure OpenAI in the **same subscription** as `appdeedai`, cheapest capable chat model (`gpt-4o-mini` class). KV-only keys via App Setting references: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before any spend bump or pricier model. Document Intelligence field-fill is **removed** — leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` are ignored.
 
 ## Phase 6 acceptance
 
 - **AI PDF → locked Review fields:** Azure OpenAI fills `documentNumber`, `volume`, `page`, `deedType`, `pid`, `mailingStreet`, `mailingCity`, `mailingState`, `mailingZip`, `grantors[]`, `grantees[]`. Human edit loop stays on Review. Re-extract uses ConfirmSheet.
 - **One path:** Document Intelligence field-fill is removed after cutover. No dual path and no feature flag that leaves both. Human edit / ConfirmSheet stay. Queue / worker / ribbon remain. Unconfigured Azure OpenAI fails closed (no silent mock in Azure).
-- **KV model keys** on the same subscription. Default model `gpt-4o-mini`. Do not raise quotas. Escalate spend to CoS before a pricier model.
+- **Brandon lock:** same-subscription Azure OpenAI · `gpt-4o-mini` class · KV App Setting names · do not raise quotas · escalate spend to CoS before a pricier model.
 - **Carry:** Mask F Review · Client/Software · no CAMA · Designer-first `20260910040000_Phase6AiExtract` · health 200.
 - **Should:** Confidence chips · batch re-extract · raw AI blob audit (`ai-raw/{id}.json`).
 - **Won’t:** Azure deploy · County/CAMA · Super Admin · quota increase.

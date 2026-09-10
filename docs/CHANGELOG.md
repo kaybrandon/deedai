@@ -3,7 +3,7 @@
 ## 2026-09-10 — Phase 6 AI extract
 - Azure OpenAI (same subscription, `gpt-4o-mini` default) fills locked Review fields from the PDF. Document Intelligence field-fill is removed (no dual path, no flag leaving both). Fail closed if KV keys are missing.
 - Human edit loop stays. Re-extract (single + batch) uses ConfirmSheet. Confidence chips and raw AI blob audit (`ai-raw/{id}.json`) are Should.
-- KV names: AzureOpenAIEndpoint · AzureOpenAIKey · AzureOpenAIDeployment · AzureOpenAIModel. Do not raise quotas. Escalate spend to CoS before a pricier model.
+- Brandon lock: same-subscription Azure OpenAI, `gpt-4o-mini` class, KV App Setting names only. Do not raise quotas. Escalate spend to CoS before a pricier model or deployment.
 - Designer-first EF migration `20260910040000_Phase6AiExtract` adds null-safe AiRawBlobPath / ExtractConfidenceJson. Client/Software only. Health 200. No Azure deploy.
 
 ## 2026-09-10 — Phase 5.2.5 Statuses catalog
