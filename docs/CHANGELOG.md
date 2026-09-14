@@ -1,5 +1,9 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-14 — Phase 7 GIS SoT chrome (Brandon visual lock)
+- Follow-up after #43 still read as Mask F soft shell. Header is now full-width teal `#0D8A7F` above a light gray rail `#F0F2F5` (no sider wordmark, no mint hover wash). Footer uses a teal rule. Login shows AdminSeed / QA demo credentials.
+- Density: tighter page titles, dashboard cards/charts, and packing. Documents keeps the 6.1 pane. Primary accent stays `#0D8A7F` (GIS Ant blue `#1890ff` not adopted).
+
 ## 2026-09-14 — Phase 7 GIS chrome
 - SPA shell matches live GIS visual chrome: Mask F teal `#0D8A7F` header band, light rail with teal small-cap labels, gold `#E8C547` export chips, Powered By BIS Consultants footer.
 - Density: 32px table rows, tighter forms/filters/Review stacks. Documents keeps the 6.1 ~8–12 row scroll pane and catalog-only status chrome.

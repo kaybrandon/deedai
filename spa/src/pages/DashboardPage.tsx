@@ -137,7 +137,6 @@ export default function DashboardPage() {
       <header className="page-head">
         <div>
           <h1 className="no-print">Dashboard</h1>
-          <p className="page-kicker no-print">Counts and charts for Clients you can access.</p>
           <div className="dashboard-print-head print-only">
             <h1>{printTitle}</h1>
             <p>

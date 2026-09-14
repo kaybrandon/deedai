@@ -38,7 +38,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 ## Phase 7 acceptance
 
-- **GIS chrome:** Teal header band (`#0D8A7F`) · light rail with teal small-cap labels · gold export chips (`#E8C547`) · Powered By BIS Consultants footer. Not a dark sidebar.
+- **GIS chrome:** Full-width teal header band (`#0D8A7F`) **above** a light gray rail (`#F0F2F5`) with teal small-cap labels · gold export chips (`#E8C547`) · obvious Powered By BIS Consultants footer. Not a dark sidebar and not a Mask F sider wordmark.
 - **Density:** GIS-level packing. Documents keeps the 6.1 ~8–12 row sticky pane with 32px rows. Review keeps 3-col IA plus a compact teal title band and primary Save.
 - **Status-first:** Settings Statuses catalog first. Documents Status filter first. Ribbon stays stage-only. One catalog Status toolbar. Row chip catalog-only.
 - **Carry:** Phase 6 AI extract · 6.1 Documents Musts · Settings→System nest · no `?` pills · no glass/gradients · ConfirmSheet-only shadows · Client/Software only.

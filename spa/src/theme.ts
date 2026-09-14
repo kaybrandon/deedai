@@ -1,6 +1,6 @@
-/** Mask F tokens + GIS chrome. Primary accent stays Mask F teal; header/rail follow live GIS light chrome. */
+/** GIS SoT chrome: full-width teal header + light gray rail. Accent stays Mask F teal. */
 export const maskF = {
-  rail: "#FFFFFF",
+  rail: "#F0F2F5",
   navy: "#1E2430",
   canvas: "#F0F2F5",
   surface: "#FFFFFF",
