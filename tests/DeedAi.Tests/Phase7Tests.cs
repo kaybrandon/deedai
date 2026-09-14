@@ -71,6 +71,14 @@ public sealed class Phase7Tests
         Assert.Contains(".documents-table thead th", css, StringComparison.Ordinal);
         Assert.Contains("position: sticky", css, StringComparison.Ordinal);
         Assert.Contains("--action-h: 44px", css, StringComparison.Ordinal);
+        Assert.Contains(".documents-table .documents-status-assign", css, StringComparison.Ordinal);
+        Assert.Contains(".documents-table .documents-status-assign select", css, StringComparison.Ordinal);
+        var statusAssign = SliceBetween(css, ".documents-status-assign {", ".token-row");
+        Assert.Contains("min-height: var(--table-row-h)", statusAssign, StringComparison.Ordinal);
+        Assert.DoesNotContain("--action-h", statusAssign, StringComparison.Ordinal);
+        var tableControls = SliceBetween(css, ".documents-table tbody input,", ".documents-table thead th");
+        Assert.Contains("max-height: var(--table-row-h)", tableControls, StringComparison.Ordinal);
+        Assert.DoesNotContain("--action-h", tableControls, StringComparison.Ordinal);
         Assert.DoesNotContain("radial-gradient", css, StringComparison.Ordinal);
         Assert.DoesNotContain("backdrop-filter", css, StringComparison.Ordinal);
     }

@@ -892,8 +892,46 @@ input.documents-search {
   padding: var(--cell-pad-y) var(--cell-pad-x);
   height: var(--row-h);
   min-height: var(--row-h);
+  max-height: var(--row-h);
   vertical-align: middle;
   white-space: nowrap;
+}
+.documents-table tbody td {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.documents-table tbody input,
+.documents-table tbody select,
+.documents-table tbody button,
+.documents-table tbody .ghost,
+.documents-table tbody .primary {
+  min-height: var(--table-row-h);
+  height: var(--table-row-h);
+  max-height: var(--table-row-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
+}
+.documents-table tbody input[type="checkbox"] {
+  min-height: 16px;
+  height: 16px;
+  max-height: var(--table-row-h);
+  width: 16px;
+  min-width: 16px;
+  padding: 0;
+  margin: 0;
+}
+.documents-table .documents-status-assign,
+.documents-table .documents-status-assign select {
+  min-height: var(--table-row-h);
+  height: var(--table-row-h);
+  max-height: var(--table-row-h);
+  min-width: var(--table-row-h);
+}
+.documents-table .th-sort {
+  min-height: var(--table-row-h);
+  height: var(--table-row-h);
+  max-height: var(--table-row-h);
 }
 .documents-table thead th {
   position: sticky;
@@ -1192,8 +1230,10 @@ input.documents-search {
   position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: var(--action-h);
-  min-width: var(--action-h);
+  min-height: var(--table-row-h);
+  min-width: var(--table-row-h);
+  height: var(--table-row-h);
+  max-height: var(--table-row-h);
 }
 .documents-status-assign .chip { pointer-events: none; }
 .documents-status-assign select {
@@ -1201,8 +1241,10 @@ input.documents-search {
   inset: 0;
   opacity: 0;
   cursor: pointer;
-  min-height: var(--action-h);
-  min-width: var(--action-h);
+  min-height: var(--table-row-h);
+  min-width: var(--table-row-h);
+  max-height: var(--table-row-h);
+  height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;

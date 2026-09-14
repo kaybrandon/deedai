@@ -2,8 +2,9 @@
 
 ## 2026-09-14 — Phase 7.1 GIS shell CSS 1:1 (live bundle)
 - CoS/BA lock: same CSS/HTML as live GIS, not another token tweak. #44 Azure Pass held.
+- Re-fetched live sheet after GIS redeploy: custom CSS now tracks `index--oIitrwY.css` (adds `.page-head` + connections/enroll helpers). AppShell HTML unchanged.
 - Ships verbatim live GIS custom CSS (`spa/src/gis-shell.css` from `index--oIitrwY.css`) plus Ant 5 layout/menu/card rules GIS applies via cssinjs (`gis-ant-layout.css`).
-- AppShell DOM stays GIS (`app-shell` → sider brand + dark menu → `app-header` → `content-wrap`). Footer is GIS `powered-by` `<p>`. Page titles use Ant Title h3 density (24px / 600). Document shell no longer loads Inter webfont (GIS system stack wins). Table rows stay 32px. Deed AI IA/AdminSeed kept.
+- AppShell DOM stays GIS (`app-shell` → sider brand + dark menu → `app-header` → `content-wrap`). Footer is GIS `powered-by` `<p>`. Page titles use Ant Title h3 density (24px / 600). Document shell no longer loads Inter webfont (GIS system stack wins). Documents grid drops `--action-h` so status/assignee/actions/checkbox are `--table-row-h` (32px). ≥44px taps stay outside the table. Deed AI IA/AdminSeed kept.
 
 ## 2026-09-14 — Phase 7 GIS shell HTML 1:1 (FAIL after #44)
 - Brandon after #44: dark sider existed but chrome still was not GIS (Deed AI title band + gold Export + soft SaaS cards).
