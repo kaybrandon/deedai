@@ -7,9 +7,7 @@ export default function AuthLayout() {
       <div className="login-page-body">
         <Outlet />
       </div>
-      <div className="powered-by powered-by-on-dark">
-        <SiteFooter />
-      </div>
+      <SiteFooter onDark />
     </div>
   );
 }

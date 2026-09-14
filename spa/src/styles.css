@@ -618,7 +618,7 @@ h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
 }
 .page { padding: 0; min-width: 0; max-width: none; }
 .page.has-ocr-ribbon { padding-top: 0; }
-.page-title { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.3; color: var(--mask-text); }
+.page-title { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.333; color: var(--mask-text); }
 .dashboard-title-row { margin-bottom: 8px; align-items: center; }
 .dashboard-page .page-kicker { margin: 2px 0 0; font-size: 13px; color: var(--mask-text-secondary); }
 .page-detail { max-width: var(--detail-w); }
@@ -656,7 +656,7 @@ h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
   flex-wrap: wrap;
   margin-bottom: 6px;
 }
-.page-head h1 { font-size: 16px; font-weight: 800; }
+.page-head h1 { font-size: 24px; font-weight: 600; line-height: 1.333; }
 .review-header,
 .title-band {
   align-items: center;
@@ -1017,12 +1017,13 @@ input.documents-search {
 }
 .profile-clients .empty-state { border-style: dashed; }
 
+.dashboard-page { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .cards, .kpi-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 0;
 }
 .ant-card,
 .chart-card, .chart-card-wide {
