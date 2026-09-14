@@ -11,11 +11,25 @@ public sealed class Phase7Tests
         var footer = Read("spa/src/components/SiteFooter.tsx");
 
         Assert.Contains("data-chrome=\"gis\"", shell, StringComparison.Ordinal);
+        Assert.Contains("className=\"app-shell", shell, StringComparison.Ordinal);
+        Assert.Contains("className=\"app-header", shell, StringComparison.Ordinal);
+        Assert.Contains("className=\"content-wrap", shell, StringComparison.Ordinal);
         Assert.Contains("className=\"brand\"", shell, StringComparison.Ordinal);
+        Assert.Contains("BIS Consultants ·", shell, StringComparison.Ordinal);
+        Assert.Contains("All Clients", shell, StringComparison.Ordinal);
+        Assert.DoesNotContain("Work Items", shell, StringComparison.Ordinal);
         Assert.True(
             shell.IndexOf("id=\"app-sidebar\"", StringComparison.Ordinal)
             < shell.IndexOf("className=\"topbar\"", StringComparison.Ordinal),
             "Dark sider must be full-height left of the white utility header.");
+        Assert.Contains("--mask-sider: #001529", css, StringComparison.Ordinal);
+        Assert.Contains("--mask-primary: #1890ff", css, StringComparison.Ordinal);
+        Assert.Contains("--mask-header: #fff", css, StringComparison.Ordinal);
+        Assert.Contains("--mask-bg: #f0f2f5", css, StringComparison.Ordinal);
+        Assert.Contains("--mask-radius: 2px", css, StringComparison.Ordinal);
+        Assert.Contains(".app-header", css, StringComparison.Ordinal);
+        Assert.Contains(".filter-toolbar", css, StringComparison.Ordinal);
+        Assert.Contains(".kpi-card", css, StringComparison.Ordinal);
         Assert.Contains("--rail: #001529", css, StringComparison.Ordinal);
         Assert.Contains("--rail-menu: #000c17", css, StringComparison.Ordinal);
         Assert.Contains("--nav-active: #1890FF", css, StringComparison.Ordinal);
@@ -129,8 +143,12 @@ public sealed class Phase7Tests
         var reports = Read("spa/src/pages/ReportsPage.tsx");
         var ac = Read("docs/PHASE-7-GIS-CHROME-AC.md");
 
-        Assert.Contains("className=\"gold\"", dashboard, StringComparison.Ordinal);
+        Assert.Contains("className=\"filter-toolbar", dashboard, StringComparison.Ordinal);
+        Assert.Contains("kpi-card", dashboard, StringComparison.Ordinal);
+        Assert.Contains("app-header", Read("spa/src/components/AppShell.tsx"), StringComparison.Ordinal);
+        Assert.Contains("content-wrap", Read("spa/src/components/AppShell.tsx"), StringComparison.Ordinal);
         Assert.Contains("Export PDF", dashboard, StringComparison.Ordinal);
+        Assert.DoesNotContain("className=\"gold\"", dashboard, StringComparison.Ordinal);
         Assert.Contains("className=\"gold\"", reports, StringComparison.Ordinal);
         Assert.Contains("Phase 7", ac, StringComparison.Ordinal);
         Assert.Contains("#0D8A7F", ac, StringComparison.Ordinal);

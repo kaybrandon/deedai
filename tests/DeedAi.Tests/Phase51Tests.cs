@@ -18,7 +18,7 @@ public sealed class Phase51Tests
         Assert.Contains("data-theme=\"mask-f\"", html, StringComparison.Ordinal);
         Assert.Contains("background: var(--rail)", css, StringComparison.Ordinal);
         Assert.Contains("--sidebar-w: 220px", css, StringComparison.Ordinal);
-        Assert.Contains("--topbar-h: 56px", css, StringComparison.Ordinal);
+        Assert.Contains("--topbar-h: 64px", css, StringComparison.Ordinal);
         Assert.Contains("--ribbon-h: 42px", css, StringComparison.Ordinal);
         Assert.Contains("--action-h: 44px", css, StringComparison.Ordinal);
         Assert.Contains("--btn-h: 32px", css, StringComparison.Ordinal);

@@ -1,5 +1,10 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-14 — Phase 7 GIS shell HTML 1:1 (FAIL after #44)
+- Brandon after #44: dark sider existed but chrome still was not GIS (Deed AI title band + gold Export + soft SaaS cards).
+- Ported live GIS `app-shell` HTML/CSS: sider brand, white utility header (hamburger · Client breadcrumb · bell · profile), `filter-toolbar`, `kpi-card` icon chips, `ant-card` chart chrome. Gold Export is no longer dashboard shell identity.
+- Deed IA/copy stays: Dashboard/Documents/Upload/Reports/Sales/Restore/Settings→System · Client/Software · AdminSeed `/login`.
+
 ## 2026-09-14 — Phase 7 GIS Dashboard chrome (dark sider lock)
 - Brandon FAIL was pale sider + teal header. PASS SoT is live GIS Dashboard: sider `#001529`, menu nest `#000c17`, active `#1890FF`, white utility header, canvas `#F0F2F5`.
 - White/light rail is a Fail. Mask F teal `#0D8A7F` stays for charts/status only. Login keeps AdminSeed / QA demo. Documents rows stay 32px.

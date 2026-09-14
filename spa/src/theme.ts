@@ -1,5 +1,7 @@
-/** GIS Dashboard chrome (PASS SoT). Live GIS tokens from appgisdashboard CSS. */
+/** GIS Dashboard chrome (PASS SoT). Live GIS tokens from appgisdashboard CSS :root. */
 export const maskF = {
+  primary: "#1890ff",
+  primaryHover: "#40a9ff",
   rail: "#001529",
   railMenu: "#000c17",
   navy: "#1E2430",
@@ -12,6 +14,10 @@ export const maskF = {
   gold: "#E8C547",
   accent: "#3B82F6",
   navActive: "#1890FF",
+  maskText: "#000000d9",
+  maskTextSecondary: "#00000073",
+  maskBorder: "#f0f0f0",
+  maskRadius: "2px",
   ready: "#D8F0EA",
   readyFg: "#0B5F56",
   failed: "#F5D6D3",
