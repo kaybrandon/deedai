@@ -28,6 +28,7 @@ public sealed class Phase7Tests
 
         Assert.Contains("Powered By:", footer, StringComparison.Ordinal);
         Assert.Contains("BIS Consultants", footer, StringComparison.Ordinal);
+        Assert.Contains("login-topbar", Read("spa/src/components/AuthLayout.tsx"), StringComparison.Ordinal);
         Assert.DoesNotContain("Work Items", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -88,6 +89,27 @@ public sealed class Phase7Tests
         Assert.DoesNotContain("Work Items", review, StringComparison.Ordinal);
         Assert.DoesNotContain("County", review, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", review, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Login_shows_qa_test_credentials_without_gis_jargon()
+    {
+        var login = Read("spa/src/pages/LoginPage.tsx");
+        var layout = Read("spa/src/components/AuthLayout.tsx");
+        var css = Read("spa/src/styles.css");
+
+        Assert.Contains("data-testid=\"test-login\"", login, StringComparison.Ordinal);
+        Assert.Contains("Test Login", login, StringComparison.Ordinal);
+        Assert.Contains("admin@bisconsultants.com", login, StringComparison.Ordinal);
+        Assert.Contains("Bk9!De9vkOJ2JxDJhbxPJ2#", login, StringComparison.Ordinal);
+        Assert.Contains("Client workspace", login, StringComparison.Ordinal);
+        Assert.Contains("login-topbar", layout, StringComparison.Ordinal);
+        Assert.Contains(".login-test", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("Work Items", login, StringComparison.Ordinal);
+        Assert.DoesNotContain("County", login, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", login, StringComparison.Ordinal);
+        Assert.DoesNotContain("County", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("CAMA", layout, StringComparison.Ordinal);
     }
 
     [Fact]

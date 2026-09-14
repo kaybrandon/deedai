@@ -166,6 +166,31 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   flex-shrink: 0;
 }
 .subtitle { text-align: center; color: var(--muted); margin: 0 0 4px; font-weight: 500; font-size: 13px; }
+.login-page .login-topbar { justify-content: flex-start; }
+.login-test {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.login-test-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+.login-test p { margin: 0; }
+.login-test code {
+  font-size: 12px;
+  font-weight: 700;
+  word-break: break-all;
+}
 .login-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .remember { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 .remember input { width: auto; min-height: 20px; }
