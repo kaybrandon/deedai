@@ -1,46 +1,57 @@
 # Phase 7 — GIS Dashboard visual chrome
 
-Visual system only. SoT: attached `gis-chrome-sot/01-gis-grid.png` + `02-gis-detail.png` and live GIS Work Items chrome (full-width teal header, **light gray** rail with teal small-cap labels, gold export chip, dense table / field stacks, obvious Powered By BIS Consultants). Client/Software naming only.
+Visual system only. SoT: Brandon PASS screenshot `04-gis-pass-brandon.png` + live GIS Dashboard (`appgisdashboard`, CSS `:root`).
+
+**Hard lock:** dark navy/charcoal sider is Must. White/light rail is Fail. Brandon FAIL screenshot `03-deedai-fail-brandon.png` (pale sider · teal header · gold Export as shell) must not ship.
 
 Does **not** port GIS product IA, work-item fields, roles, shapefile, Telerik, or GIS jargon.
 
-Primary accent stays Mask F teal `#0D8A7F` (live GIS Ant primary `#1890ff` is **not** adopted). Header teal matches the SoT band, not GIS blue.
+## Tokens (from live GIS CSS, documented)
+
+| Role | Hex | Source |
+|---|---|---|
+| Sider / rail | `#001529` | `--mask-sider` |
+| Sider menu nest | `#000c17` | `--mask-sider-menu` |
+| Active nav / primary | `#1890FF` | `--mask-primary` (PASS blue highlight) |
+| Active hover | `#40A9FF` | `--mask-primary-hover` |
+| Utility header | `#FFFFFF` | `--mask-header` |
+| Canvas | `#F0F2F5` | `--mask-bg` |
+| Accent (charts / status only) | `#0D8A7F` | Mask F teal — not shell |
+| Export chip (page actions) | `#E8C547` | kept on Export buttons, not sider |
+| Navy token (legacy) | `#1E2430` | Mask F — not the live sider |
+
+`#3B82F6` remains as `--accent` / `--blue`. Shell active nav uses live GIS `#1890FF`.
 
 ## Must
 
-1. **Shell chrome (GIS SoT)**
-   - Full-width solid teal header `#0D8A7F` **above** the rail (product title + gold role pill). Not a sider-first Mask F wordmark column.
-   - Sidebar: light gray rail `#F0F2F5` with teal small-cap labels. No pale mint/soft-green hover wash. No dark rail.
-   - **Powered By BIS Consultants** footer obvious on every shell page (teal rule, not a whisper).
+1. **Shell chrome (GIS PASS)**
+   - Full-height **dark sider** `#001529` with white brand + sentence-case nav.
+   - Active nav: full-width vibrant blue `#1890FF` (not mint/teal wash).
+   - Slim **white** utility header over the canvas (PASS), not a teal-band-only Mask F shell.
+   - **Powered By BIS Consultants** footer on every shell page.
 2. **Density**
-   - Forms + tables hug content (GIS packing). Kill Mask F soft empty canvas and airy page titles.
-   - Documents table keeps Phase 6.1 scroll pane (~8–12 visible rows, sticky thead) with GIS-dense row height (`32px`) / heavier headers.
-3. **Status-first settings / list feel**
-   - Settings opens on Statuses; Documents Status filter is first.
-   - OCR ribbon = **stage filter only** (Upload · Queued · Processing · Review · Ready).
-   - **One** catalog Status toolbar (no Ready/Failed mix in that select).
-   - Row chip catalog-only (no pipeline-pill + mixed dropdown fight).
-4. **Work-item / detail density cues**
-   - Review keeps **3-col** IA. Compact teal title band, tight field stacks, primary Save, gold Export.
-5. **Tokens**
-   - Primary accent stays Mask F teal `#0D8A7F` (no GIS blue `#1890ff` override).
-   - Gold `#E8C547` for primary export chips (GIS Export To Excel role).
-   - Client/Software only · no County/CAMA · no GIS domain copy.
-6. **AdminSeed / QA demo on `/login`**
-   - Visible panel: email `admin@bisconsultants.com`, password the current AdminSeed seed. Label **AdminSeed / QA demo**.
+   - Documents rows **32px** (`--table-row-h`). Keep 6.1 ~8–12 row scroll pane + sticky thead.
+   - Forms + dashboard cards hug GIS packing.
+3. **Status-first**
+   - Settings opens on Statuses; Documents Status filter first.
+   - OCR ribbon = stage only. One catalog Status toolbar. Row chip catalog-only.
+4. **Review**
+   - Keep 3-col IA, compact title band, primary Save, gold Export class on the page action.
+5. **AdminSeed / QA demo on `/login`**
+   - Visible panel: `admin@bisconsultants.com` + current AdminSeed password. Client workspace copy.
 
 ## Carry
 
-Phase 6 AI extract path · 6.1 Documents UX Musts · Settings→System nest (singular) · no `?` pills · no glass/gradients/radial-gradient · no drop shadows except ConfirmSheet · health 200 after deploy.
+Phase 6 AI extract · 6.1 Documents Musts · Settings→System nest · no `?` pills · no glass/radial-gradient · ConfirmSheet-only drop shadows · Client/Software only.
 
 ## Won’t
 
-GIS roles/org · shapefile · GIS work-item fields · drag-column grouping · pixel-clone Telerik · relitigate AI extract / Statuses catalog values / Super Admin / ads · dual theme mess · dark sider.
+GIS roles/org · shapefile · work-item fields · County/CAMA/Work Items copy · dual theme · white/light rail.
 
 ## Fail if
 
-- Deed AI still reads as sparse Mask F soft shell (pale mint sider, DEED AI sider wordmark, airy padding, header only in the main column).
-- Dark sidebar returns.
-- Documents status chrome fight returns (ribbon as catalog, Ready/Failed in the catalog select, pipeline + catalog chips on the row).
-- County / CAMA / Work Items / CAD jargon in Deed AI UI copy.
-- Primary accent silently replaced without a PR note.
+- White, light gray, or pale mint sider ships.
+- Deed AI still reads as FAIL screenshot (pale sider + teal header as the whole chrome story).
+- Documents row height regresses to ~53px.
+- Documents status chrome fight returns.
+- County / CAMA / Work Items jargon in UI copy.

@@ -50,31 +50,13 @@ export default function AppShell() {
 
   return (
     <div className={`shell${navOpen ? " is-nav-open" : ""}`} data-chrome="gis">
-      <header className="topbar">
-        <button
-          className="ghost nav-toggle"
-          type="button"
-          aria-expanded={navOpen}
-          aria-controls="app-sidebar"
-          onClick={() => setNavOpen((open) => !open)}
-        >
-          Menu
-        </button>
-        <h1 className="topbar-title">{title}</h1>
-        <div className="topbar-meta">
-          <UserAvatar
-            userId={me?.id}
-            name={me?.displayName}
-            email={me?.email}
-            hasPhoto={me?.hasPhoto}
-            size="sm"
-          />
-          <span className="topbar-name">{me?.displayName ?? me?.email}</span>
-          <span className="role-pill">{me?.role}</span>
+      <aside className="sidebar" id="app-sidebar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            D
+          </span>
+          Deed AI
         </div>
-      </header>
-      <div className="shell-body">
-        <aside className="sidebar" id="app-sidebar">
         <nav onClick={closeNav}>
           <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/documents">Documents</NavLink>
@@ -200,10 +182,32 @@ export default function AppShell() {
       </aside>
       {navOpen && <button className="nav-backdrop" type="button" aria-label="Close menu" onClick={closeNav} />}
       <div className="main">
+        <header className="topbar">
+          <button
+            className="ghost nav-toggle"
+            type="button"
+            aria-expanded={navOpen}
+            aria-controls="app-sidebar"
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            Menu
+          </button>
+          <h1 className="topbar-title">{title}</h1>
+          <div className="topbar-meta">
+            <UserAvatar
+              userId={me?.id}
+              name={me?.displayName}
+              email={me?.email}
+              hasPhoto={me?.hasPhoto}
+              size="sm"
+            />
+            <span className="topbar-name">{me?.displayName ?? me?.email}</span>
+            <span className="role-pill">{me?.role}</span>
+          </div>
+        </header>
         <div className="main-body">
           <Outlet />
         </div>
-      </div>
       </div>
     </div>
   );
