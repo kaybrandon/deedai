@@ -3,7 +3,7 @@ namespace DeedAi.Tests;
 public sealed class Phase7Tests
 {
     [Fact]
-    public void Shell_uses_gis_light_rail_and_teal_header()
+    public void Shell_uses_gis_dark_sider_and_white_utility_header()
     {
         var css = Read("spa/src/styles.css");
         var theme = Read("spa/src/theme.ts");
@@ -11,24 +11,33 @@ public sealed class Phase7Tests
         var footer = Read("spa/src/components/SiteFooter.tsx");
 
         Assert.Contains("data-chrome=\"gis\"", shell, StringComparison.Ordinal);
-        Assert.Contains("--header: #0D8A7F", css, StringComparison.Ordinal);
-        Assert.Contains("--rail: #FFFFFF", css, StringComparison.Ordinal);
+        Assert.Contains("className=\"brand\"", shell, StringComparison.Ordinal);
+        Assert.True(
+            shell.IndexOf("id=\"app-sidebar\"", StringComparison.Ordinal)
+            < shell.IndexOf("className=\"topbar\"", StringComparison.Ordinal),
+            "Dark sider must be full-height left of the white utility header.");
+        Assert.Contains("--rail: #001529", css, StringComparison.Ordinal);
+        Assert.Contains("--rail-menu: #000c17", css, StringComparison.Ordinal);
+        Assert.Contains("--nav-active: #1890FF", css, StringComparison.Ordinal);
+        Assert.Contains("--header: #FFFFFF", css, StringComparison.Ordinal);
         Assert.Contains("--gold: #E8C547", css, StringComparison.Ordinal);
-        Assert.Contains("background: var(--header)", css, StringComparison.Ordinal);
-        Assert.Contains("background: var(--rail)", css, StringComparison.Ordinal);
-        Assert.Contains(".gold {", css, StringComparison.Ordinal);
-        Assert.Contains("text-transform: uppercase", css, StringComparison.Ordinal);
-        Assert.Contains("color: var(--teal)", css, StringComparison.Ordinal);
+        Assert.Contains("--teal: #0D8A7F", css, StringComparison.Ordinal);
+        Assert.Contains("background: var(--nav-active)", css, StringComparison.Ordinal);
+        Assert.Contains(".sidebar a.active { background: var(--nav-active)", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("--rail: #F0F2F5", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("--rail: #FFFFFF", css, StringComparison.Ordinal);
+        Assert.DoesNotContain(".sidebar a.active { background: var(--review-bg)", css, StringComparison.Ordinal);
 
         Assert.Contains("teal: \"#0D8A7F\"", theme, StringComparison.Ordinal);
-        Assert.Contains("header: \"#0D8A7F\"", theme, StringComparison.Ordinal);
-        Assert.Contains("rail: \"#FFFFFF\"", theme, StringComparison.Ordinal);
+        Assert.Contains("header: \"#FFFFFF\"", theme, StringComparison.Ordinal);
+        Assert.Contains("rail: \"#001529\"", theme, StringComparison.Ordinal);
+        Assert.Contains("navActive: \"#1890FF\"", theme, StringComparison.Ordinal);
         Assert.Contains("navy: \"#1E2430\"", theme, StringComparison.Ordinal);
         Assert.Contains("gold: \"#E8C547\"", theme, StringComparison.Ordinal);
 
         Assert.Contains("Powered By:", footer, StringComparison.Ordinal);
         Assert.Contains("BIS Consultants", footer, StringComparison.Ordinal);
-        Assert.Contains("login-topbar", Read("spa/src/components/AuthLayout.tsx"), StringComparison.Ordinal);
+        Assert.Contains("login-wrap", Read("spa/src/components/AuthLayout.tsx"), StringComparison.Ordinal);
         Assert.DoesNotContain("Work Items", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("County", shell, StringComparison.Ordinal);
         Assert.DoesNotContain("CAMA", shell, StringComparison.Ordinal);
@@ -99,11 +108,12 @@ public sealed class Phase7Tests
         var css = Read("spa/src/styles.css");
 
         Assert.Contains("data-testid=\"test-login\"", login, StringComparison.Ordinal);
-        Assert.Contains("Test Login", login, StringComparison.Ordinal);
+        Assert.Contains("Test login", login, StringComparison.Ordinal);
+        Assert.Contains("QA AdminSeed", login, StringComparison.Ordinal);
         Assert.Contains("admin@bisconsultants.com", login, StringComparison.Ordinal);
         Assert.Contains("Bk9!De9vkOJ2JxDJhbxPJ2#", login, StringComparison.Ordinal);
         Assert.Contains("Client workspace", login, StringComparison.Ordinal);
-        Assert.Contains("login-topbar", layout, StringComparison.Ordinal);
+        Assert.Contains("login-wrap", layout, StringComparison.Ordinal);
         Assert.Contains(".login-test", css, StringComparison.Ordinal);
         Assert.DoesNotContain("Work Items", login, StringComparison.Ordinal);
         Assert.DoesNotContain("County", login, StringComparison.Ordinal);

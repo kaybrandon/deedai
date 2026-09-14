@@ -1,5 +1,9 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-14 — Phase 7 GIS Dashboard chrome (dark sider lock)
+- Brandon FAIL was pale sider + teal header. PASS SoT is live GIS Dashboard: sider `#001529`, menu nest `#000c17`, active `#1890FF`, white utility header, canvas `#F0F2F5`.
+- White/light rail is a Fail. Mask F teal `#0D8A7F` stays for charts/status only. Login keeps AdminSeed / QA demo. Documents rows stay 32px.
+
 ## 2026-09-14 — Phase 7 GIS chrome
 - SPA shell matches live GIS visual chrome: Mask F teal `#0D8A7F` header band, light rail with teal small-cap labels, gold `#E8C547` export chips, Powered By BIS Consultants footer.
 - Density: 32px table rows, tighter forms/filters/Review stacks. Documents keeps the 6.1 ~8–12 row scroll pane and catalog-only status chrome.

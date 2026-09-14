@@ -1,15 +1,17 @@
-/** Mask F tokens + GIS chrome. Primary accent stays Mask F teal; header/rail follow live GIS light chrome. */
+/** GIS Dashboard chrome (PASS SoT). Live GIS tokens from appgisdashboard CSS. */
 export const maskF = {
-  rail: "#FFFFFF",
+  rail: "#001529",
+  railMenu: "#000c17",
   navy: "#1E2430",
   canvas: "#F0F2F5",
   surface: "#FFFFFF",
   text: "#1A1F2A",
   muted: "#5C6573",
   teal: "#0D8A7F",
-  header: "#0D8A7F",
+  header: "#FFFFFF",
   gold: "#E8C547",
   accent: "#3B82F6",
+  navActive: "#1890FF",
   ready: "#D8F0EA",
   readyFg: "#0B5F56",
   failed: "#F5D6D3",
@@ -36,7 +38,7 @@ export function ribbonStepForDocument(status?: string | null, display?: string |
 export function ribbonStepForStage(stage?: string | null): OcrRibbonStep | null {
   if (stage === "Queued") return "Queued";
   if (stage === "Processing") return "Processing";
-  if (stage === "Review") return "Review";
   if (stage === "Ready") return "Ready";
+  if (stage === "Review") return "Review";
   return null;
 }

@@ -145,7 +145,6 @@ export default function DocumentsPage() {
       <header className="page-head documents-page-head">
         <div>
           <h1>Documents</h1>
-          <p className="page-kicker">Search, assign, and open deeds for your Clients.</p>
           {canEdit && !canAdmin && deletePolicy && (
             <p className="muted delete-policy-hint">
               Delete Policy: {deletePolicy.label}
