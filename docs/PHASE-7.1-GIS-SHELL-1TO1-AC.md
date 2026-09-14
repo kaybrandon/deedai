@@ -1,6 +1,6 @@
 # Phase 7.1 — GIS shell CSS/HTML 1:1
 
-BA / CoS lock. SoT = live GIS Dashboard CSS bundle `index-Dnm45b_t.css` + PASS `04-gis-pass-brandon.png`.
+BA / CoS lock. SoT = live GIS Dashboard CSS bundle `index--oIitrwY.css` + PASS `04-gis-pass-brandon.png`.
 
 #44 Azure Pass is **held**. Token-only restyles Fail. This phase ships the live GIS custom CSS **verbatim** plus Ant 5 layout/menu/card rules GIS applies via cssinjs.
 

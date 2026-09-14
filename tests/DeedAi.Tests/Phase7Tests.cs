@@ -175,9 +175,10 @@ public sealed class Phase7Tests
         Assert.Contains(".app-header{", gis, StringComparison.Ordinal);
         Assert.Contains(".filter-toolbar{", gis, StringComparison.Ordinal);
         Assert.Contains(".kpi-card{", gis, StringComparison.Ordinal);
+        Assert.Contains(".page-head{", gis, StringComparison.Ordinal);
         Assert.Contains(".content-wrap{", gis, StringComparison.Ordinal);
         Assert.Contains(".app-shell .brand{", gis, StringComparison.Ordinal);
-        Assert.Contains("index-Dnm45b_t.css", gis, StringComparison.Ordinal);
+        Assert.Contains("index--oIitrwY.css", gis, StringComparison.Ordinal);
         Assert.Contains("siderBg #001529", ant, StringComparison.Ordinal);
         Assert.Contains(".ant-menu-dark .ant-menu-item-selected", ant, StringComparison.Ordinal);
         Assert.Contains("background-color: #1890ff", ant, StringComparison.Ordinal);
