@@ -449,6 +449,15 @@ h1 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
   border-color: rgba(255, 255, 255, 0.45);
   color: #fff;
 }
+.review-header .primary,
+.title-band .primary {
+  background: #fff;
+  color: var(--teal);
+}
+.review-header .primary:hover,
+.title-band .primary:hover {
+  background: var(--review-bg);
+}
 .review-header .chip,
 .title-band .chip {
   background: var(--gold) !important;
