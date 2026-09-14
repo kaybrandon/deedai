@@ -176,12 +176,13 @@ h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
 .login-test {
   margin-top: 4px;
   padding: 10px 12px;
-  border: 1px solid var(--border);
-  background: #fafafa;
+  border: 1px solid #D5DBE3;
+  background: #F0F2F5;
   border-radius: 2px;
   display: grid;
   gap: 4px;
   font-size: 13px;
+  color: var(--muted);
 }
 .login-test-kicker {
   margin: 0;
@@ -189,7 +190,7 @@ h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--nav-active);
+  color: #0D8A7F;
 }
 .login-test p { margin: 0; }
 .login-test code {

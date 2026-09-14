@@ -108,7 +108,8 @@ public sealed class Phase7Tests
         var css = Read("spa/src/styles.css");
 
         Assert.Contains("data-testid=\"test-login\"", login, StringComparison.Ordinal);
-        Assert.Contains("AdminSeed / QA demo", login, StringComparison.Ordinal);
+        Assert.Contains("Test login", login, StringComparison.Ordinal);
+        Assert.Contains("QA AdminSeed", login, StringComparison.Ordinal);
         Assert.Contains("admin@bisconsultants.com", login, StringComparison.Ordinal);
         Assert.Contains("Bk9!De9vkOJ2JxDJhbxPJ2#", login, StringComparison.Ordinal);
         Assert.Contains("Client workspace", login, StringComparison.Ordinal);
