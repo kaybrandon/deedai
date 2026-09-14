@@ -57,7 +57,7 @@
   --table-cell-pad-y: 4px;
   --table-cell-pad-x: 10px;
   --table-header-bg: #E8EEF2;
-  --table-stripe: #F7F9FA;
+  --table-stripe: #E8EEF2;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
   color: var(--text);
 }
