@@ -157,10 +157,10 @@ h1 { margin: 0; font-size: 16px; letter-spacing: -0.02em; }
 }
 .site-footer a:hover { text-decoration: underline; color: var(--blue); }
 .login-card {
-  width: min(28rem, calc(100vw - 32px));
+  width: min(420px, calc(100vw - 32px));
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--mask-border);
+  border-radius: var(--mask-radius);
   padding: 24px 20px;
   display: grid;
   gap: 12px;
