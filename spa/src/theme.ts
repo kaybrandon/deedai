@@ -1,11 +1,14 @@
-/** Mask F — Mockitt Admin. Hex SoT for charts and ribbon (CSS :root is the shell SoT). */
+/** Mask F tokens + GIS chrome. Primary accent stays Mask F teal; header/rail follow live GIS light chrome. */
 export const maskF = {
-  rail: "#1E2430",
+  rail: "#FFFFFF",
+  navy: "#1E2430",
   canvas: "#F0F2F5",
   surface: "#FFFFFF",
   text: "#1A1F2A",
   muted: "#5C6573",
   teal: "#0D8A7F",
+  header: "#0D8A7F",
+  gold: "#E8C547",
   accent: "#3B82F6",
   ready: "#D8F0EA",
   readyFg: "#0B5F56",

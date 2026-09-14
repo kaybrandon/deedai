@@ -86,7 +86,7 @@ export default function ReportsPage() {
           <button className="ghost" type="button" onClick={() => void exportFile("xlsx", "deedai-report.xlsx")}>
             Export Excel
           </button>
-          <button className="primary" type="button" onClick={() => void exportFile("pdf", "deedai-report.pdf")}>
+          <button className="gold" type="button" onClick={() => void exportFile("pdf", "deedai-report.pdf")}>
             Export PDF
           </button>
         </div>
