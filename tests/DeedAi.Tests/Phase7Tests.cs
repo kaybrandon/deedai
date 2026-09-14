@@ -11,8 +11,8 @@ public sealed class Phase7Tests
         var footer = Read("spa/src/components/SiteFooter.tsx");
 
         Assert.Contains("data-chrome=\"gis\"", shell, StringComparison.Ordinal);
-        Assert.Contains("className=\"app-shell", shell, StringComparison.Ordinal);
-        Assert.Contains("className=\"app-header", shell, StringComparison.Ordinal);
+        Assert.Contains("className={`app-shell", shell, StringComparison.Ordinal);
+        Assert.Contains("className=\"topbar app-header\"", shell, StringComparison.Ordinal);
         Assert.Contains("className=\"content-wrap", shell, StringComparison.Ordinal);
         Assert.Contains("className=\"brand\"", shell, StringComparison.Ordinal);
         Assert.Contains("BIS Consultants ·", shell, StringComparison.Ordinal);
@@ -20,7 +20,7 @@ public sealed class Phase7Tests
         Assert.DoesNotContain("Work Items", shell, StringComparison.Ordinal);
         Assert.True(
             shell.IndexOf("id=\"app-sidebar\"", StringComparison.Ordinal)
-            < shell.IndexOf("className=\"topbar\"", StringComparison.Ordinal),
+            < shell.IndexOf("className=\"topbar app-header\"", StringComparison.Ordinal),
             "Dark sider must be full-height left of the white utility header.");
         Assert.Contains("--mask-sider: #001529", css, StringComparison.Ordinal);
         Assert.Contains("--mask-primary: #1890ff", css, StringComparison.Ordinal);
