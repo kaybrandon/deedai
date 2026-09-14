@@ -278,7 +278,7 @@ export default function AppShell() {
       </aside>
       {navOpen && <button className="nav-backdrop" type="button" aria-label="Close menu" onClick={closeNav} />}
       <div className="ant-layout shell-body main">
-        <header className="topbar app-header">
+        <header className="topbar app-header ant-layout-header">
           <div className="app-header-left">
             <button
               className="app-header-icon-btn ant-btn ant-btn-text nav-toggle"
@@ -382,7 +382,7 @@ export default function AppShell() {
         <div className="content-wrap ant-layout-content main-body">
           <Outlet />
         </div>
-        <footer className="app-footer">
+        <footer className="app-footer ant-layout-footer">
           <SiteFooter />
         </footer>
       </div>
