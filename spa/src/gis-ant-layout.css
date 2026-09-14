@@ -1,0 +1,170 @@
+/* Ant Design 5 layout/menu/card tokens used by live GIS (cssinjs). siderBg #001529 · primary #1890ff. */
+.ant-layout {
+  display: flex;
+  flex: auto;
+  flex-direction: column;
+  min-height: 0;
+  background: #f0f2f5;
+}
+.ant-layout, .ant-layout * { box-sizing: border-box; }
+.ant-layout-has-sider { flex-direction: row; }
+.ant-layout-has-sider > .ant-layout,
+.ant-layout-has-sider > .ant-layout-content { min-width: 0; }
+.ant-layout-sider {
+  position: relative;
+  min-width: 0;
+  background: #001529;
+  transition: all 0.2s, background 0s;
+}
+.ant-layout-sider-children {
+  height: 100%;
+  margin-top: -0.1px;
+  padding-top: 0.1px;
+  display: flex;
+  flex-direction: column;
+}
+.ant-layout-sider-dark,
+.ant-layout-sider-dark .ant-layout-sider-children { background: #001529; }
+.ant-layout-header {
+  height: 64px;
+  padding-inline: 16px;
+  color: rgba(0, 0, 0, 0.88);
+  line-height: 64px;
+  background: #fff;
+}
+.ant-layout-content { flex: auto; min-height: 0; }
+.ant-layout-footer {
+  padding: 8px 16px 12px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  background: transparent;
+}
+.ant-menu {
+  box-sizing: border-box;
+  margin: 0;
+  padding-inline-start: 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  line-height: 1.5714285714285714;
+  list-style: none;
+  background: #001529;
+}
+.ant-menu-root.ant-menu-inline { border-inline-end: 0; }
+.ant-menu-inline .ant-menu-item,
+.ant-menu-inline .ant-menu-submenu-title {
+  height: 40px;
+  line-height: 40px;
+  padding-inline: 24px;
+  margin-inline: 0;
+  margin-block: 4px;
+  width: 100%;
+  border-radius: 0;
+}
+.ant-menu-dark .ant-menu-item,
+.ant-menu-dark .ant-menu-submenu-title {
+  color: rgba(255, 255, 255, 0.65);
+}
+.ant-menu-dark .ant-menu-item:hover,
+.ant-menu-dark .ant-menu-submenu-title:hover {
+  color: #fff;
+  background: #000c17;
+}
+.ant-menu-dark .ant-menu-item-selected {
+  color: #fff;
+  background-color: #1890ff;
+}
+.ant-menu-dark .ant-menu-sub { background: #000c17; }
+.ant-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  font-size: 14px;
+  margin-inline-end: 10px;
+  vertical-align: -0.125em;
+}
+.ant-menu-title-content { transition: none; }
+.ant-menu-inline.ant-menu-root .ant-menu-item > .ant-menu-title-content,
+.ant-menu-inline.ant-menu-root .ant-menu-submenu-title > .ant-menu-title-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ant-card {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  line-height: 1.5714285714285714;
+  list-style: none;
+  background: #fff;
+  border-radius: 2px;
+  border: 1px solid #f0f0f0;
+}
+.ant-card-head {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 38px;
+  margin-bottom: -1px;
+  padding: 0 12px;
+  color: rgba(0, 0, 0, 0.88);
+  font-weight: 600;
+  font-size: 16px;
+  background: transparent;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 2px 2px 0 0;
+}
+.ant-card-head-wrapper { display: flex; align-items: center; width: 100%; }
+.ant-card-head-title {
+  display: inline-block;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  font-size: 16px;
+}
+.ant-card-extra { margin-inline-start: auto; color: rgba(0, 0, 0, 0.45); font-weight: 400; }
+.ant-card-body { padding: 12px; }
+.ant-card-small > .ant-card-head { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.ant-card-small > .ant-card-body { padding: 12px; }
+.ant-statistic-title { margin-bottom: 4px; color: rgba(0, 0, 0, 0.45); font-size: 14px; }
+.ant-statistic-content { color: rgba(0, 0, 0, 0.88); font-size: 24px; font-family: inherit; }
+.ant-statistic-content-value { display: inline-block; direction: ltr; }
+.ant-statistic-content-prefix { display: inline-flex; margin-inline-end: 8px; }
+.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 400;
+  font-size: 14px;
+  height: 32px;
+  padding: 4px 15px;
+  border-radius: 2px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.88);
+  line-height: 1.5714285714285714;
+  cursor: pointer;
+}
+.ant-btn-sm { height: 24px; padding: 0 7px; font-size: 14px; border-radius: 2px; }
+.ant-btn-text,
+.ant-btn.ant-btn-text {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+.ant-btn-text:hover { background: rgba(0, 0, 0, 0.06); }
+.ant-btn-primary {
+  color: #fff;
+  background: #1890ff;
+  border-color: #1890ff;
+}
+.ant-table { font-size: 14px; }
+.ant-table-tbody > tr > td,
+.ant-table td {
+  padding: 4px 8px;
+  height: 32px;
+}

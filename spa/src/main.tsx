@@ -5,6 +5,8 @@ import App from "./App";
 import { AuthProvider } from "./auth";
 import { ProgressProvider } from "./progress";
 import "./styles.css";
+import "./gis-ant-layout.css";
+import "./gis-shell.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

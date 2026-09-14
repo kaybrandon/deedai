@@ -1,12 +1,12 @@
 const BIS_URL = "https://www.bisconsultants.com";
 
-export default function SiteFooter() {
+export default function SiteFooter({ onDark = false }: { onDark?: boolean }) {
   return (
-    <footer className="site-footer">
+    <p className={onDark ? "powered-by powered-by-on-dark site-footer" : "powered-by site-footer"}>
       Powered By:{" "}
       <a href={BIS_URL} target="_blank" rel="noopener noreferrer">
         BIS Consultants
       </a>
-    </footer>
+    </p>
   );
 }

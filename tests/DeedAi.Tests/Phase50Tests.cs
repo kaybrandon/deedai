@@ -16,7 +16,7 @@ public sealed class Phase50Tests
         }
 
         Assert.Contains("--sidebar-w: 220px", css, StringComparison.Ordinal);
-        Assert.Contains("--topbar-h: 56px", css, StringComparison.Ordinal);
+        Assert.Contains("--topbar-h: 64px", css, StringComparison.Ordinal);
         Assert.Contains("--ribbon-h: 42px", css, StringComparison.Ordinal);
         Assert.Contains("--btn-h: 32px", css, StringComparison.Ordinal);
         Assert.Contains("--search-max: 360px", css, StringComparison.Ordinal);

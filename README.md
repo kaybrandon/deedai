@@ -38,7 +38,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 
 ## Phase 7 acceptance
 
-- **GIS chrome:** Dark sider `#001529` (live GIS `--mask-sider`) · blue active `#1890FF` · white utility header · light canvas `#F0F2F5` · Powered By BIS Consultants. White/light rail is a Fail. Mask F teal `#0D8A7F` stays for charts/status only.
+- **GIS chrome (1:1 shell):** Live GIS custom CSS is imported verbatim (`spa/src/gis-shell.css` from `appgisdashboard` `index--oIitrwY.css`) plus Ant 5 layout/menu/card rules. Dark sider `#001529`, blue `#1890FF` active, white utility header, `filter-toolbar` + `kpi-card`. Table rows 32px. Not a token-only restyle. Gold Export is a page action, not the shell.
 - **Density:** GIS-level packing. Documents keeps the 6.1 ~8–12 row sticky pane with 32px rows. Review keeps 3-col IA plus a compact teal title band and primary Save.
 - **Status-first:** Settings Statuses catalog first. Documents Status filter first. Ribbon stays stage-only. One catalog Status toolbar. Row chip catalog-only.
 - **Carry:** Phase 6 AI extract · 6.1 Documents Musts · Settings→System nest · no `?` pills · no glass/gradients · ConfirmSheet-only shadows · Client/Software only.

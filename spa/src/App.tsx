@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import AppShell from "./components/AppShell";
 import AuthLayout from "./components/AuthLayout";
-import SiteFooter from "./components/SiteFooter";
 import DashboardPage from "./pages/DashboardPage";
 import DeniedPage from "./pages/DeniedPage";
 import DocumentsPage from "./pages/DocumentsPage";
@@ -55,7 +54,6 @@ export default function App() {
           </Routes>
         )}
       </div>
-      <SiteFooter />
     </div>
   );
 }
