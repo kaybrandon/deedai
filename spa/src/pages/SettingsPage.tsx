@@ -174,13 +174,197 @@ export default function SettingsPage() {
           <button className="ghost" type="button" onClick={() => endpoints.exportSettings("csv").catch((e) => setError(e.message))}>
             Export CSV
           </button>
-          <button className="primary" type="button" onClick={() => endpoints.exportSettings("xlsx").catch((e) => setError(e.message))}>
+          <button className="gold" type="button" onClick={() => endpoints.exportSettings("xlsx").catch((e) => setError(e.message))}>
             Export Excel
           </button>
         </div>
       </div>
       {notice && <div className="success-banner">{notice}</div>}
       {error && <div className="denied-box">{error}</div>}
+
+      <SettingsBlock
+        title="Statuses"
+        helpKey="settings.statuses"
+        className="status-first"
+        empty={statuses.length === 0}
+        emptyBody="Catalog statuses appear on Documents and Review. Seed the Must eight if the list is empty."
+      >
+        <div className="statuses-catalog" id="statuses" data-testid="statuses-catalog">
+          <p className="muted">
+            Client/Software catalog. OCR stays Queued → Processing → Ready on the ribbon. Seed labels can be renamed or
+            disabled. Disable or delete uses a confirm sheet.
+          </p>
+          <ul className="setting-list">
+            {statuses.map((status) => {
+              const draft = statusDrafts[status.id] ?? {
+                displayName: status.displayName,
+                color: status.color,
+                sortOrder: status.sortOrder
+              };
+              return (
+                <li key={status.id} className="status-row">
+                  <span className="status-swatch" style={{ background: draft.color }} aria-hidden="true" />
+                  <div className="status-fields">
+                    <input
+                      aria-label={`Display name for ${status.code}`}
+                      value={draft.displayName}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, displayName: e.target.value }
+                        }))
+                      }
+                    />
+                    <input
+                      type="color"
+                      aria-label={`Color for ${status.displayName}`}
+                      value={draft.color}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, color: e.target.value }
+                        }))
+                      }
+                    />
+                    <input
+                      type="number"
+                      aria-label={`Sort order for ${status.displayName}`}
+                      value={draft.sortOrder}
+                      onChange={(e) =>
+                        setStatusDrafts((current) => ({
+                          ...current,
+                          [status.id]: { ...draft, sortOrder: Number(e.target.value) }
+                        }))
+                      }
+                    />
+                    <span className="muted">
+                      {status.mapsTo ? `Maps to ${status.mapsTo}` : status.code}
+                      {status.isSystem ? " · system" : ""}
+                      {status.isSeed ? " · seed" : ""}
+                      {status.isActive ? "" : " · disabled"}
+                    </span>
+                  </div>
+                  <div className="status-actions">
+                    <button
+                      className="ghost"
+                      type="button"
+                      onClick={async () => {
+                        await endpoints.updateStatus(status.id, {
+                          code: status.code,
+                          displayName: draft.displayName,
+                          color: draft.color,
+                          sortOrder: draft.sortOrder,
+                          isActive: status.isActive,
+                          mapsTo: status.mapsTo,
+                          kind: status.kind
+                        });
+                        setNotice(`${draft.displayName} saved.`);
+                        await load();
+                      }}
+                    >
+                      Save
+                    </button>
+                    {status.isActive ? (
+                      <button
+                        className="ghost"
+                        type="button"
+                        onClick={() =>
+                          setPending({
+                            kind: "status-disable",
+                            id: status.id,
+                            name: status.displayName,
+                            color: draft.color,
+                            code: status.code,
+                            sortOrder: draft.sortOrder,
+                            isActive: status.isActive,
+                            mapsTo: status.mapsTo,
+                            kindName: status.kind
+                          })
+                        }
+                      >
+                        Disable
+                      </button>
+                    ) : (
+                      <button
+                        className="ghost"
+                        type="button"
+                        onClick={async () => {
+                          await endpoints.updateStatus(status.id, {
+                            code: status.code,
+                            displayName: draft.displayName,
+                            color: draft.color,
+                            sortOrder: draft.sortOrder,
+                            isActive: true,
+                            mapsTo: status.mapsTo,
+                            kind: status.kind
+                          });
+                          setNotice(`${status.displayName} enabled.`);
+                          await load();
+                        }}
+                      >
+                        Enable
+                      </button>
+                    )}
+                    {!status.isSystem && !status.isSeed && (
+                      <button
+                        className="link"
+                        type="button"
+                        onClick={() => setPending({ kind: "status", id: status.id, name: status.displayName })}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <form
+          className="inline-form"
+          onSubmit={async (event: FormEvent) => {
+            event.preventDefault();
+            await endpoints.createStatus(statusForm);
+            setStatusForm({
+              displayName: "",
+              color: "#C5E8E4",
+              sortOrder: 90,
+              isActive: true,
+              mapsTo: "NeedsReview",
+              kind: "Catalog"
+            });
+            setNotice("Status saved.");
+            await load();
+          }}
+        >
+          <input
+            placeholder="Display name"
+            aria-label="New status display name"
+            value={statusForm.displayName}
+            onChange={(e) => setStatusForm({ ...statusForm, displayName: e.target.value })}
+            required
+          />
+          <input type="color" value={statusForm.color} aria-label="New status color" onChange={(e) => setStatusForm({ ...statusForm, color: e.target.value })} />
+          <select
+            aria-label="Maps to pipeline"
+            value={statusForm.mapsTo}
+            onChange={(e) => setStatusForm({ ...statusForm, mapsTo: e.target.value })}
+          >
+            <option value="Queued">Queued</option>
+            <option value="Processing">Processing</option>
+            <option value="Ready">Ready</option>
+            <option value="Failed">Failed</option>
+            <option value="NeedsReview">Needs Review</option>
+            <option value="Approved">Approved</option>
+            <option value="New">New</option>
+            <option value="Research">Research</option>
+            <option value="NotNeeded">Not Needed</option>
+          </select>
+          <button className="primary" type="submit">
+            Add Status
+          </button>
+        </form>
+      </SettingsBlock>
 
       <SystemHealthPanel />
 
@@ -549,184 +733,6 @@ export default function SettingsPage() {
         </form>
       </SettingsBlock>
 
-      <SettingsBlock title="Statuses" helpKey="settings.statuses" empty={statuses.length === 0} emptyBody="Catalog statuses appear on Documents and Review. Seed the Must eight if the list is empty.">
-        <div className="statuses-catalog" id="statuses" data-testid="statuses-catalog">
-          <p className="muted">
-            Client/Software catalog. OCR stays Queued → Processing → Ready on the ribbon. Seed labels can be renamed or
-            disabled. Disable or delete uses a confirm sheet.
-          </p>
-          <ul className="setting-list">
-            {statuses.map((status) => {
-              const draft = statusDrafts[status.id] ?? {
-                displayName: status.displayName,
-                color: status.color,
-                sortOrder: status.sortOrder
-              };
-              return (
-                <li key={status.id} className="status-row">
-                  <span className="status-swatch" style={{ background: draft.color }} aria-hidden="true" />
-                  <div className="status-fields">
-                    <input
-                      aria-label={`Display name for ${status.code}`}
-                      value={draft.displayName}
-                      onChange={(e) =>
-                        setStatusDrafts((current) => ({
-                          ...current,
-                          [status.id]: { ...draft, displayName: e.target.value }
-                        }))
-                      }
-                    />
-                    <input
-                      type="color"
-                      aria-label={`Color for ${status.displayName}`}
-                      value={draft.color}
-                      onChange={(e) =>
-                        setStatusDrafts((current) => ({
-                          ...current,
-                          [status.id]: { ...draft, color: e.target.value }
-                        }))
-                      }
-                    />
-                    <input
-                      type="number"
-                      aria-label={`Sort order for ${status.displayName}`}
-                      value={draft.sortOrder}
-                      onChange={(e) =>
-                        setStatusDrafts((current) => ({
-                          ...current,
-                          [status.id]: { ...draft, sortOrder: Number(e.target.value) }
-                        }))
-                      }
-                    />
-                    <span className="muted">
-                      {status.mapsTo ? `Maps to ${status.mapsTo}` : status.code}
-                      {status.isSystem ? " · system" : ""}
-                      {status.isSeed ? " · seed" : ""}
-                      {status.isActive ? "" : " · disabled"}
-                    </span>
-                  </div>
-                  <div className="status-actions">
-                    <button
-                      className="ghost"
-                      type="button"
-                      onClick={async () => {
-                        await endpoints.updateStatus(status.id, {
-                          code: status.code,
-                          displayName: draft.displayName,
-                          color: draft.color,
-                          sortOrder: draft.sortOrder,
-                          isActive: status.isActive,
-                          mapsTo: status.mapsTo,
-                          kind: status.kind
-                        });
-                        setNotice(`${draft.displayName} saved.`);
-                        await load();
-                      }}
-                    >
-                      Save
-                    </button>
-                    {status.isActive ? (
-                      <button
-                        className="ghost"
-                        type="button"
-                        onClick={() =>
-                          setPending({
-                            kind: "status-disable",
-                            id: status.id,
-                            name: status.displayName,
-                            color: draft.color,
-                            code: status.code,
-                            sortOrder: draft.sortOrder,
-                            isActive: status.isActive,
-                            mapsTo: status.mapsTo,
-                            kindName: status.kind
-                          })
-                        }
-                      >
-                        Disable
-                      </button>
-                    ) : (
-                      <button
-                        className="ghost"
-                        type="button"
-                        onClick={async () => {
-                          await endpoints.updateStatus(status.id, {
-                            code: status.code,
-                            displayName: draft.displayName,
-                            color: draft.color,
-                            sortOrder: draft.sortOrder,
-                            isActive: true,
-                            mapsTo: status.mapsTo,
-                            kind: status.kind
-                          });
-                          setNotice(`${status.displayName} enabled.`);
-                          await load();
-                        }}
-                      >
-                        Enable
-                      </button>
-                    )}
-                    {!status.isSystem && !status.isSeed && (
-                      <button
-                        className="link"
-                        type="button"
-                        onClick={() => setPending({ kind: "status", id: status.id, name: status.displayName })}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        <form
-          className="inline-form"
-          onSubmit={async (event: FormEvent) => {
-            event.preventDefault();
-            await endpoints.createStatus(statusForm);
-            setStatusForm({
-              displayName: "",
-              color: "#C5E8E4",
-              sortOrder: 90,
-              isActive: true,
-              mapsTo: "NeedsReview",
-              kind: "Catalog"
-            });
-            setNotice("Status saved.");
-            await load();
-          }}
-        >
-          <input
-            placeholder="Display name"
-            aria-label="New status display name"
-            value={statusForm.displayName}
-            onChange={(e) => setStatusForm({ ...statusForm, displayName: e.target.value })}
-            required
-          />
-          <input type="color" value={statusForm.color} aria-label="New status color" onChange={(e) => setStatusForm({ ...statusForm, color: e.target.value })} />
-          <select
-            aria-label="Maps to pipeline"
-            value={statusForm.mapsTo}
-            onChange={(e) => setStatusForm({ ...statusForm, mapsTo: e.target.value })}
-          >
-            <option value="Queued">Queued</option>
-            <option value="Processing">Processing</option>
-            <option value="Ready">Ready</option>
-            <option value="Failed">Failed</option>
-            <option value="NeedsReview">Needs Review</option>
-            <option value="Approved">Approved</option>
-            <option value="New">New</option>
-            <option value="Research">Research</option>
-            <option value="NotNeeded">Not Needed</option>
-          </select>
-          <button className="primary" type="submit">
-            Add Status
-          </button>
-        </form>
-      </SettingsBlock>
-
       <SettingsBlock title="Deed-Type Maps" helpKey="settings.deedTypeMaps" empty={deedTypes.length === 0} emptyBody="Map deed types to Software codes used on lookup and push.">
         <ul className="setting-list">
           {deedTypes.map((map) => (
@@ -789,16 +795,18 @@ function SettingsBlock({
   helpKey,
   empty,
   emptyBody,
+  className,
   children
 }: {
   title: string;
   helpKey?: HelpKey;
   empty: boolean;
   emptyBody: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="panel">
+    <section className={className ? `panel ${className}` : "panel"}>
       <h2>
         {title}
         {helpKey && <FieldHelp helpKey={helpKey} />}

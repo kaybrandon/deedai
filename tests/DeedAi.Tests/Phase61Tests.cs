@@ -84,7 +84,7 @@ public sealed class Phase61Tests
         Assert.Contains("--space-1: 4px", css, StringComparison.Ordinal);
         Assert.Contains("--space-2: 8px", css, StringComparison.Ordinal);
         Assert.Contains("--space-3: 12px", css, StringComparison.Ordinal);
-        Assert.Contains("--table-row-h: 44px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-row-h: 32px", css, StringComparison.Ordinal);
         Assert.DoesNotContain("max-height: calc(100vh - var(--topbar-h) - var(--ribbon-h)", css, StringComparison.Ordinal);
     }
 

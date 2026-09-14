@@ -389,7 +389,7 @@ export default function ReviewPage() {
   return (
     <section className="page has-ocr-ribbon">
       <OcrRibbon current={ribbonStepForDocument(doc.status, shownStatus)} />
-      <div className="review-header">
+      <div className="review-header title-band">
         <div className="title-row">
           <h1>Deed Review</h1>
           <StatusChip status={shownStatus} label={shownLabel} color={catalogColor(shownStatus, statuses)} title={doc.errorMessage} />
@@ -408,7 +408,7 @@ export default function ReviewPage() {
             Retry
           </button>
           <button
-            className="ghost"
+            className="gold"
             type="button"
             onClick={() =>
               endpoints.exportReviewedPdf(doc.id, `${doc.name}-reviewed.pdf`).catch((err) =>

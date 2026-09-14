@@ -44,8 +44,8 @@ public sealed class Phase522Tests : IClassFixture<TestAppFactory>
         Assert.DoesNotContain("CAMA", page, StringComparison.Ordinal);
 
         Assert.Contains("max-width: 360px", css, StringComparison.Ordinal);
-        Assert.Contains("--table-row-h: 44px", css, StringComparison.Ordinal);
-        Assert.Contains("--table-cell-pad-y: 6px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-row-h: 32px", css, StringComparison.Ordinal);
+        Assert.Contains("--table-cell-pad-y: 4px", css, StringComparison.Ordinal);
         Assert.Contains("--table-header-bg: #E8EEF2", css, StringComparison.Ordinal);
         Assert.Contains("--table-stripe: #E8EEF2", css, StringComparison.Ordinal);
         Assert.Contains(".documents-table thead th", css, StringComparison.Ordinal);

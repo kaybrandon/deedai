@@ -15,6 +15,7 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 - [SOP-02-azure-deploy.md](docs/SOP-02-azure-deploy.md) — Azure deploy checklist
 - [SOP-04-staff-quickstart.md](docs/SOP-04-staff-quickstart.md) — staff field quick start
 - [CHANGELOG.md](docs/CHANGELOG.md) — SOP changelog
+- [PHASE-7-GIS-CHROME-AC.md](docs/PHASE-7-GIS-CHROME-AC.md) — Phase 7 GIS visual chrome
 - [PHASE-6.1-DOCUMENTS-UX-DELTA-AC.md](docs/PHASE-6.1-DOCUMENTS-UX-DELTA-AC.md) — Phase 6.1 Documents list UX delta
 - [PHASE-6-AI-EXTRACT-AC.md](docs/PHASE-6-AI-EXTRACT-AC.md) — Phase 6 AI extract
 - [PHASE-5.2.3-SOFTWARE-DEPTH-AC.md](docs/PHASE-5.2.3-SOFTWARE-DEPTH-AC.md) — Phase 5.2.3 Software settings depth
@@ -34,6 +35,14 @@ Phase 1 operator and staff docs (no secrets). Start at [SOP.md](SOP.md) (root in
 | App Service | `appdeedai`, plan `asp-bis-deed-ai` B1, RG `rg-bis-deed-ai`, South Central US |
 
 **Brandon lock:** Azure OpenAI in the **same subscription** as `appdeedai`, cheapest capable chat model (`gpt-4o-mini` class). KV-only keys via App Setting references: `AzureOpenAIEndpoint`, `AzureOpenAIKey`, `AzureOpenAIDeployment`, optional `AzureOpenAIModel` (default `gpt-4o-mini`). Fail closed if unconfigured. Do not raise quotas. Escalate spend to Chief of Staff before any spend bump or pricier model. Document Intelligence field-fill is **removed** — leftover `BISDocumentIntelligenceEndpoint` / `DocumentIntelligenceKey` are ignored.
+
+## Phase 7 acceptance
+
+- **GIS chrome:** Teal header band (`#0D8A7F`) · light rail with teal small-cap labels · gold export chips (`#E8C547`) · Powered By BIS Consultants footer. Not a dark sidebar.
+- **Density:** GIS-level packing. Documents keeps the 6.1 ~8–12 row sticky pane with 32px rows. Review keeps 3-col IA plus a compact teal title band and primary Save.
+- **Status-first:** Settings Statuses catalog first. Documents Status filter first. Ribbon stays stage-only. One catalog Status toolbar. Row chip catalog-only.
+- **Carry:** Phase 6 AI extract · 6.1 Documents Musts · Settings→System nest · no `?` pills · no glass/gradients · ConfirmSheet-only shadows · Client/Software only.
+- **Won’t:** GIS IA / work items / shapefile / Telerik · County/CAMA · dual theme · teal hex override (primary stays `#0D8A7F`).
 
 ## Phase 6.1 acceptance
 

@@ -155,21 +155,7 @@ export default function DocumentsPage() {
         </div>
       </header>
       <div className="filter-row documents-filter-row">
-        <label className="documents-search-field">
-          Search
-          <input
-            className="search-field"
-            type="search"
-            placeholder="Search deeds"
-            value={searchDraft}
-            onChange={(e) => {
-              searchTyping.current = true;
-              setSearchDraft(e.target.value);
-            }}
-            aria-label="Search deeds"
-          />
-        </label>
-        <label>
+        <label className="filter-status-first">
           Status
           <select
             data-status-chrome="catalog"
@@ -184,6 +170,20 @@ export default function DocumentsPage() {
               </option>
             ))}
           </select>
+        </label>
+        <label className="documents-search-field">
+          Search
+          <input
+            className="search-field"
+            type="search"
+            placeholder="Search deeds"
+            value={searchDraft}
+            onChange={(e) => {
+              searchTyping.current = true;
+              setSearchDraft(e.target.value);
+            }}
+            aria-label="Search deeds"
+          />
         </label>
         <label>
           Client

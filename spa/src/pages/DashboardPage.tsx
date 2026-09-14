@@ -148,7 +148,7 @@ export default function DashboardPage() {
         </div>
         <div className="row-actions dashboard-export-actions no-print">
           <button className="ghost" type="button" disabled={busy} onClick={() => void handlePrint()}>Print</button>
-          <button className="primary" type="button" disabled={busy} onClick={() => void handleExport()}>
+          <button className="gold" type="button" disabled={busy} onClick={() => void handleExport()}>
             {exporting ? "Exporting…" : "Export PDF"}
           </button>
         </div>

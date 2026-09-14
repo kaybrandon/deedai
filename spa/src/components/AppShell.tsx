@@ -49,7 +49,7 @@ export default function AppShell() {
   }, [onSettingsSection, onSystemSection]);
 
   return (
-    <div className={`shell${navOpen ? " is-nav-open" : ""}`}>
+    <div className={`shell${navOpen ? " is-nav-open" : ""}`} data-chrome="gis">
       <aside className="sidebar" id="app-sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">

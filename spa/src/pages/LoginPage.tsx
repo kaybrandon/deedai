@@ -102,6 +102,16 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+        <aside className="login-test" data-testid="test-login" aria-label="Test login">
+          <p className="login-test-kicker">Test Login</p>
+          <p>
+            Email <code>admin@bisconsultants.com</code>
+          </p>
+          <p>
+            Password <code>Bk9!De9vkOJ2JxDJhbxPJ2#</code>
+          </p>
+          <p className="muted">QA smoke helper for Client workspace Admin seed.</p>
+        </aside>
     </form>
   );
 }

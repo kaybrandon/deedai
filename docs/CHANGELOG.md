@@ -1,5 +1,11 @@
 # Changelog — Deed AI SOPs
 
+## 2026-09-14 — Phase 7 GIS chrome
+- SPA shell matches live GIS visual chrome: Mask F teal `#0D8A7F` header band, light rail with teal small-cap labels, gold `#E8C547` export chips, Powered By BIS Consultants footer.
+- Density: 32px table rows, tighter forms/filters/Review stacks. Documents keeps the 6.1 ~8–12 row scroll pane and catalog-only status chrome.
+- Settings is Status-first (Statuses catalog before health). Review keeps 3-col IA with a compact teal title band and primary Save.
+- No GIS teal override. No County / CAMA / Work Items copy. No EF migration.
+
 ## 2026-09-10 — Phase 6.1 Documents list UX delta
 - Documents list matches Mask F density: hug rows, sticky thead, 4/8/12 spacing, no sparse canvas around the grid.
 - Table pane shows ~8–12 hug rows with internal vertical scroll and horizontal scroll so Actions stay reachable. Filters and the OCR ribbon stay fixed.
